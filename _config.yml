@@ -3,17 +3,17 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: Hexo
-subtitle: ''
-description: ''
-keywords:
-author: John Doe
-language: en
+title: 云端fff的博客
+subtitle: '技术分享与生活记录'
+description: '一个专注于技术分享和生活记录的个人博客'
+keywords: 技术,编程,生活,博客
+author: 云端fff
+language: zh-CN
 timezone: ''
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
-url: http://example.com
+url: https://wxc971231.github.io/MyBlog
 permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
@@ -100,7 +100,8 @@ theme: fluid
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
-deploy:
-  type: git
-  repository: https://github.com/wxc971231/MyBlog
-  branch: main
+# deploy:
+#   type: git
+#   repository: https://github.com/wxc971231/MyBlog
+#   branch: main
+# 注释掉手动部署配置，使用 GitHub Actions 自动部署

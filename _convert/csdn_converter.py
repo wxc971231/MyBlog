@@ -99,7 +99,7 @@ class CSDNConverter:
     
     def process_images(self, markdown_content, article_name):
         """处理markdown中的图片"""
-        # 匹配图片链接的正则表达式
+        # 匹配图片链接的正则表达式，包括可能的缩放参数
         img_pattern = r'!\[([^\]]*)\]\(([^\)]+)\)'
         
         img_index = 1
@@ -110,11 +110,21 @@ class CSDNConverter:
             
             # 只处理网络图片
             if img_url.startswith('http'):
+                # 提取缩放比例
+                scale_match = re.search(r'#pic_center\s*=\s*(\d+)%x', img_url)
+                if scale_match:
+                    width_percent = int(scale_match.group(1))
+                else:
+                    width_percent = 100  # 默认值
+                
                 # 去掉URL中的参数和锚点
                 clean_url = img_url.split('#')[0].split('?')[0]
                 local_path = self.download_image(clean_url, article_name, img_index)
                 img_index += 1
-                return f"![{alt_text}]({local_path})"
+                # 使用HTML格式，居中对齐，根据原始缩放比例调整样式
+                if not alt_text:
+                    alt_text = "图片"
+                return f'<div align="center">\n        <img src="{local_path}" alt="{alt_text}" style="width: {width_percent}%;">\n    </div>\n'
             else:
                 return match.group(0)  # 保持原样
         
@@ -137,16 +147,16 @@ class CSDNConverter:
                 
                 if not in_math_block:
                     # 不在数学块中，这是开始
-                    # 提取$$前的缩进
+                    # 提取$$前的缩进，将TAB替换为4个空格
                     match = re.match(r'(\s*).*?\$\$', line)
                     if match:
-                        math_block_indent = match.group(1)
+                        math_block_indent = match.group(1).replace('\t', '    ')
                     
                     if dollar_count == 1:
                         # 只有一个$$，这是多行数学公式的开始
                         if line.strip() == '$$':
                             # 整行只有$$
-                            processed_lines.append(line)
+                            processed_lines.append(line.replace('\t', '    '))
                         else:
                             # $$后面还有内容，需要分行
                             before_dollars = line[:line.find('$$')].strip()
@@ -200,15 +210,15 @@ class CSDNConverter:
             else:
                 # 不包含$$的行
                 if in_math_block:
-                    # 在数学块中，确保内容与开始$$对齐
+                    # 在数学块中，确保内容与开始$$对齐，将TAB替换为4个空格
                     content = line.strip()
                     if content:
                         processed_lines.append(math_block_indent + content)
                     else:
                         processed_lines.append('')  # 保持空行
                 else:
-                    # 普通行，保持原样
-                    processed_lines.append(line)
+                    # 普通行，将TAB替换为4个空格
+                    processed_lines.append(line.replace('\t', '    '))
         
         return '\n'.join(processed_lines)
     
@@ -285,10 +295,9 @@ description:
         return output_path
 
 def main():
-    """主函数"""
     # 配置
-    markdown_file = "d:\\Programmer\\Hexo\\_convert\\raw\\实践\\经典机器学习方法(2)——Softmax 回归.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/124629256"
+    markdown_file = r"d:\Programmer\Hexo\_convert\raw\实践\经典机器学习方法(4)——感知机.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/126512982"
     
     # 创建转换器
     converter = CSDNConverter()

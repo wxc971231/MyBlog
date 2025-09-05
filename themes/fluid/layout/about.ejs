@@ -1,0 +1,170 @@
+<%
+page.layout = "about"
+page.title = theme.about.title || __('about.title')
+page.subtitle = theme.about.subtitle || __('about.subtitle')
+page.banner_img = page.banner_img || theme.about.banner_img
+page.banner_img_height = page.banner_img_height || theme.about.banner_img_height
+page.banner_mask_alpha = page.banner_mask_alpha || theme.about.banner_mask_alpha
+%>
+
+<div class="text-center">
+  <div class="about-info">
+    <div class="about-name"><%- theme.about.name %></div>
+    <div class="about-intro"><%- theme.about.introduce || theme.about.intro %></div>
+    <div class="about-icons">
+      <% for(const each of theme.about.icons || []) { %>
+        <% if (!each.class) continue; %>
+        <% var cls = each.class %>
+        <% var isQr = each.qrcode %>
+        <a <%= isQr ? '' : (each.link && each.link.startsWith('mailto:') ? 'href="javascript:void(0)"' : ('href=' + url_for(each.link))) %> class="<%= isQr ? 'qr-trigger' : '' %>
+           <%= !isQr && each.tip ? 'hint--bottom hint--rounded' : '' %>"
+           <% if (!isQr && each.tip) { %>aria-label="<%= each.tip %>"<% } %>
+           <% if (!isQr && each.link && each.link.startsWith('mailto:')) { %>
+           onclick="copyEmailToClipboard('<%= each.link.replace('mailto:', '') %>'); return false;"
+           <% } else if (!isQr) { %>
+           target="_blank"
+           <% } %>
+        >
+          <i class="<%= cls %>" aria-hidden="true"></i>
+          <% if (isQr) { %>
+            <img class="qr-img" src="<%= url_for(each.qrcode) %>" alt="qrcode" />
+          <% } %>
+        </a>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<article class="about-content page-content mt-5">
+  <div class="markdown-body">
+    <%- page.content %>
+  </div>
+
+  <% if(page.comments) { %>
+    <!-- Comments -->
+    <article id="comments">
+      <% var type %>
+      <% if (typeof page.comment === 'string' && page.comment !== '') { %>
+        <% type = '_partials/comments/' + page.comment %>
+      <% } else { %>
+        <% type = '_partials/comments/' + theme.post.comments.type %>
+      <% } %>
+      <%- partial(type) %>
+    </article>
+  <% } %>
+</article>
+
+<%- partial('_partials/markdown-plugins') %>
+
+<style>
+.toast {
+  position: fixed;
+  background: rgba(200, 200, 200, 0.9);
+  color: #333;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+  font-weight: 400;
+  z-index: 9999;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.25s ease-out;
+  pointer-events: none;
+  max-width: 250px;
+  word-wrap: break-word;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast.success {
+  background: rgba(220, 220, 220, 0.9);
+  color: #555;
+}
+
+.toast.error {
+  background: rgba(220, 220, 220, 0.9);
+  color: #555;
+}
+
+.toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px 6px 0 0;
+  animation: progress 3s linear;
+}
+
+@keyframes progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+</style>
+
+<script>
+let mouseX = 0, mouseY = 0;
+
+// 跟踪鼠标位置
+document.addEventListener('mousemove', function(e) {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
+
+function showToast(message, type = 'success') {
+  // 移除已存在的toast
+  const existingToast = document.querySelector('.toast');
+  if (existingToast) {
+    existingToast.remove();
+  }
+  
+  // 创建新的toast
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  // 设置位置在鼠标下方
+  toast.style.left = mouseX + 'px';
+  toast.style.top = (mouseY + 20) + 'px';
+  
+  // 确保toast不会超出屏幕边界
+  document.body.appendChild(toast);
+  
+  const rect = toast.getBoundingClientRect();
+  if (rect.right > window.innerWidth) {
+    toast.style.left = (window.innerWidth - rect.width - 10) + 'px';
+  }
+  if (rect.bottom > window.innerHeight) {
+    toast.style.top = (mouseY - rect.height - 10) + 'px';
+  }
+  
+  // 显示动画
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 50);
+  
+  // 1.2秒后自动消失
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 250);
+  }, 1200);
+}
+
+function copyEmailToClipboard(email) {
+  navigator.clipboard.writeText(email).then(() => {
+    showToast('邮箱已复制', 'success');
+  }).catch(() => {
+    showToast(`复制失败：${email}`, 'error');
+  });
+}
+</script>

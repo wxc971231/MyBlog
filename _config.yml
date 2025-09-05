@@ -45,6 +45,7 @@ relative_link: false
 future: true
 syntax_highlighter: highlight.js
 highlight:
+  enable: true
   line_number: true
   auto_detect: false
   tab_replace: ''
@@ -97,6 +98,72 @@ ignore:
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
 theme: fluid
+
+# Markdown-it configuration
+markdown:
+  render:
+    html: true
+    xhtmlOut: false
+    breaks: false
+    linkify: true
+    typographer: false
+    quotes: '""'
+  plugins:
+    - markdown-it-abbr
+    - markdown-it-footnote
+    - markdown-it-ins
+    - markdown-it-sub
+    - markdown-it-sup
+  anchors:
+    level: 2
+    collisionSuffix: 'v'
+    permalink: false
+    permalinkClass: header-anchor
+    permalinkSymbol: ¶
+
+# Math rendering with markdown-it-plus
+markdown_it_plus:
+  highlight: true
+  html: true
+  xhtmlOut: true
+  breaks: false
+  langPrefix: ''
+  linkify: true
+  typographer: false
+  quotes: '""'
+  plugins:
+    - plugin:
+        name: '@iktakahiro/markdown-it-katex'
+        enable: true
+        options:
+          strict: false
+          throwOnError: false
+          errorColor: '#cc0000'
+          trust: true
+          macros:
+            "\\RR": "\\mathbb{R}"
+            "\\NN": "\\mathbb{N}"
+            "\\ZZ": "\\mathbb{Z}"
+            "\\QQ": "\\mathbb{Q}"
+            "\\CC": "\\mathbb{C}"
+          delimiters:
+            - left: '$$'
+              right: '$$'
+              display: true
+            - left: '$'
+              right: '$'
+              display: false
+            - left: '\\('
+              right: '\\)'
+              display: false
+            - left: '\\['
+              right: '\\]'
+              display: true
+    - plugin:
+        name: markdown-it-mark
+        enable: false
+
+# Math rendering is handled by markdown-it-plus with @iktakahiro/markdown-it-katex
 
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment

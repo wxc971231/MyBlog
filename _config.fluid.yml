@@ -66,3 +66,14 @@ about:
 
 # 自定义 CSS
 custom_css: /css/iconfont/iconfont.css
+
+# 数学公式渲染
+math:
+  # 开启数学公式渲染
+  enable: true
+  # 渲染引擎，可选 mathjax 或 katex
+  engine: katex
+  # 在指定页面开启，不填则在所有页面开启
+  specific: false
+  # 开启行内公式渲染
+  per_page: true

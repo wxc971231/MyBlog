@@ -89,7 +89,7 @@ class CSDNConverter:
                 f.write(response.content)
             
             # 返回相对路径
-            relative_path = f"MyBlog/img/{article_name}/{local_filename}"
+            relative_path = f"/MyBlog/img/{article_name}/{local_filename}"
             print(f"下载图片成功: {img_url} -> {relative_path}")
             return relative_path
             
@@ -122,80 +122,118 @@ class CSDNConverter:
         processed_content = re.sub(img_pattern, replace_img, markdown_content)
         return processed_content
     
+    def process_math_formulas(self, markdown_content):
+        """处理数学公式，确保所有双$$符号都单独占一行，并保持缩进对齐"""
+        lines = markdown_content.split('\n')
+        processed_lines = []
+        in_math_block = False
+        math_block_indent = ''
+        
+        for line in lines:
+            # 检查是否包含$$
+            if '$$' in line:
+                # 计算$$出现的次数
+                dollar_count = line.count('$$')
+                
+                if not in_math_block:
+                    # 不在数学块中，这是开始
+                    # 提取$$前的缩进
+                    match = re.match(r'(\s*).*?\$\$', line)
+                    if match:
+                        math_block_indent = match.group(1)
+                    
+                    if dollar_count == 1:
+                        # 只有一个$$，这是多行数学公式的开始
+                        if line.strip() == '$$':
+                            # 整行只有$$
+                            processed_lines.append(line)
+                        else:
+                            # $$后面还有内容，需要分行
+                            before_dollars = line[:line.find('$$')].strip()
+                            after_dollars = line[line.find('$$') + 2:].strip()
+                            
+                            if before_dollars:
+                                processed_lines.append(math_block_indent + before_dollars)
+                            processed_lines.append(math_block_indent + '$$')
+                            if after_dollars:
+                                processed_lines.append(math_block_indent + after_dollars)
+                        in_math_block = True
+                    
+                    elif dollar_count == 2:
+                        # 两个$$，这是单行数学公式
+                        # 提取公式内容
+                        start_pos = line.find('$$')
+                        end_pos = line.find('$$', start_pos + 2)
+                        
+                        before_formula = line[:start_pos].strip()
+                        formula_content = line[start_pos + 2:end_pos].strip()
+                        after_formula = line[end_pos + 2:].strip()
+                        
+                        if before_formula:
+                            processed_lines.append(math_block_indent + before_formula)
+                        processed_lines.append(math_block_indent + '$$')
+                        if formula_content:
+                            processed_lines.append(math_block_indent + formula_content)
+                        processed_lines.append(math_block_indent + '$$')
+                        if after_formula:
+                            processed_lines.append(math_block_indent + after_formula)
+                
+                else:
+                    # 在数学块中，这是结束
+                    if line.strip() == '$$':
+                        # 整行只有$$
+                        processed_lines.append(math_block_indent + '$$')
+                    else:
+                        # $$前面还有内容，需要分行
+                        before_dollars = line[:line.find('$$')].strip()
+                        after_dollars = line[line.find('$$') + 2:].strip()
+                        
+                        if before_dollars:
+                            processed_lines.append(math_block_indent + before_dollars)
+                        processed_lines.append(math_block_indent + '$$')
+                        if after_dollars:
+                            processed_lines.append(math_block_indent + after_dollars)
+                    
+                    in_math_block = False
+                    math_block_indent = ''
+            
+            else:
+                # 不包含$$的行
+                if in_math_block:
+                    # 在数学块中，确保内容与开始$$对齐
+                    content = line.strip()
+                    if content:
+                        processed_lines.append(math_block_indent + content)
+                    else:
+                        processed_lines.append('')  # 保持空行
+                else:
+                    # 普通行，保持原样
+                    processed_lines.append(line)
+        
+        return '\n'.join(processed_lines)
+    
     def extract_metadata_from_url(self, article_url):
-        """从CSDN文章URL提取tags和categories"""
-        try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            
-            response = requests.get(article_url, headers=headers, timeout=30)
-            response.raise_for_status()
-            
-            soup = BeautifulSoup(response.content, 'html.parser')
-            
-            # 提取tags (带#前缀)
-            tags = []
-            tag_elements = soup.find_all('a', class_='tag-link')
-            for tag_elem in tag_elements:
-                tag_text = tag_elem.get_text().strip()
-                if tag_text.startswith('#'):
-                    tags.append(tag_text[1:])  # 去掉#前缀
-            
-            # 如果没找到tag-link类，尝试其他可能的选择器
-            if not tags:
-                # 尝试查找包含#的链接
-                all_links = soup.find_all('a')
-                for link in all_links:
-                    text = link.get_text().strip()
-                    if text.startswith('#') and len(text) > 1:
-                        tags.append(text[1:])
-            
-            # 提取categories (包含"篇文章"字样)
-            categories = []
-            category_elements = soup.find_all('a')
-            for cat_elem in category_elements:
-                cat_text = cat_elem.get_text().strip()
-                if '篇文章' in cat_text:
-                    # 提取"xx 篇文章"前面的部分
-                    category = re.sub(r'\s*\d+\s*篇文章.*', '', cat_text).strip()
-                    if category:
-                        categories.append(category)
-            
-            # 去重
-            tags = list(set(tags))
-            categories = list(set(categories))
-            
-            print(f"提取到的tags: {tags}")
-            print(f"提取到的categories: {categories}")
-            
-            return tags, categories
-            
-        except Exception as e:
-            print(f"提取元数据失败: {e}")
-            return [], []
+        """从CSDN文章URL提取tags和categories（已禁用，返回空列表）"""
+        # 不再自动提取，返回空列表让用户手动填写
+        print("已禁用自动提取tags和categories，请手动填写")
+        return [], []
     
     def generate_front_matter(self, title, tags, categories):
         """生成Hexo Front Matter"""
-        now = datetime.now()
-        date_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        # 生成当前时间
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
+        # 构建Front Matter，留空tags、categories、description供用户手动填写
         front_matter = f"""---
 title: {title}
-date: {date_str}
-"""
+date: {current_time}
+tags:
+  - 
+categories:
+  - 
+description: 
+---\n\n"""
         
-        if tags:
-            front_matter += "tags:\n"
-            for tag in tags:
-                front_matter += f"  - {tag}\n"
-        
-        if categories:
-            front_matter += "categories:\n"
-            for category in categories:
-                front_matter += f"  - {category}\n"
-        
-        front_matter += "---\n\n"
         return front_matter
     
     def convert_article(self, markdown_file_path, article_url):
@@ -226,6 +264,10 @@ date: {date_str}
         print("开始处理图片...")
         processed_content = self.process_images(markdown_content, article_name)
         
+        # 处理数学公式
+        print("开始处理数学公式...")
+        processed_content = self.process_math_formulas(processed_content)
+        
         # 生成Front Matter
         front_matter = self.generate_front_matter(title, tags, categories)
         
@@ -245,8 +287,8 @@ date: {date_str}
 def main():
     """主函数"""
     # 配置
-    markdown_file = "d:\\Programmer\\Hexo\\_convert\\raw\\实践\\经典机器学习方法(1)——线性回归.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/122869916"
+    markdown_file = "d:\\Programmer\\Hexo\\_convert\\raw\\实践\\经典机器学习方法(2)——Softmax 回归.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/124629256"
     
     # 创建转换器
     converter = CSDNConverter()

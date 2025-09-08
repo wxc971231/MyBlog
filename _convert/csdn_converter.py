@@ -129,7 +129,11 @@ class CSDNConverter:
                     indent_level = 0
                 else:
                     # 对于非列表项的普通内容，如果当前缩进不足，需要调整
-                    if current_level < indent_level and not stripped_line.startswith(('<', '>', '```')):
+                    # 但要排除列表项，避免错误处理有序列表和无序列表
+                    if (current_level < indent_level and 
+                        not stripped_line.startswith(('<', '>', '```')) and
+                        not stripped_line.startswith(('-', '*', '+')) and
+                        not re.match(r'^\d+\.\s', stripped_line)):
                         # 调整缩进到正确级别
                         base_indent = '    ' * indent_level
                         lines[i] = base_indent + stripped_line
@@ -158,8 +162,23 @@ class CSDNConverter:
                     if not alt_text:
                         alt_text = "图片"
                     
+                    # 检查图片前面是否有代码块结束标记，如果有则使用代码块的缩进
+                    img_indent_level = indent_level
+                    if i > 0:
+                        # 向前查找最近的代码块结束标记
+                        for j in range(i-1, max(0, i-5), -1):
+                            prev_line = lines[j].strip()
+                            if prev_line == '```':
+                                # 找到代码块结束，获取其缩进
+                                code_block_indent = re.match(r'(\s*)', lines[j]).group(1)
+                                img_indent_level = len(code_block_indent.replace('\t', '    ')) // 4
+                                break
+                            elif prev_line and not prev_line.startswith('#'):
+                                # 遇到其他非空内容，停止查找
+                                break
+                    
                     # 根据缩进级别生成缩进字符串
-                    base_indent = '    ' * indent_level
+                    base_indent = '    ' * img_indent_level
                     div_content = f'{base_indent}<div align="center">\n{base_indent}    <img src="{local_path}" alt="{alt_text}" style="width: {width_percent}%;">\n{base_indent}</div>\n'  # </div> 后要加空格，避免内联公式问题
                     lines[i] = div_content
                     
@@ -190,7 +209,10 @@ class CSDNConverter:
                             current_line_level = current_indent // 4
                             
                             # 如果缩进级别不足，调整到正确的级别
-                            if current_line_level < indent_level:
+                            # 但要排除列表项，避免错误处理有序列表和无序列表
+                            if (current_line_level < indent_level and
+                                not next_line.strip().startswith(('-', '*', '+')) and
+                                not re.match(r'^\d+\.\s', next_line.strip())):
                                 content = next_line.strip()
                                 lines[k] = base_indent + content
                         else:
@@ -235,49 +257,67 @@ class CSDNConverter:
                                 processed_lines.append(math_block_indent + after_dollars)
                         in_math_block = True
                     
-                    elif dollar_count == 2:
-                        # 两个$$，这是单行数学公式
-                        # 检查是否是内联在文本中的公式
-                        start_pos = line.find('$$')
-                        end_pos = line.find('$$', start_pos + 2)
+                    elif dollar_count >= 2:
+                        # 两个或更多$$，需要逐个处理
+                        current_line = line
+                        line_indent = re.match(r'(\s*)', line).group(1).replace('\t', '    ')
                         
-                        before_formula = line[:start_pos]
-                        formula_content = line[start_pos + 2:end_pos].strip()
-                        after_formula = line[end_pos + 2:]
+                        # 记录是否是列表项，用于后续缩进处理
+                        is_list_item = (line.strip().startswith(('-', '*', '+')) or 
+                                       re.match(r'^\s*\d+\.\s', line))
                         
-                        # 如果公式前后都有文本内容，说明是内联公式，需要特殊处理
-                        if before_formula.strip() and after_formula.strip():
-                            # 内联公式：保持原行的缩进，但将公式单独成行
-                            line_indent = re.match(r'(\s*)', line).group(1).replace('\t', '    ')
+                        # 逐个处理$$对
+                        while current_line.count('$$') >= 2:
+                            start_pos = current_line.find('$$')
+                            end_pos = current_line.find('$$', start_pos + 2)
                             
-                            # 对于列表项，数学公式需要额外的缩进来与列表内容对齐
-                            if before_formula.strip().startswith('-'):
+                            if end_pos == -1:
+                                break
+                            
+                            # 处理一对$$
+                            before_formula = current_line[:start_pos]
+                            formula_content = current_line[start_pos + 2:end_pos].strip()
+                            remaining_text = current_line[end_pos + 2:]
+                            
+                            # 添加公式前的文本
+                            if before_formula.strip():
+                                processed_lines.append(line_indent + before_formula.strip())
+                            
+                            # 添加数学公式
+                            if is_list_item:
                                 formula_indent = line_indent + '    '  # 列表项内容缩进
                             else:
                                 formula_indent = line_indent
                             
-                            processed_lines.append(line_indent + before_formula.strip())
                             processed_lines.append(formula_indent + '$$')
                             if formula_content:
                                 processed_lines.append(formula_indent + formula_content)
                             processed_lines.append(formula_indent + '$$')
-                            # 后续文本也需要保持与列表项内容相同的缩进
-                            if before_formula.strip().startswith('-'):
-                                processed_lines.append(formula_indent + after_formula.strip())
-                            else:
-                                processed_lines.append(line_indent + after_formula.strip())
-                        else:
-                            # 独立公式：直接从原始行提取缩进
-                            line_indent = re.match(r'(\s*)', line).group(1).replace('\t', '    ')
                             
-                            if before_formula.strip():
-                                processed_lines.append(line_indent + before_formula.strip())
-                            processed_lines.append(line_indent + '$$')
-                            if formula_content:
-                                processed_lines.append(line_indent + formula_content)
-                            processed_lines.append(line_indent + '$$')
-                            if after_formula.strip():
-                                processed_lines.append(line_indent + after_formula.strip())
+                            # 继续处理剩余部分
+                            current_line = remaining_text
+                            if is_list_item:
+                                line_indent = formula_indent  # 后续内容保持列表项缩进
+                        
+                        # 处理最后剩余的文本
+                        if current_line.strip():
+                            if current_line.count('$$') == 1:
+                                # 剩余一个$$，开始数学块
+                                in_math_block = True
+                                math_block_indent = line_indent
+                                
+                                start_pos = current_line.find('$$')
+                                before_dollars = current_line[:start_pos].strip()
+                                after_dollars = current_line[start_pos + 2:].strip()
+                                
+                                if before_dollars:
+                                    processed_lines.append(line_indent + before_dollars)
+                                processed_lines.append(line_indent + '$$')
+                                if after_dollars:
+                                    processed_lines.append(line_indent + after_dollars)
+                            else:
+                                # 没有$$或处理完毕，添加剩余文本
+                                processed_lines.append(line_indent + current_line.strip())
                 
                 else:
                     # 在数学块中，这是结束
@@ -314,11 +354,47 @@ class CSDNConverter:
         return '\n'.join(processed_lines)
     
     def process_markdown_formatting(self, markdown_content):
-        """处理引用块和加粗文本格式问题"""
+        """处理引用块和加粗文本格式问题，以及代码块后图片的缩进问题"""
         lines = markdown_content.split('\n')
         processed_lines = []
+        in_code_block = False
+        code_block_indent = ''
         
-        for line in lines:
+        for i, line in enumerate(lines):
+            # 检测代码块的开始和结束
+            if line.strip().startswith('```'):
+                if not in_code_block:
+                    # 代码块开始，记录缩进
+                    in_code_block = True
+                    code_block_indent = re.match(r'(\s*)', line).group(1)
+                else:
+                    # 代码块结束
+                    in_code_block = False
+                processed_lines.append(line)
+                continue
+            
+            # 如果刚结束代码块，检查下一行是否是图片div
+            if (not in_code_block and 
+                i > 0 and 
+                lines[i-1].strip() == '```' and 
+                line.strip().startswith('<div align="center">')):
+                # 为代码块后的图片div添加相同的缩进
+                processed_lines.append(code_block_indent + line.strip())
+                continue
+            
+            # 如果是图片div内的img标签或结束标签，也要保持相同缩进
+            if (not in_code_block and 
+                code_block_indent and 
+                (line.strip().startswith('<img ') or line.strip() == '</div>') and 
+                i > 0 and 
+                any(processed_lines[j].strip().startswith('<div align="center">') 
+                    for j in range(max(0, len(processed_lines)-3), len(processed_lines)))):
+                processed_lines.append(code_block_indent + line.strip())
+                # 如果是结束标签，清除缩进记录
+                if line.strip() == '</div>':
+                    code_block_indent = ''
+                continue
+            
             # 处理引用块缩进问题
             if line.strip().startswith('>'):
                 # 确保引用块前有正确的缩进
@@ -434,8 +510,8 @@ description:
 
 def main():
     # 配置
-    markdown_file = r"d:\Programmer\Hexo\_convert\raw\实践\经典机器学习方法(3)——多层感知机.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/126397515"
+    markdown_file = r"d:\Programmer\Hexo\_convert\raw\论文理解\论文理解 【LLM-RL】——【EndoRM】Generalist Reward Models-Found Inside Large Language Models.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/151181272"
     
     # 创建转换器
     converter = CSDNConverter()

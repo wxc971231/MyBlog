@@ -98,39 +98,105 @@ class CSDNConverter:
             return img_url  # 返回原URL
     
     def process_images(self, markdown_content, article_name):
-        """处理markdown中的图片"""
-        # 匹配图片链接的正则表达式，包括可能的缩放参数
-        img_pattern = r'!\[([^\]]*)\]\(([^\)]+)\)'
-        
+        """处理markdown中的图片和内容缩进"""
+        lines = markdown_content.split('\n')
         img_index = 1
-        def replace_img(match):
-            nonlocal img_index
-            alt_text = match.group(1)
-            img_url = match.group(2)
-            
-            # 只处理网络图片
-            if img_url.startswith('http'):
-                # 提取缩放比例
-                scale_match = re.search(r'#pic_center\s*=\s*(\d+)%x', img_url)
-                if scale_match:
-                    width_percent = int(scale_match.group(1))
-                else:
-                    width_percent = 100  # 默认值
-                
-                # 去掉URL中的参数和锚点
-                clean_url = img_url.split('#')[0].split('?')[0]
-                local_path = self.download_image(clean_url, article_name, img_index)
-                img_index += 1
-                # 使用HTML格式，居中对齐，根据原始缩放比例调整样式
-                if not alt_text:
-                    alt_text = "图片"
-                return f'<div align="center">\n        <img src="{local_path}" alt="{alt_text}" style="width: {width_percent}%;">\n    </div>\n'
-            else:
-                return match.group(0)  # 保持原样
+        indent_level = 0  # 当前缩进级别计数器
         
-        # 替换所有图片链接
-        processed_content = re.sub(img_pattern, replace_img, markdown_content)
-        return processed_content
+        for i, line in enumerate(lines):
+            # 更新缩进级别计数器
+            if line.strip():
+                # 计算当前行的缩进级别（每4个空格或1个tab为一级）
+                current_indent = 0
+                for char in line:
+                    if char == ' ':
+                        current_indent += 1
+                    elif char == '\t':
+                        current_indent += 4
+                    else:
+                        break
+                current_level = current_indent // 4
+                
+                # 如果是列表项，更新缩进级别
+                stripped_line = line.strip()
+                if (stripped_line.startswith(('-', '*', '+')) or 
+                    re.match(r'^\d+\.\s', stripped_line)):  # 处理有序列表和无序列表
+                    # 列表项内容的缩进级别应该是当前列表项缩进级别 + 1
+                    indent_level = current_level + 1
+                elif line.strip().startswith('#'):  # 标题重置缩进级别
+                    indent_level = 0
+                elif current_level == 0:  # 顶级内容重置缩进级别
+                    indent_level = 0
+                else:
+                    # 对于非列表项的普通内容，如果当前缩进不足，需要调整
+                    if current_level < indent_level and not stripped_line.startswith(('<', '>', '```')):
+                        # 调整缩进到正确级别
+                        base_indent = '    ' * indent_level
+                        lines[i] = base_indent + stripped_line
+            
+            # 匹配图片链接的正则表达式，包括可能的缩放参数
+            img_match = re.search(r'!\[([^\]]*)\]\(([^\)]+)\)', line)
+            if img_match:
+                alt_text = img_match.group(1)
+                img_url = img_match.group(2)
+                
+                # 只处理网络图片
+                if img_url.startswith('http'):
+                    # 提取缩放比例
+                    scale_match = re.search(r'#pic_center\s*=\s*(\d+)%x', img_url)
+                    if scale_match:
+                        width_percent = int(scale_match.group(1))
+                    else:
+                        width_percent = 100  # 默认值
+                    
+                    # 去掉URL中的参数和锚点
+                    clean_url = img_url.split('#')[0].split('?')[0]
+                    local_path = self.download_image(clean_url, article_name, img_index)
+                    img_index += 1
+                    
+                    # 使用HTML格式，居中对齐，根据缩进级别应用正确的缩进
+                    if not alt_text:
+                        alt_text = "图片"
+                    
+                    # 根据缩进级别生成缩进字符串
+                    base_indent = '    ' * indent_level
+                    div_content = f'{base_indent}<div align="center">\n{base_indent}    <img src="{local_path}" alt="{alt_text}" style="width: {width_percent}%;">\n{base_indent}</div>\n'  # </div> 后要加空格，避免内联公式问题
+                    lines[i] = div_content
+                    
+                    # 处理图片后续的文本行，确保它们有正确的缩进
+                    for k in range(i+1, len(lines)):
+                        next_line = lines[k]
+                        if not next_line.strip():  # 跳过空行
+                            continue
+                        # 如果是新的列表项、标题或顶级内容，停止处理
+                        stripped_next = next_line.strip()
+                        if (stripped_next.startswith(('-', '*', '+', '#')) or
+                            re.match(r'^\d+\.\s', stripped_next) or  # 处理有序列表
+                            not next_line.startswith(' ') and not next_line.startswith('\t')):
+                            break
+                        # 如果行有内容但缩进不足，调整缩进
+                        if (next_line.strip() and 
+                            not next_line.strip().startswith('<') and  # 跳过HTML标签
+                            not next_line.strip().startswith('>')): # 跳过引用块
+                            # 计算当前行的缩进级别
+                            current_indent = 0
+                            for char in next_line:
+                                if char == ' ':
+                                    current_indent += 1
+                                elif char == '\t':
+                                    current_indent += 4
+                                else:
+                                    break
+                            current_line_level = current_indent // 4
+                            
+                            # 如果缩进级别不足，调整到正确的级别
+                            if current_line_level < indent_level:
+                                content = next_line.strip()
+                                lines[k] = base_indent + content
+                        else:
+                            break
+        
+        return '\n'.join(lines)
     
     def process_math_formulas(self, markdown_content):
         """处理数学公式，确保所有双$$符号都单独占一行，并保持缩进对齐"""
@@ -171,22 +237,47 @@ class CSDNConverter:
                     
                     elif dollar_count == 2:
                         # 两个$$，这是单行数学公式
-                        # 提取公式内容
+                        # 检查是否是内联在文本中的公式
                         start_pos = line.find('$$')
                         end_pos = line.find('$$', start_pos + 2)
                         
-                        before_formula = line[:start_pos].strip()
+                        before_formula = line[:start_pos]
                         formula_content = line[start_pos + 2:end_pos].strip()
-                        after_formula = line[end_pos + 2:].strip()
+                        after_formula = line[end_pos + 2:]
                         
-                        if before_formula:
-                            processed_lines.append(math_block_indent + before_formula)
-                        processed_lines.append(math_block_indent + '$$')
-                        if formula_content:
-                            processed_lines.append(math_block_indent + formula_content)
-                        processed_lines.append(math_block_indent + '$$')
-                        if after_formula:
-                            processed_lines.append(math_block_indent + after_formula)
+                        # 如果公式前后都有文本内容，说明是内联公式，需要特殊处理
+                        if before_formula.strip() and after_formula.strip():
+                            # 内联公式：保持原行的缩进，但将公式单独成行
+                            line_indent = re.match(r'(\s*)', line).group(1).replace('\t', '    ')
+                            
+                            # 对于列表项，数学公式需要额外的缩进来与列表内容对齐
+                            if before_formula.strip().startswith('-'):
+                                formula_indent = line_indent + '    '  # 列表项内容缩进
+                            else:
+                                formula_indent = line_indent
+                            
+                            processed_lines.append(line_indent + before_formula.strip())
+                            processed_lines.append(formula_indent + '$$')
+                            if formula_content:
+                                processed_lines.append(formula_indent + formula_content)
+                            processed_lines.append(formula_indent + '$$')
+                            # 后续文本也需要保持与列表项内容相同的缩进
+                            if before_formula.strip().startswith('-'):
+                                processed_lines.append(formula_indent + after_formula.strip())
+                            else:
+                                processed_lines.append(line_indent + after_formula.strip())
+                        else:
+                            # 独立公式：直接从原始行提取缩进
+                            line_indent = re.match(r'(\s*)', line).group(1).replace('\t', '    ')
+                            
+                            if before_formula.strip():
+                                processed_lines.append(line_indent + before_formula.strip())
+                            processed_lines.append(line_indent + '$$')
+                            if formula_content:
+                                processed_lines.append(line_indent + formula_content)
+                            processed_lines.append(line_indent + '$$')
+                            if after_formula.strip():
+                                processed_lines.append(line_indent + after_formula.strip())
                 
                 else:
                     # 在数学块中，这是结束
@@ -219,6 +310,46 @@ class CSDNConverter:
                 else:
                     # 普通行，将TAB替换为4个空格
                     processed_lines.append(line.replace('\t', '    '))
+        
+        return '\n'.join(processed_lines)
+    
+    def process_markdown_formatting(self, markdown_content):
+        """处理引用块和加粗文本格式问题"""
+        lines = markdown_content.split('\n')
+        processed_lines = []
+        
+        for line in lines:
+            # 处理引用块缩进问题
+            if line.strip().startswith('>'):
+                # 确保引用块前有正确的缩进
+                line_indent = ''
+                for char in line:
+                    if char in [' ', '\t']:
+                        line_indent += '    ' if char == '\t' else char
+                    else:
+                        break
+                
+                # 提取引用内容
+                quote_content = line.strip()[1:].strip()  # 去掉 > 符号
+                processed_lines.append(f'{line_indent}> {quote_content}')
+            
+            # 处理加粗文本内的数学公式
+            elif '**' in line and '$' in line:
+                # 查找加粗文本内的数学公式
+                # 匹配 **文本 $公式$ 文本** 的模式
+                bold_math_pattern = r'\*\*([^*]*?)\$([^$]+?)\$([^*]*?)\*\*'
+                
+                def replace_bold_math(match):
+                    before_math = match.group(1).strip()
+                    math_content = match.group(2)
+                    after_math = match.group(3).strip()
+                    # 将加粗文本内的数学公式分离出来
+                    return f'**{before_math}**${math_content}$**{after_math}**'
+                
+                processed_line = re.sub(bold_math_pattern, replace_bold_math, line)
+                processed_lines.append(processed_line)
+            else:
+                processed_lines.append(line)
         
         return '\n'.join(processed_lines)
     
@@ -278,11 +409,18 @@ description:
         print("开始处理数学公式...")
         processed_content = self.process_math_formulas(processed_content)
         
+        # 处理引用块和加粗文本格式
+        print("开始处理引用块和加粗文本格式...")
+        processed_content = self.process_markdown_formatting(processed_content)
+        
         # 生成Front Matter
         front_matter = self.generate_front_matter(title, tags, categories)
         
+        # 添加首发链接
+        first_publish_link = f"- 首发链接：[{title}]({article_url})\n"
+        
         # 组合最终内容
-        final_content = front_matter + processed_content
+        final_content = front_matter + first_publish_link + processed_content
         
         # 保存到_posts目录
         output_filename = f"{article_name}.md"
@@ -296,8 +434,8 @@ description:
 
 def main():
     # 配置
-    markdown_file = r"d:\Programmer\Hexo\_convert\raw\实践\经典机器学习方法(4)——感知机.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/126512982"
+    markdown_file = r"d:\Programmer\Hexo\_convert\raw\实践\经典机器学习方法(3)——多层感知机.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/126397515"
     
     # 创建转换器
     converter = CSDNConverter()

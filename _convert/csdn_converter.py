@@ -510,8 +510,8 @@ description:
 
 def main():
     # 配置
-    markdown_file = r"d:\Programmer\Hexo\_convert\raw\论文理解\论文理解 【LLM-RL】——【EndoRM】Generalist Reward Models-Found Inside Large Language Models.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/151181272"
+    markdown_file = r"d:\Programmer\Hexo\_convert\raw\论文理解\论文理解【CV】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/148057310"
     
     # 创建转换器
     converter = CSDNConverter()

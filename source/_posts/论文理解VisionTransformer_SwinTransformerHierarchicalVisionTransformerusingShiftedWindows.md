@@ -1,18 +1,18 @@
 ---
-title: 论文理解【CV】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows
+title: 论文理解【Vision Transformer】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows
 date: 2025-09-10 16:21:43
-index_img: img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_001.png
+index_img: img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_001.png
 tags:
   - Transformer-Based
   - Vision Transformer
   - CV
 categories:
   - 论文理解
-description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络。该模型借鉴 CNN 中的卷积和池化操作，设计了分层金字塔结构、滑动窗口机制和 Patch Merging 操作，通过将图像划分为可重叠的局部窗口，令注意力计算约束在窗口内部，使计算复杂度与图像大小呈线性关系，在保持 Transformer 强大建模能力的同时引入视觉归纳偏置，是首个在通用视觉任务上全面超越 CNN 的 Transformer 架构
+description: Swin Transformer 是首个在通用视觉任务上全面超越 CNN 的 Transformer-Based 通用 CV 骨干网络。该模型借鉴 CNN 中的卷积和池化操作，将注意力计算约束在可重叠的图像patch内部，使计算复杂度与图像大小呈线性关系
 ---
 
 - 首发链接：[论文理解【CV】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows](https://blog.csdn.net/wxc971231/article/details/148057310)
-- 文章链接：[Swin transformer: Hierarchical vision transformer using shifted windows](https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICCV_2021_paper)
+- 文章链接：[Swin transformer: Hierarchical vision transformer using shifted windows](https://openaccess.thecvf.com/content/ICCV2021/html/Liu_Swin_Transformer_Hierarchical_Vision_Transformer_Using_Shifted_Windows_ICVisionTransformer_2021_paper)
 - 代码：[microsoft/Swin-Transformer](https://github.com/microsoft/Swin-Transformer)
 - 发表：ICCV 2021
 - 领域：Transformer-based CV
@@ -34,7 +34,7 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
 ## 1.1 分层特征映射
 - 分层特征映射是 Swin Transformer 的最主要设计，其**借鉴了 CNNs 的池化操作**，是允许模型进行**多尺度特征提取**和实现**计算复杂度随输入尺寸线性增长**的核心
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_001.png" alt="在这里插入图片描述" style="width: 60%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_001.png" alt="在这里插入图片描述" style="width: 60%;">
     </div>
 
     其中 **self-attention 永远在红框**中计算，所有红框 patch数量（Transformer计算量）相同，如图所示
@@ -45,7 +45,7 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
     > 注：降低通道数是为使处理后通道数翻倍而非翻四倍，从而和 CNNs 中的池化操作特点保持一致
     
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_002.png" alt="在这里插入图片描述" style="width: 75%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_002.png" alt="在这里插入图片描述" style="width: 75%;">
     </div>
 
 ## 1.2 基于移位窗口的自注意力
@@ -61,7 +61,7 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
     > - 以上计算复杂度只考虑浮点数乘法次数，MSA 输入等价于长度 hw 的 C 维 embedding 序列，计算方式参考 [序列模型（3）—— LLM的参数量和计算量](https://blog.csdn.net/wxc971231/article/details/135434478) 第 2.2 节；W-MSA 相当于计算 $\frac{h}{M}x\frac{w}{M}$ 次长度 $M$ 的 $C$ 维度 embedding 序列
 - 窗口自注意 W-MSA 虽然有效降低了计算复杂度，但使得窗口间无法交换信息，为此，作者进一步提出了**移位窗口机制**，通过**向右下移动窗口后再计算一次 W-MAS 实现上下文信息聚合（称为 SW-MAS）**，如下图所示
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_003.png" alt="在这里插入图片描述" style="width: 80%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_003.png" alt="在这里插入图片描述" style="width: 80%;">
     </div>
 
     -  **W-MSA 和 SW-MSA 是绑定的，必须在连续的两层中执行，组成一个基本计算单元**，因此 Swin Transformer 的总 Transformer Block 层数一定是偶数。连续两层计算过程的数学表达为
@@ -75,12 +75,12 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
         $$
     - SW-MSA 中自注意力还是在红框中计算，一共有 9 个区域要计算。为了提升计算效率，作者在此设计了一个巧妙的移位+掩码计算方法，使得两次自注意力计算的 patch 数和 patch 尺寸都一致。基本思路如下图所示：
         <div align="center">
-            <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_004.png" alt="在这里插入图片描述" style="width: 80%;">
+            <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_004.png" alt="在这里插入图片描述" style="width: 80%;">
         </div>
 
         首先通过 cyclic shift 将 A,B,C 块移动下去，使其和原先一样切分成 4 个区域。然后注意到右上、右下、左下三块中移过来的部分和原先的部分不是相邻图像，因此不应该交互信息，故需通过设置 mask 控制注意力计算的范围，实际还是在以下 9 个区域内部计算自注意力
         <div align="center">
-            <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_005.png" alt="在这里插入图片描述" style="width: 20%;">
+            <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_005.png" alt="在这里插入图片描述" style="width: 20%;">
         </div>
 
 ## 1.3 相对位置编码
@@ -89,17 +89,17 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
     \text { Attention }(Q, K, V)=\operatorname{SoftMax}\left(Q K^{T} / \sqrt{d}+B\right) V
     $$
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_006.png" alt="在这里插入图片描述" style="width: 80%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_006.png" alt="在这里插入图片描述" style="width: 80%;">
     </div>
 
     注意到相对位置编码总是以自己为（0, 0）计算其他 patch 的相对位置，分别把4个相对位置拉平即得到4x4的矩阵。接下来要做的事就是**把每个框中的**$(x_{r},y_r)$**转换为一维数字 $k_{xy}$，并且保证相同的 $(x_{r},y_r)$ 对应的 $k_{xy}$ 一致，从而可以用一个可学习的参数表示它们**。具体地，作者通过以下三个操作实现
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_007.png" alt="在这里插入图片描述" style="width: 80%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_007.png" alt="在这里插入图片描述" style="width: 80%;">
     </div>
 
     这里需要注意，$B\in \mathbb{R}^{M^2\times M^2}$ 代表任意两个 patch 间的相对位置关系，但实际上 patch 在每个轴上的相对位置关系都在区间 $[-M+1, M-1]$ 内，区间长度 $2M-1$，$k_{xy}$ 最多有 $(2M-1)^2$ 个取值，**故只需要使用一个可学习的 `nn.Parameter(torch.zeros((2 * window_size[0] - 1) * (2 * window_size[1] - 1), num_heads))` 学习较小的 $\hat{B}\in \mathbb{R}^{(2M-1)\times (2M-1)}$，即可从中恢复 $B$**，如下所示
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_008.png" alt="在这里插入图片描述" style="width: 80%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_008.png" alt="在这里插入图片描述" style="width: 80%;">
     </div>
 
 
@@ -110,7 +110,7 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
 
 - Swin Transformer 结构图如下
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_009.png" alt="在这里插入图片描述" style="width: 100%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_009.png" alt="在这里插入图片描述" style="width: 100%;">
     </div>
 
     1. 输入图像尺寸 $H\times W\times 3$
@@ -124,7 +124,7 @@ description: Swin Transformer 是一种 Transformer-Based 通用 CV 骨干网络
 # 2. 实验
 - 在ImageNet22K数据集上，准确率能达到惊人的86.4%。另外在检测，分割等任务上表现也很优异，感兴趣的可以翻看论文最后的实验部分
     <div align="center">
-        <img src="/MyBlog/img/论文理解CV_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_010.png" alt="在这里插入图片描述" style="width: 80%;">
+        <img src="/MyBlog/img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/img_010.png" alt="在这里插入图片描述" style="width: 80%;">
     </div>
 
 

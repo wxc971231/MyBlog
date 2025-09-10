@@ -42,7 +42,7 @@ description: 本文发现任何通过标准next token prediction训练的LLM内�
     值得注意的是，**这可以被看作是一种行为克隆方法（BC），属于模仿学习**
 ## 1.3 基于人类反馈的强化学习（RLHF）
 - Next Token Prediction 是有效的模仿学习方案，但使 LLM 的行为对齐人类价值观需要更直接的反馈形式。人类反馈强化学习（RLHF）是这个任务的标准范式，其可分为两个步骤
-    1. **训练奖励模型**$R_\phi$****：奖励模型 RM 的训练目标是**给予人类偏好回答更高的标量分数**。给定偏好数据集 $\mathcal{D}_{\text{pref}}=\{(x, y_w, y_l)_i\}$，其中 $x$ 表示给定的提示（问题），$y_w, y_l$ 分别表示人类标记者偏好和不偏好的回答。遵循 Bradley-Terry 模型，$y_w$ 比 $y_l$ 更被偏好的概率被建模为
+    1. **训练奖励模型**$R_\phi$：奖励模型 RM 的训练目标是**给予人类偏好回答更高的标量分数**。给定偏好数据集 $\mathcal{D}_{\text{pref}}=\{(x, y_w, y_l)_i\}$，其中 $x$ 表示给定的提示（问题），$y_w, y_l$ 分别表示人类标记者偏好和不偏好的回答。遵循 Bradley-Terry 模型，$y_w$ 比 $y_l$ 更被偏好的概率被建模为
         $$
         \begin{aligned}
         P\left(y_{w} \succ y_{l} \mid x\right)
@@ -189,7 +189,7 @@ description: 本文发现任何通过标准next token prediction训练的LLM内�
     1. 与启发式基线和明确训练的 SOTA 奖励模型相比，免训练内生奖励模型（EndoRM）在基准测试上的表现如何？
     2. EndoRM 是否具有强大的指令遵循能力，作为一个可以提示的通用奖励模型？
     3. 使用 EndoRM 进行 RL 能否产生更好的策略，实现自我改进？
-## 4.1 对上的奖励准确性（Q1）
+## 4.1 多样任务轨迹对的奖励准确性（Q1）
 - 在 RM-Bench 上评估奖励模型面对多样化任务响应二元组时预测偏好准确率（计算每个响应的 token 奖励总和，分数更高的被视为“chosen”）
     <div align="center">
         <img src="/MyBlog/img/论文理解LLM_RL_EndoRMGeneralistRewardModels_FoundInsideLargeLanguageModels/img_001.png" alt="在这里插入图片描述" style="width: 90%;">
@@ -200,7 +200,7 @@ description: 本文发现任何通过标准next token prediction训练的LLM内�
         <img src="/MyBlog/img/论文理解LLM_RL_EndoRMGeneralistRewardModels_FoundInsideLargeLanguageModels/img_002.png" alt="在这里插入图片描述" style="width: 90%;">
     </div>
 
-## 4.2 指令遵循能力（Q2）
+## 4.2 奖励的指令遵循能力（Q2）
 - 使用 Multifaceted-Bench（涵盖多样化用户偏好）和领域特定偏好数据集 DSP（包含不同专业领域的偏好）测试内生奖励是否能根据提示进行 “定制”
 - 将四个领域的系统提示作为输入，得到四个领域专属的 EndoRM，测试它们在四个领域测试集上的表现。
     <div align="center">

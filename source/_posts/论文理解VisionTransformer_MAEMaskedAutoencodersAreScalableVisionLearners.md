@@ -1,7 +1,7 @@
 ---
 title: 论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners
 date: 2025-09-10 17:41:42
-index_img: img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_002.png
+index_img: img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/index.png
 tags:
   - Transformer-Based
   - Vision Transformer

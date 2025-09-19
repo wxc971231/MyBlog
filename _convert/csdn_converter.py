@@ -510,8 +510,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\论文理解\论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/151573325"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\论文理解\论文理解【CV-对比学习】——【BYOL】Bootstrap Your Own Latent-A New Approach to Self-Supervised Learning.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/151836058"
     
     # 创建转换器
     converter = CSDNConverter()

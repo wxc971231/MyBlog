@@ -5,6 +5,7 @@ index_img: img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVis
 tags:
   - Transformer-Based
   - Vision Transformer
+  - 自监督预训练
   - CV
 categories:
   - 论文理解
@@ -43,6 +44,10 @@ description: MAE 是一种 Transformer-Based CV backbone，其核心在于使用
     3. **`MAE Decoder`**：Decoder 的**输入是完整的 patch embedding 序列，其中所有 masked token 共享一个可学习 embedding 向量**。因此，需要按 masked patch 的原始拉平顺序 masked embedding 的多个副本插入到 Encoder 输出中组成完整序列，添加完整的位置编码后输入 Transformer Decoder 进行图像重建（预测对应 patch 的图像像素点值）
        > 注意此 Decoder 不同于常说的 Transformer Decoder，它还是用的**双向注意力，本质是 BERT 类的模型**
     4. **Reconstruction target**: MAE 通过预测每个 masked patch 的像素值来重建图像。Decoder 的最后一层是一个线性投影层，其输出尺寸和一个 patch 的像素数量相同，因此输出向量可以被 reshape 重建成 patch 图像。**损失设计为重建图像和原始图像的像素值 mse 误差，类似 BERT，仅在 masked patch 位置计算损失**。作者还研究了一个变体，其重建目标是每个 masked patch 的归一化像素值，实验表明这个重建目标提高了表示质量
+- 自监督预训练完成后，**下游任务的输入不再是被 mask 的 patch，而是完整图像的所有 patch**。保留预训练好的 Encoder 作为特征提取器，接任务头用于下游任务，如
+	1. **分类**：加一个 [CLS] token + MLP 分类头，类似 ViT
+	2. **检测 / 分割**：接 Detection/Segmentation 的 head，比如 Mask R-CNN、UperNet
+	3. **检索 / 对比**：用 Encoder 特征向量，配合对比学习或相似度计算
 - MAE pipeline 的一个简单实现如下
     1. 将原始图像切分为不重叠的 patch 图块
     2. 使用带有位置嵌入的线性层将每个 patch 转换为 token embedding，拉平得到标准顺序序列

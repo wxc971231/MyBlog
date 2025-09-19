@@ -5,6 +5,7 @@ index_img: img/论文理解VisionTransformer_SwinTransformerHierarchicalVisionTr
 tags:
   - Transformer-Based
   - Vision Transformer
+  - CV backbone
   - CV
 categories:
   - 论文理解

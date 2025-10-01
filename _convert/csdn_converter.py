@@ -510,8 +510,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\Transformers库\Transformers库（1）—— 基础介绍.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/140231114"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\Transformers库\Transformers库（2）—— Pipeline.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/140233173"
     
     # 创建转换器
     converter = CSDNConverter()

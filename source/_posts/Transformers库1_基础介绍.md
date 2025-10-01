@@ -1,7 +1,7 @@
 ---
 title: Transformers库（1）—— 基础介绍
 date: 2025-10-01 19:47:57
-index_img: img/Transformers库/Transformers.png
+index_img: img/Transformers库1_基础介绍/Transformers.png
 tags:
   - Transformers库
 categories:

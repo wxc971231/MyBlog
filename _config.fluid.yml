@@ -77,3 +77,16 @@ math:
   specific: false
   # 开启行内公式渲染
   per_page: true
+
+# 文章页配置
+post:
+  # 侧边栏展示文章目录
+  toc:
+    enable: true
+    # 置于板块的左侧或右侧
+    placement: right
+    # 目录会选择这些节点作为标题
+    headingSelector: "h1,h2,h3,h4,h5,h6"
+    # 层级的折叠深度，0 是全部折叠，大于 0 后如果存在下级标题则默认展开
+    # 设置为 6 表示展开所有层级（因为最多只有 h1-h6）
+    collapseDepth: 6

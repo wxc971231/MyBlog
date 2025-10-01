@@ -8,6 +8,7 @@ tags:
   - RL
   - EndoRM
 categories:
+  - 机器学习
   - 论文理解
 description: 本文发现任何通过标准next token prediction训练的LLM内部已隐含通用奖励模型，并基于逆强化学习提出一种从预训练模型中直接提取内生奖励函数的方法，为LLM对齐提供了新的理论基础和实践路径。
 ---

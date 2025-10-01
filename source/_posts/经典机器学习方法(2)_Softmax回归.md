@@ -7,6 +7,7 @@ tags:
   - pytorch
   - 机器学习
 categories:
+  - 机器学习
   - 实践
 description: 本文详细介绍了softmax回归模型,包括其原理、计算表达式、交叉熵损失函数和模型训练。通过实例展示了如何在PyTorch中实现softmax回归,以及训练过程和模型评估。此外,还探讨了为何在分类问题中使用交叉熵损失而非MSE损失的原因。
 ---

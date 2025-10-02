@@ -7,7 +7,7 @@ tags:
 categories:
   - 常用库
   - Transformers库
-description: 本文介绍了 Transformers 库中的 Tokenizer 组件，包括其基本概念、使用方法和在不同任务中的应用。Tokenizer 是将原始字符串转换为模型可以计算的数值形式的工具
+description: 本文介绍了 Transformers 库中的 Tokenizer 组件相关 API 的用法，包括其基本概念、使用方法和在不同任务中的应用。Tokenizer 是将原始字符串转换为模型可以计算的数值形式的工具
 ---
 
 - 首发链接：[Transformers库（3）—— Tokenizer](https://blog.csdn.net/wxc971231/article/details/140234490)

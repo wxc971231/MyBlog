@@ -3,7 +3,7 @@ title: 经典机器学习方法(2)——Softmax 回归
 date: 2025-09-05 19:35:20
 index_img: /img/经典机器学习方法(2)_Softmax回归/index_img.png
 tags:
-  - softmax回归
+  - 数值回归
   - pytorch
   - 机器学习
 categories:

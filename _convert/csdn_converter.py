@@ -510,8 +510,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\数学杂烩\Wasserstein 距离简介.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/153417678"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\数学杂烩\小目标检测的尺寸极限.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/151802535"
     
     # 创建转换器
     converter = CSDNConverter()

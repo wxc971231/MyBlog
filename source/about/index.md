@@ -1,6 +1,8 @@
 ---
 title: 关于我
 layout: about
+comments: true
+comment: giscus
 ---
 
 # 关于我

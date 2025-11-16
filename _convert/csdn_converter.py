@@ -419,8 +419,14 @@ class CSDNConverter:
                     before_math = match.group(1).strip()
                     math_content = match.group(2)
                     after_math = match.group(3).strip()
-                    # 将加粗文本内的数学公式分离出来
-                    return f'**{before_math}**${math_content}$**{after_math}**'
+                    # 将加粗文本内的数学公式分离出来，避免空段导致连续 '****'
+                    parts = []
+                    if before_math:
+                        parts.append(f'**{before_math}**')
+                    parts.append(f'${math_content}$')
+                    if after_math:
+                        parts.append(f'**{after_math}**')
+                    return ''.join(parts)
                 
                 processed_line = re.sub(bold_math_pattern, replace_bold_math, line)
                 processed_lines.append(processed_line)

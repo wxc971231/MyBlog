@@ -516,8 +516,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\数学杂烩\小目标检测的尺寸极限.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/151802535"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\论文理解\论文理解 【LLM-RL】—— Does Reinforcement Learning Really Incentivize Reasoning Capacity in LLMs Beyond the Base Model.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/155713258"
     
     # 创建转换器
     converter = CSDNConverter()

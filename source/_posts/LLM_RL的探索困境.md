@@ -16,7 +16,7 @@ description: 分析 Policy-Gradient RL 等可微代理优化方法在平衡探�
 ------ 
 @[toc]
 # 1 可微代理优化
-- **`可微代理优化 (Differentiable Surrogate Optimization)`**：考虑原始优化问题**$\max_x f(x)$**，当目标函数 $f(x)$ 对决策变量 $x$**不可微、不可得解析梯度或梯度估计不稳定**时，难以直接基于**$\nabla_x f(x)$**进行优化。此时引入一个由参数 $\phi$ 控制、且对 $\phi$**可微**的决策变量代理分布 $p_\phi(x)$，构造代理目标
+- **`可微代理优化 (Differentiable Surrogate Optimization)`**：考虑原始优化问题 $\max_x f(x)$，当目标函数 $f(x)$ 对决策变量 $x$**不可微、不可得解析梯度或梯度估计不稳定**时，难以直接基于 **$\nabla_x f(x)$** 进行优化。此时引入一个由参数 $\phi$ 控制、且对 $\phi$**可微**的决策变量代理分布 $p_\phi(x)$，构造代理目标
     $$
     J(\phi)=\mathbb{E}_{x\sim p_\phi}[f(x)]
     $$
@@ -44,10 +44,10 @@ description: 分析 Policy-Gradient RL 等可微代理优化方法在平衡探�
     p_{\phi}(\tau)=p\left(s_{0}\right) \prod_{t} \pi_{\phi}\left(a_{t} \mid s_{t}\right) p\left(s_{t+1} \mid s_{t}, a_{t}\right)
     $$
     优化目标是最大化期望回报
-        $$
-        J(\phi) = \mathbb{E}_{\tau\sim p_\phi(\tau)}[R(\tau)]
-        $$
-        此时轨迹 $\tau$ 是决策变量 $x$，累积（折扣）奖励 $R$ 就是目标函数 $f$，策略 $\pi_\phi$ 是代理分布。由于初始状态分布 $p(s_0)$ 和环境转移 $p(s_{t+1} \mid s_{t}, a_{t})$ 都和 $\phi$ 无关，得到梯度公式
+    $$
+    J(\phi) = \mathbb{E}_{\tau\sim p_\phi(\tau)}[R(\tau)]
+    $$
+    此时轨迹 $\tau$ 是决策变量 $x$，累积（折扣）奖励 $R$ 就是目标函数 $f$，策略 $\pi_\phi$ 是代理分布。由于初始状态分布 $p(s_0)$ 和环境转移 $p(s_{t+1} \mid s_{t}, a_{t})$ 都和 $\phi$ 无关，得到梯度公式
     $$
     \begin{aligned}
     \nabla_{\phi} J(\phi)

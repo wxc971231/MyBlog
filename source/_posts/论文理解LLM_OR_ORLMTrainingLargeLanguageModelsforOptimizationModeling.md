@@ -1,17 +1,17 @@
 ---
-title: 论文速览【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling
-index_img: img/论文速览LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/index.png
+title: 论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling
+index_img: img/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/index.png
 date: 2025-12-29 20:36:31
 tags:
   - LLM-OR
   - LLM
 categories:
   - 机器学习
-  - 论文速览
+  - 论文理解
 description: LLM 有能力将自然语言描述的工业场景问题建模为数学运筹优化问题，然后通过写代码调用经典求解器的方式加以解决。本文提出的 ORLM 方法主要关注如何合成数据来训练或微调这种领域模型
 ---
 
-- 首发链接：[论文速览【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling](https://blog.csdn.net/wxc971231/article/details/141610882)
+- 首发链接：[论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling](https://blog.csdn.net/wxc971231/article/details/141610882)
 - 文章链接：[ORLM: Training Large Language Models for Optimization Modeling](https://arxiv.org/abs/2405.17743)
 - 代码：[Cardinal-Operations/ORLM](https://github.com/Cardinal-Operations/ORLM)
 - 发表：Operations Research 2025
@@ -37,7 +37,7 @@ description: LLM 有能力将自然语言描述的工业场景问题建模为数
   4. 对于**同一个问题，可以有多种数学建模方案**（例如通过引入辅助变量把多项式优化转为线性优化），数据集中应该包含这种数据
 - 作者提出了一个半自动化方法来合成具有以上性质的高质量数据，如下图所示
     <div align="center">
-        <img src="/MyBlog/img/论文速览LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_001.png" alt="在这里插入图片描述" style="width: 90%;">
+        <img src="/MyBlog/img/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_001.png" alt="在这里插入图片描述" style="width: 90%;">
     </div>
 
     1. 从一组**种子数据开始**（686个来自不用行业的问题+求解数据），将它们添加到数据池中
@@ -51,7 +51,7 @@ description: LLM 有能力将自然语言描述的工业场景问题建模为数
 # 2. 实验
 - 作者使用以上流程，将 686 个种子数据扩展为拥有 30k 数据的 OR-INSTRUCT 数据集，行业分布和问题类型分布如下
     <div align="center">
-        <img src="/MyBlog/img/论文速览LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_002.png" alt="在这里插入图片描述" style="width: 90%;">
+        <img src="/MyBlog/img/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_002.png" alt="在这里插入图片描述" style="width: 90%;">
     </div>
 
 - 作者使用以上数据集微调了几个 7B 左右规模的开源 LLM，包括 Mistral-7B、Deepseek-math-7B 和 LLaMA-3-8B

@@ -516,8 +516,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\强化学习\强化学习拾遗 —— 表格型方法和函数近似方法中 Bellman 迭代的收敛性分析.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/124208531"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\强化学习\强化学习拾遗 —— Off-policy 方法中的重要性采样比.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/124803207"
     
     # 创建转换器
     converter = CSDNConverter()

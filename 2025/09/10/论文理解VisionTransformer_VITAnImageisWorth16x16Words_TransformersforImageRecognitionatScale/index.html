@@ -1,0 +1,862 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="VIT将图像切分成16x16的patch块，通过标准Transformer进行图像分类，在引入尽量少图像归纳偏置的情况下，验证了纯Transformer在图像分类任务中的有效性，为CV和NLP的模型统一奠定基础。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="VIT将图像切分成16x16的patch块，通过标准Transformer进行图像分类，在引入尽量少图像归纳偏置的情况下，验证了纯Transformer在图像分类任务中的有效性，为CV和NLP的模型统一奠定基础。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_001.png">
+<meta property="article:published_time" content="2025-09-10T17:31:46.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="CV">
+<meta property="article:tag" content="Transformer-Based">
+<meta property="article:tag" content="Vision Transformer">
+<meta property="article:tag" content="CV backbone">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_001.png">
+  
+  
+  
+  <title>论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-10 17:31" pubdate>
+          2025年9月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          26 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141721062">论文理解【CV】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2010.11929">An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale</a></li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/google-research/vision_transformer">GitHub - google-research/vision_transformer</a></li>
+<li>发表：ICLR 2021</li>
+<li>领域：Transformer-based CV</li>
+<li>一句话总结：VIT 将完整图像切分成多个 16x16 的 patch 块，每个块拉平后经过线性变换看作 token embedding 输入<strong>标准 Bert 模型</strong>提取特征，用<strong>有监督方法</strong>训练图像分类模型。VIT 使用了尽量少的图像归纳偏置，因此在小数据量的情况下不如 CNN 类模型，但得益于 Transformer 更好的 scaling 能力，其在大规模数据集上表现更好。<strong>VIT 验证了标准 Transformer 模型也可以良好地解决 CV 问题，并且仍然保持 NLP 中的 Scaling 能力</strong>。VIT 使得 CV 和 NLP 任务在模型上统一起来，启发了大量后续研究，并揭示了多模态大模型的可行性
+<blockquote>
+<p>关于归纳偏置，请参考：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/128107548">从模型容量的视角看监督学习</a></p>
+</blockquote>
+</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：虽然 Transformer 已经成为了 NLP 任务中的标准结构，它在 CV 领域的应用仍很有限。目前，在 CV 任务中注意力机制要么与卷积网络结合应用，要么用于在保持网络整体结构的同时替换卷积网络的某些组成部分。<strong>我们证明了这种对 CNN 的依赖是不必要的，一个直接应用于图像 patch 序列的纯 Transformer 就可以很好地执行图像分类（目标识别）任务</strong>。当对大量数据进行预训练，并转移到多个中型或小型图像识别基准测试（ImageNet、CIFAR-100、VTAB等）时，与最先进的卷积网络相比，我们提出的 Vision Transformer（ViT）获得了良好的结果，且需要的计算资源更少</li>
+</ul>
+<p></p>
+<h1 id="1-方法"><a class="markdownIt-Anchor" href="#1-方法"></a> 1. 方法</h1>
+<ul>
+<li>
+<p>自从 2016 年 self attention 机制出现后，已经有大量研究将其用到 CV 领域中，特别是尝试将其和 Transformer 类模型结合以利用其 Scaling 优势。这里的主要困难是当时 Transformer 类模型输入长度无法做得很大，也缺乏序列长度泛化能力，<strong>直接简单地把图像各个像素值拉平作为 token 进行训练会导致序列长度太长而无法训练</strong>。针对该问题，早期研究包括</p>
+<ol>
+<li>先进行多层卷积和池化，得到较小的特征图（如14x14）后拉平作为 token 训练 Transformer 模型</li>
+<li>类似卷积核，使用滑动窗口扫描图像，仅在局部进行 attention 计算，并以此代替卷积运算</li>
+<li>使用稀疏注意力或轴注意力，降低标准自注意力的计算量。但这些做法大都无法进行并行加速训练</li>
+</ol>
+</li>
+<li>
+<p>以上问题本质上就是一个<strong>图像的 <code>tokenize &amp; embed</code> 问题</strong>，核心要素有两个</p>
+<ol>
+<li>能够<strong>把较大尺寸的图像（如 224x224x3）变化成可接受长度的（如</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>≤</mo></mrow><annotation encoding="application/x-tex">\leq</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7719400000000001em;vertical-align:-0.13597em;"></span><span class="mrel">≤</span></span></span></span><strong>1000）的 token embedding 序列</strong>，从而适配于标准的 Transformer 模型</li>
+<li>为了使模型可以尽可能地在 CV 和 NLP 任务上通用，<strong>该方法应当尽量少地使用图像数据的归纳偏置</strong></li>
+</ol>
+</li>
+<li>
+<p>本文作者设计了一种基于 patch 切分的 tokenize &amp; embedding 方案，提出的 VIT 方法如下</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<p>如图可见，作者将原始尺寸为 224x224x3 的图像切分成 196 个 16x16x3 的 patch 块，每个块拉平后得到尺寸 768 维的张量（地位等同于 NLP token），再用 768x768 的线性层投影到嵌入空间（地位等同于 NLP embedding）。由于本文考虑的是图像分类任务（目标识别任务），作者使用了作为自编码器的 BERT 骨干模型，使用可学习的 1D 位置编码，并引入 [CLS] 分类 token 构成完整的 VIT 模型。<strong>除了 tokenize &amp; embedding 方法不同外，其他设计和 BERT 分类模型完全一致</strong>，形式化描述如下</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.15999999999999992em" columnalign="left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mtable rowspacing="0.24999999999999992em" columnalign="right left right left" columnspacing="0em 1em 0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mi mathvariant="bold">z</mi><mn>0</mn></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mrow><mo fence="true">[</mo><msub><mi mathvariant="bold">x</mi><mtext>class </mtext></msub><mo separator="true">;</mo><msubsup><mi mathvariant="bold">x</mi><mi>p</mi><mn>1</mn></msubsup><mi mathvariant="bold">E</mi><mo separator="true">;</mo><msubsup><mi mathvariant="bold">x</mi><mi>p</mi><mn>2</mn></msubsup><mi mathvariant="bold">E</mi><mo separator="true">;</mo><mo>⋯</mo><mtext> </mtext><mo separator="true">;</mo><msubsup><mi mathvariant="bold">x</mi><mi>p</mi><mi>N</mi></msubsup><mi mathvariant="bold">E</mi><mo fence="true">]</mo></mrow><mo>+</mo><msub><mi mathvariant="bold">E</mi><mrow><mi>p</mi><mi>o</mi><mi>s</mi></mrow></msub><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi mathvariant="bold">E</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mrow><mo fence="true">(</mo><msup><mi>P</mi><mn>2</mn></msup><mo>⋅</mo><mi>C</mi><mo fence="true">)</mo></mrow><mo>×</mo><mi>D</mi></mrow></msup><mo separator="true">,</mo><msub><mi mathvariant="bold">E</mi><mrow><mi>p</mi><mi>o</mi><mi>s</mi></mrow></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mo stretchy="false">(</mo><mi>N</mi><mo>+</mo><mn>1</mn><mo stretchy="false">)</mo><mo>×</mo><mi>D</mi></mrow></msup></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msubsup><mi mathvariant="bold">z</mi><mi mathvariant="normal">ℓ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msubsup></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mi mathvariant="normal">MSA</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mi mathvariant="normal">LN</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold">z</mi><mrow><mi mathvariant="normal">ℓ</mi><mo>−</mo><mn>1</mn></mrow></msub><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow><mo>+</mo><msub><mi mathvariant="bold">z</mi><mrow><mi mathvariant="normal">ℓ</mi><mo>−</mo><mn>1</mn></mrow></msub><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi mathvariant="normal">ℓ</mi><mo>=</mo><mn>1</mn><mo>…</mo><mi>L</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><msub><mi mathvariant="bold">z</mi><mi mathvariant="normal">ℓ</mi></msub></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mi mathvariant="normal">MLP</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mi mathvariant="normal">LN</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi mathvariant="bold">z</mi><mi mathvariant="normal">ℓ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msubsup><mo fence="true">)</mo></mrow><mo fence="true">)</mo></mrow><mo>+</mo><msubsup><mi mathvariant="bold">z</mi><mi mathvariant="normal">ℓ</mi><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msubsup><mo separator="true">,</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mi mathvariant="normal">ℓ</mi><mo>=</mo><mn>1</mn><mo>…</mo><mi>L</mi></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mi mathvariant="bold">y</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mi mathvariant="normal">LN</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi mathvariant="bold">z</mi><mi>L</mi><mn>0</mn></msubsup><mo fence="true">)</mo></mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd></mtr></mtable></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{array}{l}
+\begin{aligned}
+\mathbf{z}_{0} &amp; =\left[\mathbf{x}_{\text {class }} ; \mathbf{x}_{p}^{1} \mathbf{E} ; \mathbf{x}_{p}^{2} \mathbf{E} ; \cdots ; \mathbf{x}_{p}^{N} \mathbf{E}\right]+\mathbf{E}_{p o s}, &amp; &amp; \mathbf{E} \in \mathbb{R}^{\left(P^{2} \cdot C\right) \times D}, \mathbf{E}_{p o s} \in \mathbb{R}^{(N+1) \times D} \\
+\mathbf{z}_{\ell}^{\prime} &amp; =\operatorname{MSA}\left(\operatorname{LN}\left(\mathbf{z}_{\ell-1}\right)\right)+\mathbf{z}_{\ell-1}, &amp; &amp; \ell=1 \ldots L \\
+\mathbf{z}_{\ell} &amp; =\operatorname{MLP}\left(\operatorname{LN}\left(\mathbf{z}_{\ell}^{\prime}\right)\right)+\mathbf{z}_{\ell}^{\prime}, &amp; &amp; \ell=1 \ldots L \\
+\mathbf{y} &amp; =\operatorname{LN}\left(\mathbf{z}_{L}^{0}\right) &amp; &amp;
+\end{aligned}\\
+\end{array}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:6.317716000000001em;vertical-align:-2.9088580000000004em;"></span><span class="mord"><span class="mtable"><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4088580000000004em;"><span style="top:-5.408858em;"><span class="pstrut" style="height:5.408858em;"></span><span class="mord"><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4088580000000004em;"><span style="top:-5.408858em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">0</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-3.8857500000000003em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8018919999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span></span></span><span style="top:-2.38575em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span style="top:-0.8616419999999998em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">y</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9088580000000004em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4088580000000004em;"><span style="top:-5.408858em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">[</span></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">class </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.864108em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">E</span></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.864108em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">E</span></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">⋯</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mpunct">;</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.891331em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span style="top:-3.1130000000000004em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">E</span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size1">]</span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">E</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span><span style="top:-3.8857500000000003em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mop"><span class="mord mathrm">M</span><span class="mord mathrm">S</span><span class="mord mathrm">A</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mop"><span class="mord mathrm">L</span><span class="mord mathrm">N</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.208331em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span><span class="mbin mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.208331em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span><span style="top:-2.38575em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mop"><span class="mord mathrm">M</span><span class="mord mathrm">L</span><span class="mord mathrm">P</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mop"><span class="mord mathrm">L</span><span class="mord mathrm">N</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8018919999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8018919999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mpunct">,</span></span></span><span style="top:-0.8616419999999998em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mop"><span class="mord mathrm">L</span><span class="mord mathrm">N</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size1">(</span></span><span class="mord"><span class="mord"><span class="mord mathbf">z</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641079999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">L</span></span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">0</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size1">)</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9088580000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:1em;"></span><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4088580000000004em;"><span style="top:-5.408858em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"></span></span><span style="top:-3.8857500000000003em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"></span></span><span style="top:-2.38575em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"></span></span><span style="top:-0.8616419999999998em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9088580000000004em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:3.4088580000000004em;"><span style="top:-5.408858em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mord"><span class="mord mathbf">E</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:1.1105em;"><span style="top:-3.4130000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="minner mtight"><span class="mopen sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">(</span></span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913142857142857em;"><span style="top:-2.931em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span><span class="mbin mtight">⋅</span><span class="mord mathnormal mtight" style="margin-right:0.07153em;">C</span><span class="mclose sizing reset-size3 size6 mtight delimcenter" style="top:0.07500000000000001em;"><span class="mtight">)</span></span></span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">E</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.15139200000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.938em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">(</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span><span class="mbin mtight">+</span><span class="mord mtight">1</span><span class="mclose mtight">)</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.8857500000000003em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mord">ℓ</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">L</span></span></span><span style="top:-2.38575em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span><span class="mord">ℓ</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner">…</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">L</span></span></span><span style="top:-0.8616419999999998em;"><span class="pstrut" style="height:3.1105em;"></span><span class="mord"><span class="mord"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9088580000000004em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.9088580000000004em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span></span></span></span></span></span></span></p>
+<p>其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">x</mi><mtext>class</mtext></msub></mrow><annotation encoding="application/x-tex">\mathbf{x}_{\text {class}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.59444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">class</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 即为随机初始化的 [CLS] token，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi mathvariant="bold">x</mi><mi>p</mi><mn>1</mn></msubsup><mo separator="true">,</mo><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mi mathvariant="normal">.</mi><mo separator="true">,</mo><msubsup><mi mathvariant="bold">x</mi><mi>p</mi><mi>N</mi></msubsup></mrow><annotation encoding="application/x-tex">\mathbf{x}_{p}^{1},...,\mathbf{x}_{p}^{N}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.2244389999999998em;vertical-align:-0.383108em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">.</span><span class="mord">.</span><span class="mord">.</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord mathbf">x</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-2.4530000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.383108em;"><span></span></span></span></span></span></span></span></span></span> 为拉平的 patch token，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">E</mi></mrow><annotation encoding="application/x-tex">\mathbf{E}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68611em;vertical-align:0em;"></span><span class="mord"><span class="mord mathbf">E</span></span></span></span></span> 为线性嵌入层，MSA 为多头自注意力层</p>
+<blockquote>
+<p>事实上，ICLR 2020 论文 On the relationship between self-attention and convolutional layers 其实已经提出和本文 VIT 技术上完全一致的方法，但它使用的数据集 CIFAR 10 的图像尺寸仅 32x32，其切分的 patch 尺寸为 2x2，没有验证扩展能力。VIT 基本就是把这个设计用到更大规模的数据集和模型上</p>
+</blockquote>
+</li>
+<li>
+<p>ViT 可以应用到 CV 领域常见的预训练 + 微调框架中，即首先大数据集上预训练，然后使较小的下游任务数据集进行微调。微调的具体做法为</p>
+<ol>
+<li>移除预训练好的预测头，重新加上一个全零初始化的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>×</mo><mi>K</mi></mrow><annotation encoding="application/x-tex">D\times K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span> 的前馈神经网络作为新的预测头（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>K</mi></mrow><annotation encoding="application/x-tex">K</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span></span>是下游任务的分类数）</li>
+<li>使用更高分辨率的图像进行微调通常更有益（比如在 224x224 的图像上预训练，在 600x600 的任务上微调）。但问题是，当保持相同大小的 patch 块时，更高分辨率图像对应的 token 序列长度会变长，这会导致预训练的位置编码失效。作者通过在预训练位置编码之间插值来解决这个问题</li>
+</ol>
+</li>
+<li>
+<p><strong>VIT 针对图像归纳偏置的设计远远少于 CNN</strong></p>
+<ol>
+<li>CNN 中每一层卷积核都用到了图像的局部性、二维结构和平移不变性，归纳偏置的针对性设计贯穿了整个模型</li>
+<li>ViT 中只有 MLP 层利用到图像的局部性和平移不变性，自注意力层完全没有用（都是全局信息）。图像二维结构的使用也很谨慎，仅在切分 patch 和微调时调整不同图像分辨率位置信息时用到。位置编码在初始化时也没有携带任何的二维图像块信息，所有位置信息的空间关系都需要从头开始学习</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-实验"><a class="markdownIt-Anchor" href="#2-实验"></a> 2. 实验</h1>
+<ul>
+<li>
+<p>作者设置了多种规模，使用多种 patch 尺寸的 ViT 模型，使用两种尺寸的 ImageNet 数据集和 JFT 数据集进行预训练。作为对比，CNN based 模型 MobileNet-v2 参数规模为13M，ResNet34 模型参数规模 85M</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 75%;">
+  </div>
+<p>文章的主实验如下，使用不同规模数据集预训练，比较其与 CNN 模型的性能</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<p>可见，<strong>在数据量较小时，无论是在ImageNet还是JFT数据集，BiT（以ResNet为骨干的CNN模型）准确率相对更高</strong>，但是<strong>当数据集量增大到一定程度时，ViT模型略优于CNN模型</strong>。所以，ViT 模型更需要大数据集进行预训练，以提高模型的表征。这种结果是可预期的</p>
+<ol>
+<li><strong>ViT 使用了更少的归纳偏置，相当于人为引入的领域知识更少，这会导致模型的数据利用率较低</strong>，在小数据集上性能会较差</li>
+<li>同样因为 <strong>ViT 使用的归纳偏置少，模型的假设空间更大，使用更多数据有效训练后，其性能上限会比 CNN 类方法更好</strong>，这也可以理解为人类设计的领域知识不一定完全适配于数据</li>
+</ol>
+</li>
+<li>
+<p>预训练后，<strong>ViT 微调到下游任务的效率更高</strong>，如图所示，微调训练 7 个epoch时，ViT 类的模型相较于 CNN 模型效果更好。这说明 ViT 学习到的特征可能比 CNN 更通用</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<blockquote>
+<p>参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/510218124">ViT论文及代码解读-ICLR2021：Transformer用于视觉分类也有很好的性能</a> ：无论是使用小模型和轻量化模型AlexNet、MobileNetv2，还是使用大模型ResNet50，要达到较好预测，都要训练30-50epoch甚至更高。而使用ViT模型仅需要2-3个epoch便可达到更优秀的性能</p>
+</blockquote>
+</li>
+<li>
+<p>将 ViT 与基于 CNN 的 SOTA 模型对比，发现<strong>各个任务下，ViT 模型都轻微超越了 SOTA 性能，同时其训练使用的计算资源要低很多</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<blockquote>
+<p>这里有一点值得注意的，原始 ViT-L/16 这个模型由于参数规模太大，容易过拟合，作者使用了很大规模的  I21K 数据集才能稳定训练。MAE 论文中直接用小 21 倍的 IN1k 数据集训练该模型得到的性能只有 76.5，但是如果给他更强的正则化约束，则也可以稳定收敛，且性能提升到 82.5</p>
+</blockquote>
+</li>
+<li>
+<p>ViT 模型内部可视化分析</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ol>
+<li>
+<p>左图可视化了<strong>线性嵌入层</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi></mrow><annotation encoding="application/x-tex">E</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.05764em;">E</span></span></span></span><strong>学到的 28 个主成分，看起来它们可以作为每个 patch 二维结构特征的合理基函数</strong>。对 CNN 卷积核的可视化中也能看到类似的成分</p>
+</li>
+<li>
+<p>中图可视化了训练完毕的 1D 可学习位置编码得到的，各个位置嵌入之间的相关性。一方面注意到二维空间上越接近的位置相关性越高，另一方面注意到 patch 所在行列的相关性较高，说明 <strong>1D 位置编码也能够学到良好的 2D 空间位置信息</strong></p>
+</li>
+<li>
+<p>右图可视化了 ViT 模型每一层的所有注意力头的<code>平均注意距离</code>，它描述了图像空间中被整合信息的平均距离，类似 CNN 中的接受野大小。<strong>如图可见，ViT 中最底层就存在一些注意力头可以整合全局信息，而 CNN 每个注意力头都只能整合局部信息</strong>。同时，注意到较高层中注意力头整合信息的距离都比较远，这说明其已经学习到语义概念，<strong>高层的注意力头主要关注了语义相关的图像区域</strong></p>
+<blockquote>
+<p>对于每个注意力头，图像上任意两个patch之间存在一个注意力权重，这二者间的注意力距离就是二者间欧式距离乘以注意力权重，所有patch二元组之间注意力距离的平均值被定义为平均注意距离</p>
+</blockquote>
+<p>对 ViT 最后一层（输出层）注意力头的注意范围进行可视化，可以发现其确实关注位置和类别语义信息是一致的</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+ </div>
+</li>
+</ol>
+</li>
+</ul>
+<h1 id="3-总结"><a class="markdownIt-Anchor" href="#3-总结"></a> 3. 总结</h1>
+<ul>
+<li><strong>ViT = NLP 序列模型（Transformer） + CV 训练范式（有监督预训练+微调）</strong></li>
+<li>本文验证了 NLP 中的标准 Transformer 模型也能有效应用到 CV 任务中，属于一个破局挖坑的工作。以前 CV 领域的研究主要还是集中在 CNN 的各种变形上，但本文说明完全不用 CNN 也能解决复杂的 CV 问题，而且有潜力比 CNN 做得更好，这就带来了很多新的思路，比如
+<ol>
+<li>新的图像 Tokenize &amp; Embedding 方法</li>
+<li>本文只做了目标识别，还可以将 ViT 用于目标检测、分割等其他 CV 任务</li>
+<li>修改中间的 Transformer Block 结构，后来有人把 attention 换成 MLP 甚至不需学习的 Pooling 层，发现效果也还不错</li>
+<li>目标函数上可以继续走 CV 的有监督，也可以走 NLP 中的自监督，而且后者意义更大，因为无需构造标记数据了。后来 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/142708130?spm=1001.2014.3001.5502">MAE</a> 方法补足了这块</li>
+<li>本文验证了 Transformer 这个骨干可以同时有效提取一维结构化数据（文本）和二维结构化数据（图像）的特征，这暗示了其处理多模态数据的能力，这一点近年来也被深度发掘了</li>
+</ol>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/CV/" class="print-no-link">#CV</a>
+      
+        <a href="/MyBlog/tags/Transformer-Based/" class="print-no-link">#Transformer-Based</a>
+      
+        <a href="/MyBlog/tags/Vision-Transformer/" class="print-no-link">#Vision Transformer</a>
+      
+        <a href="/MyBlog/tags/CV-backbone/" class="print-no-link">#CV backbone</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/09/10/论文理解VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/" title="论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_SwinTransformerHierarchicalVisionTransformerusingShiftedWindows/" title="论文理解【Vision Transformer】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows">
+                        <span class="hidden-mobile">论文理解【Vision Transformer】——【Swin Transformer】Hierarchical Vision Transformer using Shifted Windows</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

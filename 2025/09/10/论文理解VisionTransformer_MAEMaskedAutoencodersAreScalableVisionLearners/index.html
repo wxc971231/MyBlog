@@ -1,0 +1,865 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="MAE 是一种 Transformer-Based CV backbone，其核心在于使用了类似 Bert 模型的训练机制，通过高比例随机 mask 图像 patch，使用非对称 Encoder-Decoder 架构进行自监督训练重建图像，实现了高效的视觉特征学习。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="MAE 是一种 Transformer-Based CV backbone，其核心在于使用了类似 Bert 模型的训练机制，通过高比例随机 mask 图像 patch，使用非对称 Encoder-Decoder 架构进行自监督训练重建图像，实现了高效的视觉特征学习。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/index.png">
+<meta property="article:published_time" content="2025-09-10T17:41:42.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="自监督预训练">
+<meta property="article:tag" content="CV">
+<meta property="article:tag" content="Transformer-Based">
+<meta property="article:tag" content="Vision Transformer">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/index.png">
+  
+  
+  
+  <title>论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-10 17:41" pubdate>
+          2025年9月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/142708130">论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2111.06377">Masked Autoencoders Are Scalable Vision Learners</a></li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/facebookresearch/mae">GitHub - facebookresearch/mae</a></li>
+<li>发表：CVPR 2022</li>
+<li>领域：Transformer-based CV</li>
+<li>一句话总结：本文提出的 MAE 是一种将 Transformer 模型用作 CV backbone 的方法，核心在于其使用了类似 Bert 模型的训练机制。具体而言，MAE 首先对图像 patch 块进行<strong>高比例</strong>的随机 mask，再用一个非对称的 <strong>Encoder-Decoder 架构</strong>进行<strong>自监督</strong>训练来重建图像，训练结束后的 Encoder 提取到高质量的图像特征，可通过微调适用于下游任务。<strong>相比 ViT，MAE 的自监督预训练过程无需图像标签，训练效率更高，在加速训练的同时提高了准确性，并且表现出有潜力的 Scaling 能力</strong>
+<blockquote>
+<ol>
+<li>ViT = NLP 序列模型（Transformer Encoder） + CV 训练范式（有监督预训练+微调）</li>
+<li><strong>MAE = NLP 序列模型（Transformer Encoder-Decoder） + NLP 训练范式（MLM自监督预训练+微调）</strong></li>
+</ol>
+</blockquote>
+</li>
+</ul>
+<hr />
+<ul>
+<li>摘要: 本文证明了掩码自编码器（MAE）是一种可扩展的 CV 自监督学习器。我们的MAE方法很简单：先随机 mask 掉输入图像的部分 patch 块，再重建缺失的像素。MAE 包含两个核心设计：<strong>首先，我们开发了一个非对称的 Encoder-Decoder 架构，其中 Encoder 只作用于没有被 mask 的可见 patch 子集，轻量级 Decoder 则从 latent representation 和 mask tokens 重构原始图像。其次，我们发现掩盖高比例的输入图像，例如75%，可以构造一个普适而有意义的自监督任务</strong>。耦合这两种设计使我们能够快速有效地训练大规模模型并提高准确性。我们的可扩展方法能够学到泛化能力很强的高容量模型...</li>
+</ul>
+<h1 id="1-方法"><a class="markdownIt-Anchor" href="#1-方法"></a> 1. 方法</h1>
+<ul>
+<li>
+<p>作者注意到 NLP 领域中，以 BERT 为代表的 MLM 自监督训练范式取得了很大的成功，为了把 MLM 训练扩展到 CV 领域中，作者先分析了 CV 和 NLP 任务的差异</p>
+<ol>
+<li>
+<p><strong>架构差异</strong>：CV 领域长期以来被 CNN 架构所主导，由于 CNN 使用卷积核汇聚局部特征，将 Mask 遮盖集成到 CNN 中是困难的。不过这个困难已经被近期提出的 ViT 模型通过 <strong>patch 形式的 tokenize 方法</strong>解决了</p>
+</li>
+<li>
+<p><strong>信息密度差异</strong>：语言信号是高度语义化的，信息密度高，而图像信号具有很高的空间冗余性。和 ViT 的 patch 图块相比，自然语言中单个 token 的语义性更强，信息量更高。因此应该<strong>遮盖更大比例的 patch 图块，使模型不能仅依靠低级统计信息完成重建任务，从而迫使模型学会对图像的整体理解</strong></p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+ </div>
+</li>
+<li>
+<p><strong>解码器扮演角色的差异</strong>：NLP 中解码器只用来还原一个词表中的 token 索引，抽象程度高数据复杂度低，因此用 MLP 解码器就足够了；<strong>CV 任务中解码器需要重建一个图块 patch，抽象程度低数据复杂度高，为此需要更复杂的解码器结构</strong></p>
+</li>
+</ol>
+</li>
+<li>
+<p>针对以上差异，作者设计的 MAE 模型结构如下所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+<p>如图所示，MAE 模型使用<strong>非对称的 encoder-decoder 架构</strong>，它输入被 mask 遮盖的图像，由较大规模的 Transformer Encoder 将所有<strong>无遮盖的</strong> patch token 投影到 embedding 空间中，然后<strong>按顺序插入统一的 learnable mask token embedding</strong> 并<strong>加上位置编码</strong>，最后使用一个轻量的 Transformer Decoder 将 embedding 序列重建为图像。具体而言</p>
+<ol>
+<li><strong><code>Masking</code></strong>：使用和 ViT 相同的方法将输入图像切分成不重叠的 patch 块，然后从中<strong>均匀随机采样高比例（如</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>75</mn><mi mathvariant="normal">%</mi></mrow><annotation encoding="application/x-tex">75\%</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.80556em;vertical-align:-0.05556em;"></span><span class="mord">7</span><span class="mord">5</span><span class="mord">%</span></span></span></span><strong>）的子集 mask 掉</strong>，一方面消除冗余信息以提高 MLM 任务的难度；另一方面为 Encoder 提供稀疏的输入以降低计算成本</li>
+<li><strong><code>MAE Encoder</code></strong>：直接使用一个 <strong>ViT 模型作为 Encoder</strong>，它通过线性投影来嵌入 patch 块，添加位置编码后通过一系列的Transformer block 进行处理。Encoder <strong>仅应用于可见的，未被 mask 的 patch</strong>，其比例很低，因此计算成本并不高</li>
+<li><strong><code>MAE Decoder</code></strong>：Decoder 的<strong>输入是完整的 patch embedding 序列，其中所有 masked token 共享一个可学习 embedding 向量</strong>。因此，需要按 masked patch 的原始拉平顺序 masked embedding 的多个副本插入到 Encoder 输出中组成完整序列，添加完整的位置编码后输入 Transformer Decoder 进行图像重建（预测对应 patch 的图像像素点值）
+<blockquote>
+<p>注意此 Decoder 不同于常说的 Transformer Decoder，它还是用的<strong>双向注意力，本质是 BERT 类的模型</strong></p>
+</blockquote>
+</li>
+<li><strong>Reconstruction target</strong>: MAE 通过预测每个 masked patch 的像素值来重建图像。Decoder 的最后一层是一个线性投影层，其输出尺寸和一个 patch 的像素数量相同，因此输出向量可以被 reshape 重建成 patch 图像。<strong>损失设计为重建图像和原始图像的像素值 mse 误差，类似 BERT，仅在 masked patch 位置计算损失</strong>。作者还研究了一个变体，其重建目标是每个 masked patch 的归一化像素值，实验表明这个重建目标提高了表示质量</li>
+</ol>
+</li>
+<li>
+<p>自监督预训练完成后，<strong>下游任务的输入不再是被 mask 的 patch，而是完整图像的所有 patch</strong>。保留预训练好的 Encoder 作为特征提取器，接任务头用于下游任务，如</p>
+<ol>
+<li><strong>分类</strong>：加一个 [CLS] token + MLP 分类头，类似 ViT</li>
+<li><strong>检测 / 分割</strong>：接 Detection/Segmentation 的 head，比如 Mask R-CNN、UperNet</li>
+<li><strong>检索 / 对比</strong>：用 Encoder 特征向量，配合对比学习或相似度计算</li>
+</ol>
+</li>
+<li>
+<p>MAE pipeline 的一个简单实现如下</p>
+<ol>
+<li>将原始图像切分为不重叠的 patch 图块</li>
+<li>使用带有位置嵌入的线性层将每个 patch 转换为 token embedding，拉平得到标准顺序序列</li>
+<li>随机打乱 token embedding 序列（shuffling），并根据 masked 比例删除列表的最后一部分，将保留的前驱部分输入 Encoder</li>
+<li>获取 Encoder 输出，在其后拼接 masked embedding 序列以恢复序列长度，重新顺序为标准顺序（unshuffling），使所有自监督标签和序列中的 embedding 对齐</li>
+<li>向完整序列添加位置编码后输入 Decoder 进行重建，计算并优化损失</li>
+</ol>
+</li>
+<li>
+<p>值得注意的是，在 MAE 之前，已经有一些探索如何把 Transformer 模型用于 CV 任务的工作尝试了 MLM 式的自监督训练方法（比如 ViT 就做过），但是效果不好没有流行起来。主要原因有以下几点</p>
+<ol>
+<li><strong>没有注意到图像信息密度低的归纳偏置，mask 比例不够</strong></li>
+<li><strong>没有直接重建原始图像 pixel ，而是重建一些低维表示</strong>（比如马赛克或者 mean color）</li>
+<li><strong>没有设置独立的 Decoder 模型，而是直接在 Encoder 输出上进行重建</strong>。但是 Encoder 的编码结果应该是一个更全局、高维的表示，直接在其基础上重建 pixel 会让 Encoder 后几层太关注局部细节，导致提取特征的抽象程度不足</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-实验"><a class="markdownIt-Anchor" href="#2-实验"></a> 2. 实验</h1>
+<h2 id="21-主实验"><a class="markdownIt-Anchor" href="#21-主实验"></a> 2.1 主实验</h2>
+<ul>
+<li>
+<p>作者在 IN1k 数据集上比较了 ViT-L/16 有监督从头训练和 MAE finetune 的结果，可以看到 MAE finetune 超越了有监督训练的效果</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+<blockquote>
+<p>这里特别注意，ViT 原始论文的实现正则化强度太低了，ViT-L/16 这个规模的模型很容易过拟合，因此在 IN1k 这个规模较小的数据集上只达成了 76.5 的性能，且不太稳定。MAE 作者调整了实现细节后性能提升到 82.5，但是仍不如 MAE finetune 的 84.9</p>
+</blockquote>
+<p>和其他经典方法的对比体现了 MAE 的有效性</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+</li>
+<li>
+<p>作者在 COCO 数据集的目标检测任务和 ADE20k 数据集上的分割任务验证了 MAE 的<strong>迁移性能</strong>，同样是最好的</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+</li>
+</ul>
+<h2 id="22-消融实验"><a class="markdownIt-Anchor" href="#22-消融实验"></a> 2.2 消融实验</h2>
+<ul>
+<li>
+<p>作者考察了 masking ratio 的影响。作者评估了两种微调方法，一是<code>全参数微调fine-tuning</code>，二是只<code>微调Encoder最后的线性层linear probing</code>，注意到<strong>最佳 masking ratio 是相当高的，达到 75% 左右</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 65%;">
+  </div>
+<p>注意到全量 fine-tuning 比较稳健，而 linear probing 关于 mask ratio 更敏感。作者进一步考察了介于二者之间的部分微调方案</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 65%;">
+  </div>
+<p>可见微调一半的 Transformer Block 基本就足够了</p>
+</li>
+<li>
+<p>作者进一步对解码器的结构进行对比，其中 ft 表示全量微调，lin 表示只调线性层</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_008.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ul>
+<li>(C) 说明在 <strong>Encoder 中不加入 Mask token 的话性能更好，而且计算量更少</strong></li>
+<li>(d) 对比数据增强方法，发现<strong>简单随机裁剪</strong>就足够好了</li>
+<li>(e) 对比 mask 策略，发现<strong>均匀随机 mask 效果最好</strong>  <div align="center">
+      <img src="/MyBlog/img/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/img_009.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 65%;">
+  </div>
+</li>
+</ul>
+</li>
+</ul>
+<h1 id="3-总结-感受"><a class="markdownIt-Anchor" href="#3-总结-感受"></a> 3 总结 &amp; 感受</h1>
+<ul>
+<li>MAE 进一步发展了 ViT 将 NLP 方法和训练范式运用到 CV 任务上的思路，通过以下三个创新在 Image 1K 上取得了很好的结果
+<ol>
+<li>由于图像的信息密度较低，CV 任务上应该使用更高的 mask ratio</li>
+<li>使用 Transformer decoder 重建图像</li>
+<li>加上了 ViT 之后的各种 trick，使训练更鲁棒</li>
+</ol>
+</li>
+<li>这篇文章的思路不难，但是故事讲得足够好，从将 NLP 范式直接用到 CV 任务的问题存在的问题开始讲，这个写法是可以帮助读者理解的。另外实验做得很详细，具有很好的借鉴意义</li>
+<li>参考：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/498364155/answer/2240224120">如何看待何恺明最新一作论文Masked Autoencoders？ - 李rumor的回答 - 知乎</a></li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/%E8%87%AA%E7%9B%91%E7%9D%A3%E9%A2%84%E8%AE%AD%E7%BB%83/" class="print-no-link">#自监督预训练</a>
+      
+        <a href="/MyBlog/tags/CV/" class="print-no-link">#CV</a>
+      
+        <a href="/MyBlog/tags/Transformer-Based/" class="print-no-link">#Transformer-Based</a>
+      
+        <a href="/MyBlog/tags/Vision-Transformer/" class="print-no-link">#Vision Transformer</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/09/10/论文理解VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/15/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3CV_%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/" title="论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_VITAnImageisWorth16x16Words_TransformersforImageRecognitionatScale/" title="论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale">
+                        <span class="hidden-mobile">论文理解【Vision Transformer】——【VIT】An Image is Worth 16x16 Words-Transformers for Image Recognition at Scale</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

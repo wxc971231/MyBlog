@@ -1,0 +1,955 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="本文介绍了 Transformers 库的 Model 组件相关 API 的用法，包括模型的基本架构、预训练模型的加载、模型的微调等">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformers库（4）—— Model">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/10/03/Transformers%E5%BA%934_Model/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="本文介绍了 Transformers 库的 Model 组件相关 API 的用法，包括模型的基本架构、预训练模型的加载、模型的微调等">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/Transformers%E5%BA%934_Model/Transformers.png">
+<meta property="article:published_time" content="2025-10-03T02:01:29.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.096Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="Transformers库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/Transformers%E5%BA%934_Model/Transformers.png">
+  
+  
+  
+  <title>Transformers库（4）—— Model - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Transformers库（4）—— Model"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-10-03 02:01" pubdate>
+          2025年10月3日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          43 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Transformers库（4）—— Model</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/140242380">Transformers库（4）—— Model</a></li>
+<li>Hugging Face 是一家在 AI 领域具有重要影响力的科技公司，他们的开源工具和社区建设为NLP研究和开发提供了强大的支持。它们拥有当前最活跃、最受关注、影响力最大的 <a target="_blank" rel="noopener" href="https://huggingface.co/">NLP 社区</a>，最新最强的 NLP 模型大多在这里发布和开源。该社区也提供了丰富的教程、文档和示例代码，帮助用户快速上手并深入理解各类 Transformer 模型和 NLP 技术</li>
+<li>Transformers 库是 Hugging Face 最著名的贡献之一，它最初是 Transformer 模型的 pytorch 复现库，随着不断建设，至今已经成为 NLP 领域最重要，影响最大的基础设施之一。该库提供了大量预训练的模型，涵盖了多种语言和任务，成为当今大模型工程实现的主流标准，换句话说，<strong>如果你正在开发一个大模型，那么按 Transformer 库的代码格式进行工程实现、将 check point 打包成 hugging face 格式开源到社区，对于推广你的工作有很大的助力作用</strong>。本系列文章将介绍 Transformers 库的基本使用方法</li>
+<li>参考：
+<ul>
+<li><a target="_blank" rel="noopener" href="https://huggingface.co/docs/transformers/index">官方教程</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1KM4y1q7Js">手把手带你实战HuggingFace Transformers</a></li>
+</ul>
+</li>
+</ul>
+<hr />
+<h1 id="1-transformer-model"><a class="markdownIt-Anchor" href="#1-transformer-model"></a> 1.  Transformer Model</h1>
+<h2 id="11-基本架构"><a class="markdownIt-Anchor" href="#11-基本架构"></a> 1.1 基本架构</h2>
+<ul>
+<li>Transformer model 代表了以 Transformer 为基础的一系列模型
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/127680656?spm=1001.2014.3001.5501#31_Transformer_203">原始的 Transformer</a> 是 Encoder-Decoder 模型，用于自然语言翻译任务。其 Encoder 部分接受原始序列输入并构建其完整的特征表示，Decoder 部分基于 Encoder 提供的特征和当前已经翻译的部分结果，自回归地生成目标序列（翻译结果）。 无论 Encoder 还是 Decoder，均由多个 Transformer Block 堆叠而成，每个 Transformer Block 由 Attention Layer 和 FFD Layer 组成</p>
+<div align="center">
+    <img src="/MyBlog/img/Transformers库4_Model/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 40%;">
+</div>
+</li>
+<li>
+<p>由于 Transformer Encoder 具有序列特征提取能力，Transformer Decoder 具有自回归序列生成能力，两者之后都被独立使用，Encoder-Only 衍生出属于自编码器的 BERT 类模型，Decoder-Only 衍生出属于自回归生成模型的 GPT 类模型</p>
+</li>
+</ul>
+</li>
+<li>Attention 机制
+<ul>
+<li><a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/127680656?spm=1001.2014.3001.5501#2__137">Attention 机制</a>是 Transformer 类模型的一个核心特征，在计算当前 token 的特征表示时，可以通过注意力机制有选择性地告诉模型应该使用哪部分上下文</li>
+<li>Encoder-Decoder / Encoder-Only / Decoder-Only 三类模型，可以归结为 attention mask 设置的不同，详见 1.2 节</li>
+</ul>
+</li>
+</ul>
+<h2 id="12-模型类型"><a class="markdownIt-Anchor" href="#12-模型类型"></a> 1.2 模型类型</h2>
+<ul>
+<li>
+<p>目前主流的 Transformer 类模型可分为以下四类</p>
+<ol>
+<li><strong>自编码模型：<code>Encoder-Only</code> 结构</strong>，拥有双向的注意力机制，即计算每一个词的特征时都看到完整上下文</li>
+<li><strong>自回归模型：<code>Decoder-Only / Causal Decoder</code> 结构</strong>，拥有单向的注意力机制，即计算每一个词的特征时都只能看到上文，无法看到下文:</li>
+<li><strong>序列到序列模型：<code>Encoder-Decoder</code> 结构</strong>，Encoder部分使用双向的注意力，Decoder部分使用单向注意力</li>
+<li><strong>前缀模型：<code>Prefix-Decoder</code> 结构</strong>，它对输入序列的前缀部分使用双向注意力机制，后半部分使用单向注意力机制，前缀片段内部的所有 token 都能看到完整上下文，其他部分只能看到前文。这可以看作是 Encoder-Decoder 的一个变体</li>
+</ol>
+</li>
+<li>
+<p>以上 3 的结构示意图已经在 1.1 节给出，它的 Encoder-Decoder 使用两个独立的 Transformer 结构，其中通过 cross attention 机制连接，1/2/4 都只使用一个 Transformer 结构，<strong>区别仅在于 attention mask 施加不同，使得序列中各个 token 能观测到的上下文区域有所区别</strong>，如下所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/Transformers库4_Model/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ul>
+<li>Prefix Decoder 和 Encoder-Decoder 的主要区别在于：前者对编码部分的 attention 是在每一层 Transformer Block 内部施加的，即第任意一层 Block 中的解码部分片段可以关注到该层的前缀片段；后者则是 Decoder 中每层 Block 都能只能关注到 Encoder 最后一层的编码片段结果</li>
+<li>Prefix Decoder 和 Decoder-Only 非常类似，它们能执行的任务类型也差不多，下图更清晰地指示了二者的不同  <div align="center">
+      <img src="/MyBlog/img/Transformers库4_Model/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+</li>
+</ul>
+</li>
+<li>
+<p>不同的模型结构适用不同的预训练方法，主要有以下几种</p>
+  <div align="center">
+      <img src="/MyBlog/img/Transformers库4_Model/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+<ol>
+<li><strong><code>FLM (full language modeling)</code></strong>：就是训练标准的语言模型，完整一段话从头到尾基于上文预测下一个token。适用于 Decoder-Only 模型</li>
+<li><strong><code>PLM (prefix language modeling) </code></strong>：一段话分成两截，前一截作为输入，预测后一截。适用于 Encoder-Decoder 模型和 Prefix Decoder 模型</li>
+<li><strong><code>MLM (masked language modeling)</code></strong>：遮盖住文本中的一部分token，让模型通过上下文猜测遮盖部分的token。适用于 Encoder-Only 模型
+<blockquote>
+<ul>
+<li>将任务改造成 text-to-text 形式（即 input 和 target 都是一段文本），可以适配 Encoder-Decoder 和 Prefix Decoder</li>
+<li>将 input 和 target 拼接起来，可以适配 Decoder-Only</li>
+</ul>
+</blockquote>
+</li>
+</ol>
+</li>
+<li>
+<p>总结一下各类结构的经典模型和主要适用任务</p>
+<table>
+<thead>
+<tr>
+<th>模型类型</th>
+<th>预训练目标</th>
+<th>常用预训练模型</th>
+<th>主要适用任务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encoder-only</td>
+<td>MLM</td>
+<td>ALBERT，BERT，DistilBERT，RoBERTa</td>
+<td>文本分类、命名实体识别、阅读理解</td>
+</tr>
+<tr>
+<td>Decoder-only</td>
+<td>FLM</td>
+<td>GPT，GPT-2，Bloom,LLaMA</td>
+<td>文本生成</td>
+</tr>
+<tr>
+<td>Encoder-Decoder</td>
+<td>PLM</td>
+<td>BART，T5，Marian，mBART</td>
+<td>文本摘要、机器翻译</td>
+</tr>
+<tr>
+<td>Prefix-Decoder</td>
+<td>PLM</td>
+<td>ChatGLM、ChatGLM2、U-PaLM</td>
+<td>文本摘要、机器翻译、文本生成</td>
+</tr>
+</tbody>
+</table>
+<p>注意这里的适用任务并不绝对，比如 Decoder-only 配合指令微调，在参数规模大了之后其实什么都能做；用 MLM 目标预训练的模型，经过 PLM 或 FLM 继续训练后，也能做翻译和生成等任务，反之亦然。可以参考论文 <a target="_blank" rel="noopener" href="https://proceedings.mlr.press/v162/wang22u.html">What Language Model Architecture and Pretraining Objective Works Best for Zero-Shot Generalization?</a></p>
+</li>
+<li>
+<p>额外提一句，当前最流行的模型结构是 Decoder-only，其中可能包含多方面原因，可以参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/625184011">【大模型慢学】GPT起源以及GPT系列采用Decoder-only架构的原因探讨</a></p>
+</li>
+</ul>
+<h2 id="13-model-head"><a class="markdownIt-Anchor" href="#13-model-head"></a> 1.3 Model Head</h2>
+<ul>
+<li>和 CV 任务很多都使用 ResNet Backbone 一样，同一个 Transformer backbone 可以通过连接不同的 head 完成很多 NLP 任务。<strong>在 Transformers 库的设计上，一个相同的模型骨干可以对应多个不同的任务，它们的区别仅在于最后的 model head 有所不同</strong>
+<ul>
+<li>
+<p>Model Head 是<strong>连接在模型后的层，通常为1个或多个全连接层</strong></p>
+</li>
+<li>
+<p>Model Head 将模型的编码的表示结果进行映射，以解决不同类型的任务</p>
+  <div align="center">
+      <img src="/MyBlog/img/Transformers库4_Model/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<blockquote>
+<p>以 BERT 模型情感二分类任务为例，设模型输入长度 128，嵌入维度 768，则 Hidden states 尺寸 1x128x768。这时 Head 可能是一个输入尺寸为 768，输出尺寸为 2 的 MLP，最后一层 Hidden states 中 [CLS] 特殊 token 位置的 768 维向量将会输入 Head，对 Head 输出计算交叉熵损失来训练模型</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>Transformer 库中，模型类对象使用的 Model Head 可以从其类名后缀中观察出来
+<ul>
+<li>*Model(模型本身，只返回编码结果)</li>
+<li>*ForCausalLM</li>
+<li>*ForMaskedLM</li>
+<li>*ForSeq2SeqLM</li>
+<li>*ForMultipleChoice</li>
+<li>*ForQuestionAnswering</li>
+<li>*ForSequenceClassification</li>
+<li>*ForTokenClassification</li>
+<li>...</li>
+</ul>
+</li>
+</ul>
+<h1 id="2-transformer-库-model-组件的基本使用"><a class="markdownIt-Anchor" href="#2-transformer-库-model-组件的基本使用"></a> 2. Transformer 库 Model 组件的基本使用</h1>
+<h2 id="21-创建模型"><a class="markdownIt-Anchor" href="#21-创建模型"></a> 2.1 创建模型</h2>
+<h3 id="211-显式设置模型"><a class="markdownIt-Anchor" href="#211-显式设置模型"></a> 2.1.1 显式设置模型</h3>
+<ul>
+<li>如果知道要使用模型的类型，可以直接使用其架构相对应的模型类，以加载 Bert 模型为例，首先创建其 config 对象  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> BertConfig, BertModel<br><br><span class="hljs-comment"># 初始化 Config 类</span><br>config = BertConfig(hidden_size=<span class="hljs-number">768</span>)    <span class="hljs-comment"># 以下 config 参数可传参设置</span><br>config<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs shell">BertConfig &#123;<br>  &quot;attention_probs_dropout_prob&quot;: 0.1,<br>  &quot;classifier_dropout&quot;: null,<br>  &quot;hidden_act&quot;: &quot;gelu&quot;,<br>  &quot;hidden_dropout_prob&quot;: 0.1,<br>  &quot;hidden_size&quot;: 768,<br>  &quot;initializer_range&quot;: 0.02,<br>  &quot;intermediate_size&quot;: 3072,<br>  &quot;layer_norm_eps&quot;: 1e-12,<br>  &quot;max_position_embeddings&quot;: 512,<br>  &quot;model_type&quot;: &quot;bert&quot;,<br>  &quot;num_attention_heads&quot;: 12,<br>  &quot;num_hidden_layers&quot;: 12,<br>  &quot;pad_token_id&quot;: 0,<br>  &quot;position_embedding_type&quot;: &quot;absolute&quot;,<br>  &quot;transformers_version&quot;: &quot;4.40.0&quot;,<br>  &quot;type_vocab_size&quot;: 2,<br>  &quot;use_cache&quot;: true,<br>  &quot;vocab_size&quot;: 30522<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>然后就可以基于 config 对象构造模型，模型对象也支持从 checkpoint 构造  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 从 Config 类初始化随机模型</span><br>model = BertModel(config)<br><br><span class="hljs-comment"># 也可从预训练 checkpoint 构造模型</span><br>model = BertModel.from_pretrained(<span class="hljs-string">&quot;google-bert/bert-base-cased&quot;</span>)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="212-使用-automodel"><a class="markdownIt-Anchor" href="#212-使用-automodel"></a> 2.1.2 使用 AutoModel</h3>
+<ul>
+<li>
+<p><code>AutoModel</code> 类及其所有的相关类是对 Transformers 库中可用的各种模型的智能包装，它们可以自动猜测加载 checkpoint 适合的模型架构，然后实例化一个具有相同架构的模型。基于 <code>AutoModel</code> 类，可以用 <code>from_pretrained</code> 方法直接从模型地址下载模型和权重检查点，并返回 model 对象。这类似<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/140234490">前文</a>介绍过的 <code>AutoTokenizer</code> 类似。</p>
+</li>
+<li>
+<p><strong>通常我们会将上一节的 <code>BertModel</code> 替换为等效的 <code>AutoModel</code> 类，这样可以摆脱对 checkpoint 的依赖</strong></p>
+<blockquote>
+<p>如果你的代码适用于一个 checkpoint，那么它就可以无缝适用于另一个 checkpoint，即使体系结构不同这是如此，只要 checkpoint 是针对同类的任务（例如，情绪分析任务）训练的即可</p>
+</blockquote>
+</li>
+<li>
+<p>这里我们加载一个小规模的中文情感分类模型作为示例</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoConfig, AutoModel, AutoTokenizer<br><span class="hljs-comment"># 在线加载</span><br><span class="hljs-comment"># 若下载失败，也可以在仓库 https://huggingface.co/hfl/rbt3/tree/main 手动下载，然后在from_pretrained方法中传入本地文件夹加载</span><br>model = AutoModel.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>)<br>model<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs shell">BertModel(<br>  (embeddings): BertEmbeddings(<br>    (word_embeddings): Embedding(21128, 768, padding_idx=0)<br>    (position_embeddings): Embedding(512, 768)<br>    (token_type_embeddings): Embedding(2, 768)<br>    (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)<br>    (dropout): Dropout(p=0.1, inplace=False)<br>  )<br>  (encoder): BertEncoder(<br>    (layer): ModuleList(<br>      (0): BertLayer(<br>        (attention): BertAttention(<br>          (self): BertSelfAttention(<br>            (query): Linear(in_features=768, out_features=768, bias=True)<br>            (key): Linear(in_features=768, out_features=768, bias=True)<br>            (value): Linear(in_features=768, out_features=768, bias=True)<br>            (dropout): Dropout(p=0.1, inplace=False)<br>          )<br>          (output): BertSelfOutput(<br>            (dense): Linear(in_features=768, out_features=768, bias=True)<br>            (LayerNorm): LayerNorm((768,), eps=1e-12, elementwise_affine=True)<br>            (dropout): Dropout(p=0.1, inplace=False)<br>          )<br>        )<br>        (intermediate): BertIntermediate(<br>...<br>  (pooler): BertPooler(<br>    (dense): Linear(in_features=768, out_features=768, bias=True)<br>    (activation): Tanh()<br>  )<br>)<br></code></pre></td></tr></table></figure>
+<p>可以看到这是一个 <code>BertModel</code></p>
+</li>
+<li>
+<p>可以通过 <code>model.config</code> 访问该模型的参数</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 查看模型配置参数</span><br>model.config<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs shell">BertConfig &#123;<br>  &quot;_name_or_path&quot;: &quot;hfl/rbt3&quot;,<br>  &quot;architectures&quot;: [<br>    &quot;BertForMaskedLM&quot;<br>  ],<br>  &quot;attention_probs_dropout_prob&quot;: 0.1,<br>  &quot;classifier_dropout&quot;: null,<br>  &quot;directionality&quot;: &quot;bidi&quot;,<br>  &quot;hidden_act&quot;: &quot;gelu&quot;,<br>  &quot;hidden_dropout_prob&quot;: 0.1,<br>  &quot;hidden_size&quot;: 768,<br>  &quot;initializer_range&quot;: 0.02,<br>  &quot;intermediate_size&quot;: 3072,<br>  &quot;layer_norm_eps&quot;: 1e-12,<br>  &quot;max_position_embeddings&quot;: 512,<br>  &quot;model_type&quot;: &quot;bert&quot;,<br>  &quot;num_attention_heads&quot;: 12,<br>  &quot;num_hidden_layers&quot;: 3,<br>  &quot;output_past&quot;: true,<br>  &quot;pad_token_id&quot;: 0,<br>  &quot;pooler_fc_size&quot;: 768,<br>  &quot;pooler_num_attention_heads&quot;: 12,<br>  &quot;pooler_num_fc_layers&quot;: 3,<br>  &quot;pooler_size_per_head&quot;: 128,<br>  &quot;pooler_type&quot;: &quot;first_token_transform&quot;,<br>...<br>  &quot;transformers_version&quot;: &quot;4.41.2&quot;,<br>  &quot;type_vocab_size&quot;: 2,<br>  &quot;use_cache&quot;: true,<br>  &quot;vocab_size&quot;: 21128<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可见，Bert 类模型的参数使用一个 <code>BertConfig </code> 类对象管理，查看其源码定义，可以看到参数的解释</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BertConfig</span>(<span class="hljs-title class_ inherited__">PretrainedConfig</span>):<br>    <span class="hljs-string">r&quot;&quot;&quot;</span><br><span class="hljs-string">    This is the configuration class to store the configuration of a [`BertModel`] or a [`TFBertModel`]. It is used to</span><br><span class="hljs-string">    instantiate a BERT model according to the specified arguments, defining the model architecture. Instantiating a</span><br><span class="hljs-string">    configuration with the defaults will yield a similar configuration to that of the BERT</span><br><span class="hljs-string">    [google-bert/bert-base-uncased](https://huggingface.co/google-bert/bert-base-uncased) architecture.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Configuration objects inherit from [`PretrainedConfig`] and can be used to control the model outputs. Read the</span><br><span class="hljs-string">    documentation from [`PretrainedConfig`] for more information.</span><br><span class="hljs-string"></span><br><span class="hljs-string"></span><br><span class="hljs-string">    Args:</span><br><span class="hljs-string">        vocab_size (`int`, *optional*, defaults to 30522):</span><br><span class="hljs-string">            Vocabulary size of the BERT model. Defines the number of different tokens that can be represented by the</span><br><span class="hljs-string">            `inputs_ids` passed when calling [`BertModel`] or [`TFBertModel`].</span><br><span class="hljs-string">        hidden_size (`int`, *optional*, defaults to 768):</span><br><span class="hljs-string">            Dimensionality of the encoder layers and the pooler layer.</span><br><span class="hljs-string">        num_hidden_layers (`int`, *optional*, defaults to 12):</span><br><span class="hljs-string">            Number of hidden layers in the Transformer encoder.</span><br><span class="hljs-string">        num_attention_heads (`int`, *optional*, defaults to 12):</span><br><span class="hljs-string">            Number of attention heads for each attention layer in the Transformer encoder.</span><br><span class="hljs-string">        intermediate_size (`int`, *optional*, defaults to 3072):</span><br><span class="hljs-string">            Dimensionality of the &quot;intermediate&quot; (often named feed-forward) layer in the Transformer encoder.</span><br><span class="hljs-string">        hidden_act (`str` or `Callable`, *optional*, defaults to `&quot;gelu&quot;`):</span><br><span class="hljs-string">            The non-linear activation function (function or string) in the encoder and pooler. If string, `&quot;gelu&quot;`,</span><br><span class="hljs-string">            `&quot;relu&quot;`, `&quot;silu&quot;` and `&quot;gelu_new&quot;` are supported.</span><br><span class="hljs-string">        hidden_dropout_prob (`float`, *optional*, defaults to 0.1):</span><br><span class="hljs-string">            The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.</span><br><span class="hljs-string">        attention_probs_dropout_prob (`float`, *optional*, defaults to 0.1):</span><br><span class="hljs-string">            The dropout ratio for the attention probabilities.</span><br><span class="hljs-string">        max_position_embeddings (`int`, *optional*, defaults to 512):</span><br><span class="hljs-string">            The maximum sequence length that this model might ever be used with. Typically set this to something large</span><br><span class="hljs-string">            just in case (e.g., 512 or 1024 or 2048).</span><br><span class="hljs-string">        type_vocab_size (`int`, *optional*, defaults to 2):</span><br><span class="hljs-string">            The vocabulary size of the `token_type_ids` passed when calling [`BertModel`] or [`TFBertModel`].</span><br><span class="hljs-string">        initializer_range (`float`, *optional*, defaults to 0.02):</span><br><span class="hljs-string">            The standard deviation of the truncated_normal_initializer for initializing all weight matrices.</span><br><span class="hljs-string">        layer_norm_eps (`float`, *optional*, defaults to 1e-12):</span><br><span class="hljs-string">            The epsilon used by the layer normalization layers.</span><br><span class="hljs-string">        position_embedding_type (`str`, *optional*, defaults to `&quot;absolute&quot;`):</span><br><span class="hljs-string">            Type of position embedding. Choose one of `&quot;absolute&quot;`, `&quot;relative_key&quot;`, `&quot;relative_key_query&quot;`. For</span><br><span class="hljs-string">            positional embeddings use `&quot;absolute&quot;`. For more information on `&quot;relative_key&quot;`, please refer to</span><br><span class="hljs-string">            [Self-Attention with Relative Position Representations (Shaw et al.)](https://arxiv.org/abs/1803.02155).</span><br><span class="hljs-string">            For more information on `&quot;relative_key_query&quot;`, please refer to *Method 4* in [Improve Transformer Models</span><br><span class="hljs-string">            with Better Relative Position Embeddings (Huang et al.)](https://arxiv.org/abs/2009.13658).</span><br><span class="hljs-string">        is_decoder (`bool`, *optional*, defaults to `False`):</span><br><span class="hljs-string">            Whether the model is used as a decoder or not. If `False`, the model is used as an encoder.</span><br><span class="hljs-string">        use_cache (`bool`, *optional*, defaults to `True`):</span><br><span class="hljs-string">            Whether or not the model should return the last key/values attentions (not used by all models). Only</span><br><span class="hljs-string">            relevant if `config.is_decoder=True`.</span><br><span class="hljs-string">        classifier_dropout (`float`, *optional*):</span><br><span class="hljs-string">            The dropout ratio for the classification head.</span><br><span class="hljs-string"></span><br><span class="hljs-string">    Examples:</span><br><span class="hljs-string"></span><br><span class="hljs-string">    ```python</span><br><span class="hljs-string">    &gt; &gt;&gt; from transformers import BertConfig, BertModel</span><br><span class="hljs-string"></span><br><span class="hljs-string">    &gt; &gt;&gt; # Initializing a BERT google-bert/bert-base-uncased style configuration</span><br><span class="hljs-string">    &gt; &gt;&gt; configuration = BertConfig()</span><br><span class="hljs-string"></span><br><span class="hljs-string">    &gt; &gt;&gt; # Initializing a model (with random weights) from the google-bert/bert-base-uncased style configuration</span><br><span class="hljs-string">    &gt; &gt;&gt; model = BertModel(configuration)</span><br><span class="hljs-string"></span><br><span class="hljs-string">    &gt; &gt;&gt; # Accessing the model configuration</span><br><span class="hljs-string">    &gt; &gt;&gt; configuration = model.config</span><br><span class="hljs-string">    ```&quot;&quot;&quot;</span><br><br>    model_type = <span class="hljs-string">&quot;bert&quot;</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>()<br>    ...<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>注意到 <strong>BertConfig 类继承自 <code>PretrainedConfig</code>，这意味着之前从 <code>model.config</code> 打印的参数并不完整，进一步查看 PretrainedConfig 类的源码，可以看到模型使用的所有参数</strong>。了解模型使用的全部参数是重要的，因为我们修改模型时主要就是从修改参数入手</p>
+</li>
+</ul>
+<h2 id="22-模型保存"><a class="markdownIt-Anchor" href="#22-模型保存"></a> 2.2 模型保存</h2>
+<ul>
+<li>使用 <code>save_pretrained()</code> 方法将模型保存到指定位置  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 保存模型到指定路径</span><br>save_path = <span class="hljs-string">&quot;C:\\Users\\xxxxx&quot;</span><br>model = BertModel.from_pretrained(<span class="hljs-string">&quot;google-bert/bert-base-cased&quot;</span>)<br>model.save_pretrained(save_path)<br><br><span class="hljs-comment"># 推荐同时保存对应的tokenizer</span><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer<br>tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;google-bert/bert-base-cased&quot;</span>)<br>tokenizer.save_pretrained(save_path)<br></code></pre></td></tr></table></figure>
+</li>
+<li>模型保存后会得到 <code>config.json</code> 和 <code>model.safetensors</code> 两个文件，其中
+<ol>
+<li><code>config.json</code> 存储了模型架构参数，以及 checkpoint 来源、Transformers 版本等元数据</li>
+<li><code>model.safetensors</code> 被称为 state dictionary（状态字典） ，它包含了模型的所有权重</li>
+</ol>
+</li>
+</ul>
+<h2 id="23-模型调用"><a class="markdownIt-Anchor" href="#23-模型调用"></a> 2.3 模型调用</h2>
+<h3 id="231-不带-model-head-的模型调用"><a class="markdownIt-Anchor" href="#231-不带-model-head-的模型调用"></a> 2.3.1 不带 Model Head 的模型调用</h3>
+<ul>
+<li>
+<p>像 2.1.2 节那样加载，得到的 model 是不带 model head 的，这一点可以从打印从模型结构中看出，它以一个 <code>BertPooler</code> 块结尾</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">...<br>(pooler): BertPooler(<br>    (dense): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>    (activation): Tanh()<br>  )<br>...<br></code></pre></td></tr></table></figure>
+<p>可见输出特征还是 768 维，这意味着没有接调整到目标维度的 model head。<strong>当我们想把预训练的模型作为序列特征提取器时，这种裸模型是有用的</strong>，可以通过加载模型时传入参数 <code>output_attentions=True</code> 来获得模型所有层的 attention 张量</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 构造测试输入</span><br>sen = <span class="hljs-string">&quot;弱小的我也有大梦想！&quot;</span><br>tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>)  <span class="hljs-comment"># 加载 tokenizer</span><br>inputs = tokenizer(sen, return_tensors=<span class="hljs-string">&quot;pt&quot;</span>)           <span class="hljs-comment"># return_tensors=&quot;pt&quot; 要求返回 tensor 张量</span><br><br><span class="hljs-comment"># 不带 model head 的模型调用</span><br>model = AutoModel.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>, output_attentions=<span class="hljs-literal">True</span>) <span class="hljs-comment"># 要求输出 attention 张量</span><br>output = model(**inputs)<br><br><span class="hljs-built_in">print</span>(output.keys())    <span class="hljs-comment"># odict_keys([&#x27;last_hidden_state&#x27;, &#x27;pooler_output&#x27;, &#x27;attentions&#x27;])</span><br><span class="hljs-keyword">assert</span> output.last_hidden_state.shape[<span class="hljs-number">1</span>] == <span class="hljs-built_in">len</span>(inputs[<span class="hljs-string">&#x27;input_ids&#x27;</span>][<span class="hljs-number">0</span>]) <span class="hljs-comment"># 输出尺寸和输入尺寸相同</span><br></code></pre></td></tr></table></figure>
+<p>查看最后一层 hidden state</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 不带 model head 做下游任务时，通常我们是需要 model 提取的特征，即最后一层的 last_hidden_state</span><br>output.last_hidden_state      <span class="hljs-comment"># torch.Size([1, 12, 768])</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs shell">tensor([[[ 0.6804,  0.6664,  0.7170,  ..., -0.4102,  0.7839, -0.0262],<br>         [-0.7378, -0.2748,  0.5034,  ..., -0.1359, -0.4331, -0.5874],<br>         [-0.0212,  0.5642,  0.1032,  ..., -0.3617,  0.4646, -0.4747],<br>         ...,<br>         [ 0.0853,  0.6679, -0.1757,  ..., -0.0942,  0.4664,  0.2925],<br>         [ 0.3336,  0.3224, -0.3355,  ..., -0.3262,  0.2532, -0.2507],<br>         [ 0.6761,  0.6688,  0.7154,  ..., -0.4083,  0.7824, -0.0224]]],<br>       grad_fn=&lt;NativeLayerNormBackward0&gt;)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="232-带-model-head-的模型调用"><a class="markdownIt-Anchor" href="#232-带-model-head-的模型调用"></a> 2.3.2 带 Model Head 的模型调用</h3>
+<ul>
+<li>
+<p>使用带有 1.3 节所述 model head 类名后缀的模型类加载模型，即可得到带 head 的模型</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoModelForSequenceClassification<br><br>clz_model = AutoModelForSequenceClassification.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>)  <span class="hljs-comment"># 加载带多分类头的模型</span><br>clz_model <span class="hljs-comment"># 注意模型结构最后多了 (classifier): Linear(in_features=768, out_features=2, bias=True)</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs python">Some weights of BertForSequenceClassification were <span class="hljs-keyword">not</span> initialized <span class="hljs-keyword">from</span> the model checkpoint at hfl/rbt3 <span class="hljs-keyword">and</span> are newly initialized: [<span class="hljs-string">&#x27;classifier.bias&#x27;</span>, <span class="hljs-string">&#x27;classifier.weight&#x27;</span>]<br>You should probably TRAIN this model on a down-stream task to be able to use it <span class="hljs-keyword">for</span> predictions <span class="hljs-keyword">and</span> inference.<br>BertForSequenceClassification(<br>  (bert): BertModel(<br>    (embeddings): BertEmbeddings(<br>      (word_embeddings): Embedding(<span class="hljs-number">21128</span>, <span class="hljs-number">768</span>, padding_idx=<span class="hljs-number">0</span>)<br>      (position_embeddings): Embedding(<span class="hljs-number">512</span>, <span class="hljs-number">768</span>)<br>      (token_type_embeddings): Embedding(<span class="hljs-number">2</span>, <span class="hljs-number">768</span>)<br>      (LayerNorm): LayerNorm((<span class="hljs-number">768</span>,), eps=<span class="hljs-number">1e-12</span>, elementwise_affine=<span class="hljs-literal">True</span>)<br>      (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>    )<br>    (encoder): BertEncoder(<br>      (layer): ModuleList(<br>        (<span class="hljs-number">0</span>): BertLayer(<br>          (attention): BertAttention(<br>            (<span class="hljs-variable language_">self</span>): BertSelfAttention(<br>              (query): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (key): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (value): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>            )<br>            (output): BertSelfOutput(<br>              (dense): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (LayerNorm): LayerNorm((<span class="hljs-number">768</span>,), eps=<span class="hljs-number">1e-12</span>, elementwise_affine=<span class="hljs-literal">True</span>)<br>              (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>            )<br>          )<br>...<br>    )<br>  )<br>  (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>  (classifier): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">2</span>, bias=<span class="hljs-literal">True</span>)<br>)<br></code></pre></td></tr></table></figure>
+<p>注意模型现在变成了一个 <code>BertForSequenceClassification</code> 对象，其<strong>结构最后多了一个由 <code>dropout</code> 和 <code>classifier</code> 线性层组成的 head</strong>，而且这里提示我们 <code>Some weights of BertForSequenceClassification were not initialized...</code>，说明<strong>这个线性层的参数 ckpt 中没有提供，需要我们针对下游任务特别训练</strong></p>
+</li>
+<li>
+<p>注意到分类头默认输出维度（类别数为2），这个可以通过参数 <code>num_labels</code> 控制，从模型类 <code>BertForSequenceClassification</code> 定义进去检查。下面修改 model head 的输出维度看看</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 分类头默认输出维度（类别数为2），可以通过参数 num_labels 控制</span><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoModelForSequenceClassification, BertForSequenceClassification<br><br>clz_model = AutoModelForSequenceClassification.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>, num_labels=<span class="hljs-number">10</span>)  <span class="hljs-comment"># 指定10个类</span><br>clz_model <span class="hljs-comment"># 注意模型结构最后多了 (classifier): Linear(in_features=768, out_features=10, bias=True)</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs python">Some weights of BertForSequenceClassification were <span class="hljs-keyword">not</span> initialized <span class="hljs-keyword">from</span> the model checkpoint at hfl/rbt3 <span class="hljs-keyword">and</span> are newly initialized: [<span class="hljs-string">&#x27;classifier.bias&#x27;</span>, <span class="hljs-string">&#x27;classifier.weight&#x27;</span>]<br>You should probably TRAIN this model on a down-stream task to be able to use it <span class="hljs-keyword">for</span> predictions <span class="hljs-keyword">and</span> inference.<br>BertForSequenceClassification(<br>  (bert): BertModel(<br>    (embeddings): BertEmbeddings(<br>      (word_embeddings): Embedding(<span class="hljs-number">21128</span>, <span class="hljs-number">768</span>, padding_idx=<span class="hljs-number">0</span>)<br>      (position_embeddings): Embedding(<span class="hljs-number">512</span>, <span class="hljs-number">768</span>)<br>      (token_type_embeddings): Embedding(<span class="hljs-number">2</span>, <span class="hljs-number">768</span>)<br>      (LayerNorm): LayerNorm((<span class="hljs-number">768</span>,), eps=<span class="hljs-number">1e-12</span>, elementwise_affine=<span class="hljs-literal">True</span>)<br>      (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>    )<br>    (encoder): BertEncoder(<br>      (layer): ModuleList(<br>        (<span class="hljs-number">0</span>): BertLayer(<br>          (attention): BertAttention(<br>            (<span class="hljs-variable language_">self</span>): BertSelfAttention(<br>              (query): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (key): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (value): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>            )<br>            (output): BertSelfOutput(<br>              (dense): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">768</span>, bias=<span class="hljs-literal">True</span>)<br>              (LayerNorm): LayerNorm((<span class="hljs-number">768</span>,), eps=<span class="hljs-number">1e-12</span>, elementwise_affine=<span class="hljs-literal">True</span>)<br>              (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>            )<br>          )<br>...<br>    )<br>  )<br>  (dropout): Dropout(p=<span class="hljs-number">0.1</span>, inplace=<span class="hljs-literal">False</span>)<br>  (classifier): Linear(in_features=<span class="hljs-number">768</span>, out_features=<span class="hljs-number">10</span>, bias=<span class="hljs-literal">True</span>)<br>)<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>使用以上模型做前向传播试试</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">clz_model(**inputs)<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs shell">SequenceClassifierOutput(loss=None, logits=tensor([[ 0.1448,  0.1539, -0.1112,  0.1182,  0.2485,  0.4370,  0.3614,  0.5981,<br>          0.5442, -0.2900]], grad_fn=&lt;AddmmBackward0&gt;), hidden_states=None, attentions=None)<br></code></pre></td></tr></table></figure>
+<p>可见输出结构中存在一个 <code>loss</code> 成员，说明前向过程中就有计算 loss 的结构了，不妨看一下 <code>BertForSequenceClassification</code> 类的定义</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">BertForSequenceClassification</span>(<span class="hljs-title class_ inherited__">BertPreTrainedModel</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self, config</span>):<br>        <span class="hljs-built_in">super</span>().__init__(config)<br>        <span class="hljs-variable language_">self</span>.num_labels = config.num_labels<br>        <span class="hljs-variable language_">self</span>.config = config<br><br>        <span class="hljs-variable language_">self</span>.bert = BertModel(config)<br>        classifier_dropout = (<br>            config.classifier_dropout <span class="hljs-keyword">if</span> config.classifier_dropout <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> config.hidden_dropout_prob<br>        )<br>        <span class="hljs-variable language_">self</span>.dropout = nn.Dropout(classifier_dropout)<br>        <span class="hljs-variable language_">self</span>.classifier = nn.Linear(config.hidden_size, config.num_labels)<br><br>        <span class="hljs-comment"># Initialize weights and apply final processing</span><br>        <span class="hljs-variable language_">self</span>.post_init()<br><br><span class="hljs-meta">    @add_start_docstrings_to_model_forward(<span class="hljs-params">BERT_INPUTS_DOCSTRING.<span class="hljs-built_in">format</span>(<span class="hljs-params"><span class="hljs-string">&quot;batch_size, sequence_length&quot;</span></span>)</span>)</span><br><span class="hljs-meta">    @add_code_sample_docstrings(<span class="hljs-params"></span></span><br><span class="hljs-params"><span class="hljs-meta">        checkpoint=_CHECKPOINT_FOR_SEQUENCE_CLASSIFICATION,</span></span><br><span class="hljs-params"><span class="hljs-meta">        output_type=SequenceClassifierOutput,</span></span><br><span class="hljs-params"><span class="hljs-meta">        config_class=_CONFIG_FOR_DOC,</span></span><br><span class="hljs-params"><span class="hljs-meta">        expected_output=_SEQ_CLASS_EXPECTED_OUTPUT,</span></span><br><span class="hljs-params"><span class="hljs-meta">        expected_loss=_SEQ_CLASS_EXPECTED_LOSS,</span></span><br><span class="hljs-params"><span class="hljs-meta">    </span>)</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params"></span><br><span class="hljs-params">        self,</span><br><span class="hljs-params">        input_ids: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        attention_mask: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        token_type_ids: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        position_ids: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        head_mask: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        inputs_embeds: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        labels: <span class="hljs-type">Optional</span>[torch.Tensor] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        output_attentions: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">bool</span>] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        output_hidden_states: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">bool</span>] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">        return_dict: <span class="hljs-type">Optional</span>[<span class="hljs-built_in">bool</span>] = <span class="hljs-literal">None</span>,</span><br><span class="hljs-params">    </span>) -&gt; <span class="hljs-type">Union</span>[<span class="hljs-type">Tuple</span>[torch.Tensor], SequenceClassifierOutput]:<br>        <span class="hljs-string">r&quot;&quot;&quot;</span><br><span class="hljs-string">        labels (`torch.LongTensor` of shape `(batch_size,)`, *optional*):</span><br><span class="hljs-string">            Labels for computing the sequence classification/regression loss. Indices should be in `[0, ...,</span><br><span class="hljs-string">            config.num_labels - 1]`. If `config.num_labels == 1` a regression loss is computed (Mean-Square loss), If</span><br><span class="hljs-string">            `config.num_labels &gt; 1` a classification loss is computed (Cross-Entropy).</span><br><span class="hljs-string">        &quot;&quot;&quot;</span><br>        return_dict = return_dict <span class="hljs-keyword">if</span> return_dict <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> <span class="hljs-variable language_">self</span>.config.use_return_dict<br><br>        outputs = <span class="hljs-variable language_">self</span>.bert(<br>            input_ids,<br>            attention_mask=attention_mask,<br>            token_type_ids=token_type_ids,<br>            position_ids=position_ids,<br>            head_mask=head_mask,<br>            inputs_embeds=inputs_embeds,<br>            output_attentions=output_attentions,<br>            output_hidden_states=output_hidden_states,<br>            return_dict=return_dict,<br>        )<br><br>        pooled_output = outputs[<span class="hljs-number">1</span>]<br><br>        pooled_output = <span class="hljs-variable language_">self</span>.dropout(pooled_output)<br>        logits = <span class="hljs-variable language_">self</span>.classifier(pooled_output)<br><br>        loss = <span class="hljs-literal">None</span><br>        <span class="hljs-keyword">if</span> labels <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>            <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.config.problem_type <span class="hljs-keyword">is</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.num_labels == <span class="hljs-number">1</span>:<br>                    <span class="hljs-variable language_">self</span>.config.problem_type = <span class="hljs-string">&quot;regression&quot;</span><br>                <span class="hljs-keyword">elif</span> <span class="hljs-variable language_">self</span>.num_labels &gt; <span class="hljs-number">1</span> <span class="hljs-keyword">and</span> (labels.dtype == torch.long <span class="hljs-keyword">or</span> labels.dtype == torch.<span class="hljs-built_in">int</span>):<br>                    <span class="hljs-variable language_">self</span>.config.problem_type = <span class="hljs-string">&quot;single_label_classification&quot;</span><br>                <span class="hljs-keyword">else</span>:<br>                    <span class="hljs-variable language_">self</span>.config.problem_type = <span class="hljs-string">&quot;multi_label_classification&quot;</span><br><br>            <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.config.problem_type == <span class="hljs-string">&quot;regression&quot;</span>:<br>                loss_fct = MSELoss()<br>                <span class="hljs-keyword">if</span> <span class="hljs-variable language_">self</span>.num_labels == <span class="hljs-number">1</span>:<br>                    loss = loss_fct(logits.squeeze(), labels.squeeze())<br>                <span class="hljs-keyword">else</span>:<br>                    loss = loss_fct(logits, labels)<br>            <span class="hljs-keyword">elif</span> <span class="hljs-variable language_">self</span>.config.problem_type == <span class="hljs-string">&quot;single_label_classification&quot;</span>:<br>                loss_fct = CrossEntropyLoss()<br>                loss = loss_fct(logits.view(-<span class="hljs-number">1</span>, <span class="hljs-variable language_">self</span>.num_labels), labels.view(-<span class="hljs-number">1</span>))<br>            <span class="hljs-keyword">elif</span> <span class="hljs-variable language_">self</span>.config.problem_type == <span class="hljs-string">&quot;multi_label_classification&quot;</span>:<br>                loss_fct = BCEWithLogitsLoss()<br>                loss = loss_fct(logits, labels)<br>        <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> return_dict:<br>            output = (logits,) + outputs[<span class="hljs-number">2</span>:]<br>            <span class="hljs-keyword">return</span> ((loss,) + output) <span class="hljs-keyword">if</span> loss <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">else</span> output<br><br>        <span class="hljs-keyword">return</span> SequenceClassifierOutput(<br>            loss=loss,<br>            logits=logits,<br>            hidden_states=outputs.hidden_states,<br>            attentions=outputs.attentions,<br>        )<br><br></code></pre></td></tr></table></figure>
+<p>从 forward 方法中可见，如果传入了 labels 参数，则会进一步根据输出尺寸 <code>num_labels </code> 自动识别任务类型，并使用相应的损失函数计算 loss 作为返回的一部分</p>
+</li>
+</ul>
+<h1 id="3-下游任务训练"><a class="markdownIt-Anchor" href="#3-下游任务训练"></a> 3. 下游任务训练</h1>
+<ul>
+<li>在 2.2.2 节，我们构造了一个 <code>BertForSequenceClassification</code> 模型，它的 Bert 骨干加载了预训练的 ckpt 权重，而分类头权重是随机初始化的。本节我们使用 <a target="_blank" rel="noopener" href="https://github.com/SophonPlus/ChineseNlpCorpus/blob/master/datasets/ChnSentiCorp_htl_all/intro.ipynb">ChnSentiCorp_htl_all数据集</a>对它做下游任务训练，该数据集由 7000 多条酒店评论数据，包括 5000 多条正向评论，2000 多条负向评论，用这些数据继续训练，可以得到一个文本情感分类模型。由于模型中绝大部分参数都有良好的初始权重，且模型规模很小，训练成本并不高</li>
+<li>我们这里不使用 Transformers 库的 pipeline、evaluate、trainer 和 dataset，尽量手动实现全部代码，细节请参考注释  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> os<br><span class="hljs-keyword">import</span> sys<br>base_path = os.path.abspath(os.path.join(os.path.dirname(__file__)))<br>sys.path.append(base_path)<br><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer, AutoModelForSequenceClassification<br><span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd<br><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">from</span> torch.utils.data <span class="hljs-keyword">import</span> Dataset, DataLoader, random_split<br><span class="hljs-keyword">from</span> torch.optim <span class="hljs-keyword">import</span> Adam<br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyDataset</span>(<span class="hljs-title class_ inherited__">Dataset</span>):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>) -&gt; <span class="hljs-literal">None</span>:<br>        <span class="hljs-built_in">super</span>().__init__()<br>        <span class="hljs-variable language_">self</span>.data = pd.read_csv(<span class="hljs-string">f&quot;<span class="hljs-subst">&#123;base_path&#125;</span>/ChnSentiCorp_htl_all.csv&quot;</span>)    <span class="hljs-comment"># 加载原始数据</span><br>        <span class="hljs-variable language_">self</span>.data = <span class="hljs-variable language_">self</span>.data.dropna()                                      <span class="hljs-comment"># 去掉 nan 值</span><br><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__getitem__</span>(<span class="hljs-params">self, index</span>):<br>        text:<span class="hljs-built_in">str</span> = <span class="hljs-variable language_">self</span>.data.iloc[index][<span class="hljs-string">&quot;review&quot;</span>]<br>        label:<span class="hljs-built_in">int</span> = <span class="hljs-variable language_">self</span>.data.iloc[index][<span class="hljs-string">&quot;label&quot;</span>]<br>        <span class="hljs-keyword">return</span> text, label<br>    <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__len__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(<span class="hljs-variable language_">self</span>.data)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">collate_func</span>(<span class="hljs-params">batch</span>):<br>    <span class="hljs-comment"># 对 dataloader 得到的 batch data 进行后处理</span><br>    <span class="hljs-comment"># batch data 是一个 list，其中每个元素是 (sample, label) 形式的元组</span><br>    texts, labels = [], []<br>    <span class="hljs-keyword">for</span> item <span class="hljs-keyword">in</span> batch:<br>        texts.append(item[<span class="hljs-number">0</span>])<br>        labels.append(item[<span class="hljs-number">1</span>])<br>    <br>    <span class="hljs-comment"># 对原始 texts 列表进行批量 tokenize，通过填充或截断保持 token 长度为 128，要求返回的每个字段都是 pytorch tensor</span><br>    <span class="hljs-keyword">global</span> tokenizer<br>    inputs = tokenizer(texts, max_length=<span class="hljs-number">128</span>, padding=<span class="hljs-string">&quot;max_length&quot;</span>, truncation=<span class="hljs-literal">True</span>, return_tensors=<span class="hljs-string">&quot;pt&quot;</span>)<br><br>    <span class="hljs-comment"># 增加 label 字段，这样之后模型前向传播时可以直接计算 loss</span><br>    inputs[<span class="hljs-string">&quot;labels&quot;</span>] = torch.tensor(labels)<br>    <span class="hljs-keyword">return</span> inputs<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate</span>(<span class="hljs-params">model</span>):<br>    model.<span class="hljs-built_in">eval</span>()<br>    acc_num = <span class="hljs-number">0</span><br>    <span class="hljs-keyword">with</span> torch.inference_mode():<br>        <span class="hljs-keyword">for</span> batch <span class="hljs-keyword">in</span> validloader:<br>            <span class="hljs-keyword">if</span> torch.cuda.is_available():<br>                batch = &#123;k: v.cuda() <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> batch.items()&#125;<br>            output = model(**batch)<br>            pred = torch.argmax(output.logits, dim=-<span class="hljs-number">1</span>)<br>            acc_num += (pred.long() == batch[<span class="hljs-string">&quot;labels&quot;</span>].long()).<span class="hljs-built_in">float</span>().<span class="hljs-built_in">sum</span>()<br>    <span class="hljs-keyword">return</span> acc_num / <span class="hljs-built_in">len</span>(validset)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train</span>(<span class="hljs-params">model, optimizer, epoch=<span class="hljs-number">3</span>, log_step=<span class="hljs-number">100</span></span>):<br>    global_step = <span class="hljs-number">0</span><br>    <span class="hljs-keyword">for</span> ep <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(epoch):<br>        model.train()<br>        <span class="hljs-keyword">for</span> batch <span class="hljs-keyword">in</span> trainloader:<br>            <span class="hljs-keyword">if</span> torch.cuda.is_available():<br>                batch = &#123;k: v.cuda() <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> batch.items()&#125;<br>            optimizer.zero_grad()<br>            output = model(**batch) <span class="hljs-comment"># batch 是一个字典，其中包含 model forward 方法所需的字段，每个字段 value 是 batch tensor</span><br>            output.loss.backward()  <span class="hljs-comment"># batch 字典中包含 labels 时会计算损失，详见源码</span><br>            optimizer.step()<br>            <span class="hljs-keyword">if</span> global_step % log_step == <span class="hljs-number">0</span>:<br>                <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;ep: <span class="hljs-subst">&#123;ep&#125;</span>, global_step: <span class="hljs-subst">&#123;global_step&#125;</span>, loss: <span class="hljs-subst">&#123;output.loss.item()&#125;</span>&quot;</span>)<br>            global_step += <span class="hljs-number">1</span><br>        acc = evaluate(model)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;ep: <span class="hljs-subst">&#123;ep&#125;</span>, acc: <span class="hljs-subst">&#123;acc&#125;</span>&quot;</span>)<br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&quot;__main__&quot;</span>:<br>    <span class="hljs-comment"># 构造训练集/测试集以及对应的 Dataloader</span><br>    dataset = MyDataset()<br>    train_size = <span class="hljs-built_in">int</span>(<span class="hljs-number">0.9</span>*<span class="hljs-built_in">len</span>(dataset))<br>    vaild_size = <span class="hljs-built_in">len</span>(dataset) - train_size<br>    trainset, validset = random_split(dataset, lengths=[train_size, vaild_size])<br>    trainloader = DataLoader(trainset, batch_size=<span class="hljs-number">32</span>, shuffle=<span class="hljs-literal">True</span>, collate_fn=collate_func)<br>    validloader = DataLoader(validset, batch_size=<span class="hljs-number">64</span>, shuffle=<span class="hljs-literal">False</span>, collate_fn=collate_func)<br><br>    <span class="hljs-comment"># 构造 tokenizer、model 和 optimizer</span><br>    tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>)<br>    model = AutoModelForSequenceClassification.from_pretrained(<span class="hljs-string">&quot;hfl/rbt3&quot;</span>)  <span class="hljs-comment"># 从 AutoModelForSequenceClassification 加载标准初始化模型，从 AutoModel.from_pretrained(&quot;hfl/rbt3&quot;) 加载 ckpt 权重模型</span><br>    <span class="hljs-keyword">if</span> torch.cuda.is_available():<br>        model = model.cuda()<br>    optimizer = Adam(model.parameters(), lr=<span class="hljs-number">2e-5</span>)<br><br>    <span class="hljs-comment"># 训练</span><br>    train(model, optimizer)<br><br>    <span class="hljs-comment"># 测试</span><br>    sen = <span class="hljs-string">&quot;我觉得这家酒店不错，饭很好吃！&quot;</span><br>    id2_label = &#123;<span class="hljs-number">0</span>: <span class="hljs-string">&quot;差评！&quot;</span>, <span class="hljs-number">1</span>: <span class="hljs-string">&quot;好评！&quot;</span>&#125;<br>    model.<span class="hljs-built_in">eval</span>()<br>    <span class="hljs-keyword">with</span> torch.inference_mode():<br>        inputs = tokenizer(sen, return_tensors=<span class="hljs-string">&quot;pt&quot;</span>)<br>        inputs = &#123;k: v.cuda() <span class="hljs-keyword">for</span> k, v <span class="hljs-keyword">in</span> inputs.items()&#125;<br>        logits = model(**inputs).logits<br>        pred = torch.argmax(logits, dim=-<span class="hljs-number">1</span>)<br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">f&quot;输入：<span class="hljs-subst">&#123;sen&#125;</span>\n模型预测结果:<span class="hljs-subst">&#123;id2_label.get(pred.item())&#125;</span>&quot;</span>)<br><br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs shell">Some weights of BertForSequenceClassification were not initialized from the model checkpoint at hfl/rbt3 and are newly initialized: [&#x27;classifier.bias&#x27;, &#x27;classifier.weight&#x27;]<br>You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.<br>ep: 0, global_step: 0, loss: 0.6289803385734558<br>ep: 0, global_step: 200, loss: 0.17686372995376587<br>ep: 0, acc: 0.8944659233093262<br>ep: 1, global_step: 300, loss: 0.18355882167816162<br>ep: 1, global_step: 400, loss: 0.27272453904151917<br>ep: 1, acc: 0.8957529067993164<br>ep: 2, global_step: 500, loss: 0.18500971794128418<br>ep: 2, global_step: 600, loss: 0.08873294293880463<br>ep: 2, acc: 0.8918918967247009<br>输入：我觉得这家酒店不错，饭很好吃！<br>模型预测结果:好评！<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E5%B8%B8%E7%94%A8%E5%BA%93/" class="category-chain-item">常用库</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E5%B8%B8%E7%94%A8%E5%BA%93/Transformers%E5%BA%93/" class="category-chain-item">Transformers库</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/Transformers%E5%BA%93/" class="print-no-link">#Transformers库</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Transformers库（4）—— Model</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/10/03/Transformers库4_Model/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年10月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/10/08/Transformess%E5%BA%935_Datasets/" title="Transformess库（5）—— Datasets">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Transformess库（5）—— Datasets</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/10/02/Transformers%E5%BA%933_Tokenizer/" title="Transformers库（3）—— Tokenizer">
+                        <span class="hidden-mobile">Transformers库（3）—— Tokenizer</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

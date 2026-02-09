@@ -1,0 +1,981 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="Step-opt 是一种针对 LLM 求解运筹优化任务的数据增强框架，其通过用迭代问题生成 + 分步验证机制实现更可靠的训练数据合成，并微调开源 LLM 得到 Step-Opt，在多个 OR 建模基准提升性能，尤其在复杂问题上提升更明显">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2026/01/31/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="Step-opt 是一种针对 LLM 求解运筹优化任务的数据增强框架，其通过用迭代问题生成 + 分步验证机制实现更可靠的训练数据合成，并微调开源 LLM 得到 Step-Opt，在多个 OR 建模基准提升性能，尤其在复杂问题上提升更明显">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/index.png">
+<meta property="article:published_time" content="2026-01-31T20:22:08.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LLM-OR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/index.png">
+  
+  
+  
+  <title>论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-01-31 20:22" pubdate>
+          2026年1月31日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          38 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157399452">论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://aclanthology.org/anthology-files/pdf/findings/2025.findings-emnlp.691.pdf">Training LLMs for Optimization Modeling via Iterative Data Synthesis and Structured Validation
+</a></li>
+<li>发表：EMNLP 2025 Findings</li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/samwu-learn/Step">samwu-learn/Step</a></li>
+<li>领域：LLM OR</li>
+<li>一句话总结：使用 LLM 对运筹优化问题（OR Problem）建模时，现有基于提示的方法（如 CoT/Reflexion/CoE）在复杂 OR 优化建模任务上仍不稳定，而现有微调路线（如 ORLM）受限于高质量建模数据的获取与质量控制。本文提出 Step-Opt-Instruct <strong>数据合成框架</strong>，通过 <strong>“迭代式问题生成”</strong> 逐步提升问题复杂度/扩展覆盖，并用 <strong>“分步验证”</strong> 在生成阶段过滤错误、防止错误传播，从而构建高质量微调数据并训练得到 Step-Opt，使开源 LLM 在 NL4OPT、MAMO、IndustryOR 等基准上，尤其在困难问题上取得显著提升</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：大型语言模型（LLMs）已经革新了多个领域，但在处理运筹学（OR）的优化建模任务时仍面临重大挑战，尤其是在应对复杂问题时。本文提出 Step-Opt-Instruct，一个<strong>用于扩增现有数据集并生成面向优化建模的高质量微调数据的框架</strong>。Step-Opt-Instruct 采用<strong>迭代式问题生成来系统性地提升问题复杂度</strong>，并<strong>通过分步验证对数据进行严格核验</strong>，从而防止错误传播并确保生成数据集的质量。基于该框架，我们对开源 LLM 进行微调（包括 LLaMA-3-8B 和 Mistral-7B），从而得到 Step-Opt——一个在 NL4OPT、MAMO 和 IndustryOR 等基准上达到最先进性能的模型。大量实验表明 Step-Opt 具有更优的表现，尤其在解决复杂 OR 任务时优势显著：在困难问题上，其 micro average accuracy 提升了 17.01%。这些发现突显了将结构化验证与渐进式问题细化相结合、以推进使用 LLM 自动化决策过程的有效性</li>
+</ul>
+<h1 id="1-背景"><a class="markdownIt-Anchor" href="#1-背景"></a> 1. 背景</h1>
+<h2 id="11-运筹问题建模"><a class="markdownIt-Anchor" href="#11-运筹问题建模"></a> 1.1 运筹问题建模</h2>
+<ul>
+<li>本文研究复杂运筹学问题 (OR Problem) 的自动建模与编程，以减轻对人类专家的严重依赖。具体而言，这类问题要求<strong>输入一段自然语言描述的问题</strong>（如配送货、生产规划等问题），要求模型或系统完成<strong>运筹学建模</strong>，并<strong>生成问题求解代码</strong>。近期研究常借助 LLM 丰富的领域知识完成建模，主要存在两类方法：
+<ol>
+<li><strong>基于提示的建模prompt-based modeling</strong>：通过为 GPT-4 等大规模预训练 LLM 精心设计建模 Prompt 实现数学建模和代码生成
+<ul>
+<li>基础方式包括引入推理链的 CoT、ToT、引入反馈迭代机制的 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141812277">Reflexion</a> 等，这些方法的缺点在于缺乏针对 OR 领域的针对性设计</li>
+<li><strong>近期工作常通过某种问题分解机制对限定复杂问题边界或对建模流程进行拆分，从而提升提示词精度并降低子问题难度</strong>，如 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/156361583">OptiTree</a> 基于问题类型的包含关系构造建模树，实现复杂任务类型的精细识别；<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157328214">PaMOP</a> 通过拆分原问题约束条件构造问题划分树，将复杂问题拆分为多个简单子问题分块建模；Optimus 等方法通过多 Agent 机制对数学建模和代码编写的各个阶段进行拆分，提升子流程的处理精度</li>
+</ul>
+</li>
+<li><strong>基于微调的建模fine-tuned LLM modeling agents</strong>：通过构造大规模运筹学及建模知识对 LLM 进行微调，形成专用的建模语言模型。这里的代表性方法是 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141610882">ORLM</a>，其使用通用 prompt 模板驱动 LLM 对种子问题的约束、目标、问题描述方式和建模技巧进行改写，再使用简单的启发式方法过滤明显低质量的数据（如重复描述、程序无法执行等），多轮迭代后使用构造数据集微调 LLM 进行问题建模和求解</li>
+</ol>
+</li>
+<li>本文聚焦于基于微调的方法，针对经典方法 ORLM 存在的问题进行改进
+<ol>
+<li>针对 ORLM 偏半自动化，缺乏有效错误过滤机制的问题，提出一种新的<strong>错误自动识别纠正</strong>方法</li>
+<li>针对 ORLM 对所有问题使用通用 Prompt 模版，缺乏精细提示的问题，提出一种新的<strong>数据合成</strong>方法</li>
+</ol>
+</li>
+</ul>
+<h2 id="12-数据增强"><a class="markdownIt-Anchor" href="#12-数据增强"></a> 1.2 数据增强</h2>
+<ul>
+<li>数据增强是指当领域数据不足时，通过构造合成数据集提高模型性能，是监督学习领域的一种常见做法
+<ul>
+<li>ORLM 通过修改和重述扩展行业案例数据集</li>
+<li>ReSoCratic 采用逆向数据合成方法，从解决方案反向生成优化问题场景描述</li>
+<li>Evol-Instruct 针对通用 LLM 指令微调任务构造数据，从增加指令深度（通过增加约束、加深要求、具体化、增加推理步骤等方式把问题复杂化）和扩大指令广度（基于原指令生成主题/任务不同的新问题）两方面进行数据增强，提升覆盖面与多样性</li>
+</ul>
+</li>
+<li>本文方法 Step-Opt 可以看作在 Evol-Instruct 的深度/广度进化范式上，针对 OR 建模引入结构化验证与领域算子的扩展版本</li>
+</ul>
+<h1 id="2-本文方法"><a class="markdownIt-Anchor" href="#2-本文方法"></a> 2. 本文方法</h1>
+<h2 id="21-问题生成器"><a class="markdownIt-Anchor" href="#21-问题生成器"></a> 2.1 问题生成器</h2>
+<ul>
+<li>
+<p>Step-Opt 设计了类似 Evol-Instruct 的问题生成机制，从增加问题复杂度和迁移问题领域两个角度扩展训练数据。具体而言，首先需要准备一组种子数据集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi><mo>=</mo><msubsup><mrow><mo fence="true">{</mo><mrow><mo fence="true">(</mo><msub><mi>q</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>i</mi></msub><mo fence="true">)</mo></mrow><mo fence="true">}</mo></mrow><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></msubsup></mrow><annotation encoding="application/x-tex">D=\left\{\left(q_{i}, m_{i}\right)\right\}_{i=1}^{K}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.2809309999999998em;vertical-align:-0.29969999999999997em;"></span><span class="minner"><span class="minner"><span class="mopen delimcenter" style="top:0em;">{</span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mclose delimcenter" style="top:0em;">}</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.4003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29969999999999997em;"><span></span></span></span></span></span></span></span></span></span> 每个种子问题由问题描述 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">q_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 和对应数学建模及程序 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">m_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 组成，每次迭代从 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>D</mi></mrow><annotation encoding="application/x-tex">D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span> 随机采样一个种子数据 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>q</mi><mi>s</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>s</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(q_s, m_s)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span>，然后使用某种特定的进化方法 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mi>e</mi></msub></mrow><annotation encoding="application/x-tex">f_e</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">e</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 将其改写为新问题，形式化表示为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>q</mi><mi>n</mi></msub><mo>=</mo><msub><mi>f</mi><mi>e</mi></msub><mo stretchy="false">(</mo><msub><mi>q</mi><mi>s</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">q_n = f_e(q_s)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">e</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>改写过程是<strong>使用 prompt 驱动 LLM 完成的</strong>，改写方法可以分为 <strong><code>复杂度进化 Complexity-Evolving</code></strong> 与 <strong><code>范围进化Scope-Evolving</code></strong> 两类</p>
+</li>
+<li>
+<p><strong>复杂度进化</strong>：针对 OR 问题特性，通过约束修改、目标改变和参数调整三种修改方式修改已有条件或引入新元素，在保持逻辑一致性的同时逐步提高问题难度。为了避免生成的问题过于复杂，<strong>限制对约束或目标的修改最多只允许一项，参数调整最多引入一个新实体</strong></p>
+<ol>
+<li>
+<p><strong>约束修改</strong>：修订已有约束或添加新约束以增强问题。其核心原则是 “在保留逻辑结构的前提下，基于给定问题修改约束”，从而在复杂度增加时保持问题基本逻辑不变</p>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+</div>
+</li>
+<li>
+<p><strong>目标改变</strong>：修改目标或引入新目标，但限制为 “不能仅仅调整系数”</p>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+</div>
+</li>
+<li>
+<p><strong>参数调整</strong>：改变数值或添加元素；与上述方法一样，其共同原则是保留底层结构，并从不同角度提升问题难度</p>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+</div>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>范围进化</strong>：通过将种子样本转换到不同领域，或将其与另一条样本组合生成新场景，以扩展主题覆盖与多样性</p>
+<ol>
+<li>
+<p><strong>领域转换</strong>：将原问题的基本结构迁移到新领域，同时保留其逻辑与约束，从而提升语言与上下文多样性。为保证实际相关性，作者定义了一组<strong>参考领域列表</strong></p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+<li>
+<p><strong>组合</strong>：将两个不同问题合并成一个新问题，新问题属于不同领域并包含新的细节；这种方式带来更大的变化。为控制复杂度，要求<strong>新问题长度与其中一个原问题相近</strong>，以保持难度可控</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+</ol>
+</li>
+<li>
+<p>综上，Step-Opt 中的问题构造示意图如下，其中红色表示 “”“复杂度进化”，蓝色表示 “范围进化”</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+</li>
+</ul>
+<h2 id="22-解答生成器"><a class="markdownIt-Anchor" href="#22-解答生成器"></a> 2.2 解答生成器</h2>
+<ul>
+<li>使用 2.1 节方法合成新问题 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">q_{n}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 后，解答生成器利用原始问题 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>q</mi><mi>s</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>s</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(q_{s}, m_{s})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 和进化方法信息 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>f</mi><mi>e</mi></msub></mrow><annotation encoding="application/x-tex">f_{e}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 作为参考，为新问题生成数学建模与求解程序 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">m_{n}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，形式化表示为<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>m</mi><mi>n</mi></msub><mo>=</mo><mi>g</mi><mrow><mo fence="true">(</mo><msub><mi>q</mi><mi>n</mi></msub><mo separator="true">,</mo><msub><mi>q</mi><mi>s</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>s</mi></msub><mo separator="true">,</mo><msub><mi>f</mi><mi>e</mi></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">m_{n}=g\left(q_{n}, q_{s}, m_{s}, f_{e}\right)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.10764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">e</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span></span></p>
+由于 LLM 可能难以处理复杂模型，作者在 meta-prompt 中加入指令：“确保格式与结构尽可能与给定的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><msub><mi>q</mi><mi>s</mi></msub><mo separator="true">,</mo><msub><mi>m</mi><mi>s</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(q_{s}, m_{s})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span> 保持一致</li>
+</ul>
+<h2 id="23-分步验证机制"><a class="markdownIt-Anchor" href="#23-分步验证机制"></a> 2.3 分步验证机制</h2>
+<ul>
+<li>
+<p>使用 2.1 和 2.2 节的方法可以对种子数据集进行有效扩展，由于 OR 建模的复杂性，仍很能存在参数确实、优化目标含糊或高级技巧误用等问题，若缺乏足够的监督与纠错机制，这类问题往往会持续存在，逐步破坏数据集质量并影响模型表现，特别是在 bootstrap 迭代构造数据集时，错误数据会不断传染，导致数据质量下降</p>
+</li>
+<li>
+<p>针对该问题，Step-Opt 使用分步验证机制在生成过程中持续检查，剔除低质量或错误数据以维持数据集完整性。该机制包含四类检查器，分别聚焦于：描述完整性、变量定义、约束实现与程序质量，具体如下</p>
+<ol>
+<li>
+<p><strong>描述检查器 description checker</strong>：评估生成的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">q_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 是否包含必要组成部分（优化目标、约束条件、参数变量和数值）。若缺失，则提供反馈并触发重新生成，直到验证通过或达到尝试次数上限。只有通过该检查后，解答生成器才会生成数学模型与程序。重新生成模板如下</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+<li>
+<p><strong>变量检查器 variables checker</strong>：在交叉参考 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>q</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">q_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">q</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.03588em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 与 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>m</mi><mi>n</mi></msub></mrow><annotation encoding="application/x-tex">m_n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">m</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 的基础上，提供分步指令，并给出覆盖常见类型的示例，使其能够核验变量定义是否正确</p>
+<blockquote>
+<p>这个模板论文没给，在源码中是有的，如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs shell"><span class="hljs-meta prompt_">#</span><span class="language-bash">Task Description: Check the Correctness of Decision Variable Definitions</span><br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">#Solution Description: To check the definitions of decision variables in a &quot;## Mathematical Model:&quot; for a combinatorial optimization problem, follow this structured approach:</span></span><br>**Important: The checks must be based on the problem description and common sense. No assumptions or conjectures should be made. The conclusions must be justified by the problem description or common sense.**<br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">##Step 1: Extract Decision Variable Definitions</span></span><br>1. In the &quot;## Mathematical Model:&quot; Find definitions under &quot;### Decision Variables&quot;.<br>2. In the &quot;## Python Code Solution Using coptpy:&quot; Identify definitions where &quot;model.addVar&quot; is used.<br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">##Step 2: Confirm Consistency with Problem Description</span></span><br>1. Ensure each variable&#x27;s type and bounds align with the problem&#x27;s actual meaning.<br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">##Step 3: Confirm Variable Types and Bounds</span></span><br>Note: The examples provided below are not exhaustive. Specific examples should be analyzed based on their actual meaning in the context of the problem.<br>1. **Integer Variables (Bounds &gt; 0): Examples of integer variables include the number of people (human resource), quantity(production quantity, the number of items produced, inventory quantity), event count, service count, product count, dose count, delivery count, number of vehicle trips, number of selections, number of machines, number of shifts, number of tasks, number of projects, number of batches, number of visits, number of orders, number of repairs, number of maintenance activities, number of inspections, number of tests, number of installations, number of calls, number of meetings, number of training sessions.**<br>2. **Binary Variables (0 or 1): Examples of binary variables include attendance, binary choices, facility opening decisions, allocation decisions.**<br>3. **Continuous Variables: Examples of continuous variables include length (like kilometre、metre、decimetre、centimetre、millimetre、micron, etc.), area (square meters, hectares, square kilometers, etc.), distance ( meter, kilometer, mile, centimeter, millimeter, micrometer, nanometer, inch, foot, yard, nautical mile, light-year.), time (second, minute, hour etc), amount of money,  weight (e.g., gram, kilogram, ton), volume (e.g., liter, cubic meter), temperature (e.g., degree Celsius, degree Fahrenheit), speed (e.g., meters per second, kilometers per hour), energy (e.g., joules, kilowatt-hours), power (e.g., watts, kilowatts), pressure (e.g., pascals, bar), flow rate (e.g., liters per second, cubic meters per hour), concentration (e.g., molarity, parts per million).**<br>4. **Continuous Variables with Range: Examples of variables with range include proportions or percentages (0 to 1).**<br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">##Step 4: Check the Python Code Solution Using coptpy</span></span><br>1. For integer variables: Ensure vtype=COPT.INTEGER.<br>2. For continuous variables: Ensure vtype=COPT.CONTINUOUS.<br>3. For binary variables: Ensure vtype=COPT.BINARY.<br><span class="hljs-meta prompt_">#</span><span class="language-bash"><span class="hljs-comment">## Output Format:</span></span><br>**If there are no errors, output: &quot;There are no errors found.&quot;<br>If there are errors, output the specific errors with the format &quot;ERROR:&quot; and how to fix them.**<br>Please check for any errors in the decision variable definitions based on the steps above. Make sure to especially reference the examples listed in &#x27;###Step 4&#x27;. Use #Examples as reference (Note that for ease of description, we will use the parts unrelated to decision variables as replace in #Examples). **Do not repeat the prompt, only provide the errors and fixes if any, or confirm there are no errors.**<br>**Input**:<br>&#123;problem_with_completion&#125;<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">Example1:</span><br>&#123;example1_input&#125;<br>&#123;example1_output&#125;<br><span class="hljs-meta prompt_"></span><br><span class="hljs-meta prompt_">#</span><span class="language-bash">Example2:</span><br>&#123;example2_input&#125;<br>&#123;example2_output&#125;<br></code></pre></td></tr></table></figure>
+</blockquote>
+</li>
+<li>
+<p><strong>约束检查器 constraint checker</strong>：确保约束被正确建模并与问题描述一致。这里会使用一个标准检查流程是：先识别约束，再验证其与问题内容一致性，类似变量验证。特别地，约束检查器会将 <strong>Big-M 方法</strong>、<strong>K-way 选择约束</strong> 等高级技术作为专门检查项给予特别关注；其他高级技术也可按此方式纳入检查</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_008.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+<li>
+<p><strong>程序检查器 program checker</strong>：抽取并执行程序，捕获输出或错误</p>
+</li>
+</ol>
+</li>
+<li>
+<p>以上所有检查步骤中，描述检查器在 2.1 节所述问题生成后即进行检查和重新生成，仅在通过检查时利用 2.2 节所述的解答生成器生成解。然后用变量检查器、约束检查器和程序检查器进行检查，查出的错误也反馈给 2.2 节描述的解答生成器重新生成解，直到通过所有检查或达到最大纠正次数为止。整体错误纠正流程如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_009.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<p>解答生成器纠错 prompt 模版如下</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_010.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+</li>
+<li>
+<p>Step-Opt 与 Chain-of-Experts（CoE）等多智能体框架的区别在于</p>
+<ul>
+<li>CoE 使用相互独立的 “专家”，每个专家解决一个完整子任务（例如，一个专家创建整个模型）</li>
+<li>Step-Opt 采用更细粒度、集成式的系统。<strong>检查器验证解答中的特定组成部分</strong>——例如变量或约束——而不是整项任务。这种<strong>组件级验证不仅更精确，而且在计算成本与 token 使用量方面显著更高效</strong>，使其特别适用于迭代式数据生成</li>
+</ul>
+</li>
+</ul>
+<h1 id="3-实验"><a class="markdownIt-Anchor" href="#3-实验"></a> 3. 实验</h1>
+<h2 id="31-实验设定"><a class="markdownIt-Anchor" href="#31-实验设定"></a> 3.1 实验设定</h2>
+<ul>
+<li><strong>数据集与清洗</strong>：作者在简单与复杂两类基准上评测：NL4OPT、MAMO EasyLP、MAMO ComplexLP、IndustryOR，并说明对答案/标注进行了必要的人工修订
+<ul>
+<li><strong>NL4OPT</strong>：共 1,101 个简单 LP，其中 <strong>289 用于评测</strong> ；作者修正了 <strong>16</strong> 个不准确实例</li>
+<li><strong>MAMO</strong>：含 EasyLP（652 个简单 LP）与 ComplexLP（211 个复杂 LP），都配有最优解；作者修正了 <strong>78</strong> 个不准确实例</li>
+<li><strong>IndustryOR</strong>：100 个复杂 OR 问题；因缺少关键信息或数值不准确，作者进行了 <strong>50</strong> 处修正，并移除了 <strong>23</strong> 个不满足建模标准的实例</li>
+</ul>
+</li>
+<li><strong>Baselines方法</strong>
+<ul>
+<li>tag-BART（NL4Opt 竞赛冠军模型）</li>
+<li>Prompt 方法：<strong>Standard / CoT / Reflexion</strong></li>
+<li>多智能体提示：<strong>Chain-of-Experts (CoE)</strong></li>
+<li>微调模型：<strong>ORLM</strong>（从 <a target="_blank" rel="noopener" href="https://huggingface.co/CardinalOperations/ORLM-LLaMA-3-8B">ORLM-LLaMA-3-8B ckpt</a> 开始，用 <a target="_blank" rel="noopener" href="https://huggingface.co/datasets/CardinalOperations/OR-Instruct-Data-3K">OR-Instruct-Data-3K</a> 数据进行微调；该 3K 数据也用于消融）</li>
+</ul>
+</li>
+<li>评测设置与指标
+<ul>
+<li>所有方法评测时 <strong>temperature=0</strong>；微调模型在 zero-shot 下用 greedy decoding，取 top-1 completion 作为解，确保对比公平</li>
+<li>推理最大生成长度 <strong>2,048 tokens</strong></li>
+<li>指标：用生成程序输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>o</mi></mrow><annotation encoding="application/x-tex">o</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">o</span></span></span></span> 与真值 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span></span></span></span> 的<strong>相对误差阈值</strong>判等：<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mfrac><mrow><mi mathvariant="normal">∣</mi><mi>o</mi><mo>−</mo><mi>g</mi><mi mathvariant="normal">∣</mi></mrow><mrow><mi>g</mi><mo>+</mo><mi>ϵ</mi></mrow></mfrac><mo>≤</mo><mn>1</mn><msup><mn>0</mn><mrow><mo>−</mo><mn>4</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\frac{|o-g|}{g+\epsilon} \leq 10^{-4}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:2.30744em;vertical-align:-0.8804400000000001em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathnormal">ϵ</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">∣</span><span class="mord mathnormal">o</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mord">∣</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.8804400000000001em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.864108em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.864108em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">4</span></span></span></span></span></span></span></span></span></span></span></span></span></p>
+其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi></mrow><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">ϵ</span></span></span></span> 防止除零；满足则认为等价</li>
+<li>训练数据构造与微调：从 <strong>260</strong> 个例子出发，进行 <strong>8,400</strong> 次迭代，用 GPT-4-turbo-0409 得到 <strong>4,464</strong> 个例子；随后用 LLaMA-Factory + Alpaca 模板 + LoRA 微调 <strong>LLaMA-3-8B</strong> 与 <strong>Mistral-7B</strong>（输入为固定 prompt+问题描述，输出为数学模型+程序）</li>
+</ul>
+</li>
+</ul>
+<h2 id="32-实验结果"><a class="markdownIt-Anchor" href="#32-实验结果"></a> 3.2 实验结果</h2>
+<ul>
+<li>
+<p>在 NL4OPT、MAMO EasyLP、MAMO ComplexLP、IndustryOR 上的准确率，以及 micro/macro 平均（其中 tag-BART 的结果为引用原论文）结果如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_011.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ul>
+<li><strong>Step-Opt-LLaMA-3-8B</strong> 在所有基准上达到最佳</li>
+<li>微调模型（ORLM、Step-Opt）整体上平均优于纯 prompt 工程方法；但在简单数据集（NL4OPT、EasyLP）差距较小，而在复杂数据集上优势更明显</li>
+<li>论文指出：<strong>复杂问题描述更“繁琐”，且需要更高级建模技巧，因此 Step-Opt 模型在复杂任务上体现出更强的处理能力</strong></li>
+</ul>
+</li>
+</ul>
+<h2 id="33-消融实验"><a class="markdownIt-Anchor" href="#33-消融实验"></a> 3.3 消融实验</h2>
+<h3 id="331-不同进化方法的贡献"><a class="markdownIt-Anchor" href="#331-不同进化方法的贡献"></a> 3.3.1 不同进化方法的贡献</h3>
+<ul>
+<li>
+<p>针对 2.1 节提出的 5 种数据扩展方法进行消融实验</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_012.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ul>
+<li><strong>domain transformation 对所有数据集有显著影响，显示其关键性</strong></li>
+<li><strong>parameter adjustment 更影响简单集</strong></li>
+<li><strong>constraint modification 与 objective alteration 对复杂集影响更大</strong>，特别是 constraint modification 会引入更多约束、提升难度，从而帮助模型学习复杂条件</li>
+</ul>
+</li>
+<li>
+<p>此外作者统计了不同生成方式的 “ 通过验证样本数”：发现组合最难、易失败；参数调整与领域变换相对更容易通过验证</p>
+<ul>
+<li>constraint modification 1,716；</li>
+<li>objective alteration 1,242；</li>
+<li>parameter adjustment 2,123；</li>
+<li>domain transformation 2,077；</li>
+<li>combination 455</li>
+</ul>
+</li>
+</ul>
+<h3 id="332-训练样本是否包含-数学模型"><a class="markdownIt-Anchor" href="#332-训练样本是否包含-数学模型"></a> 3.3.2 训练样本是否包含 “数学模型”</h3>
+<ul>
+<li>每条训练样本的解 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">m</span></span></span></span> 都包含 “数学模型 + 对应 COPT 程序”，虽然最终求解依赖程序，<strong>但移除数学模型会导致性能显著下降</strong>；为排除 token 数差异影响，控制总 token 数为 4.73M，仍然是 “包含数学模型” 的数据更好
+<blockquote>
+<p>Step-Opt 的数学建模是 “给人看的公式/说明体裁”，latex 格式存储，形如</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs csharp"><span class="hljs-meta">## Mathematical Model:</span><br>...（自然语言说明）<br><span class="hljs-meta">### Decision Variables:</span><br>- \(x_i\) ...（LaTeX/符号）<br><span class="hljs-meta">### Objective Function:</span><br>- Minimize ... \(Z = ...\)<br><span class="hljs-meta">### Constraints:</span><br>...<br><span class="hljs-meta">## Python Code Solution Using coptpy:</span><br></code></pre></td></tr></table></figure>
+<p>相比而言，<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157328214">PaMOP</a> 生成的模型是 AMPL 伪代码，<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/156361583">OptiTree</a> 直接生成 gurobi 代码</p>
+</blockquote>
+</li>
+<li>作者认为数学模型是一种 “结构化推理桥梁”，类似 CoT，能帮助从问题描述过渡到代码解  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_013.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+</li>
+</ul>
+<h3 id="333-数据集对比"><a class="markdownIt-Anchor" href="#333-数据集对比"></a> 3.3.3 数据集对比</h3>
+<ul>
+<li>
+<p>对比了使用 OR-Instruct（ORLM 的数据）和使用 Step-Opt-Instruct 数据集微调 LLM 的效果，都取 3,000 条样本训练 LLaMA-3-8B</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/img_014.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<p>如图所示，除 MAMO EasyLP 外，Step-Opt 在其余数据集与 micro/macro 平均上优于 ORLM，且在复杂集（ComplexLP、IndustryOR）增益更明显</p>
+</li>
+</ul>
+<h1 id="4-总结"><a class="markdownIt-Anchor" href="#4-总结"></a> 4. 总结</h1>
+<ul>
+<li>本文提出 Step-Opt-Instruct 框架属于一种 OR 垂直领域的数据增广方法，<strong>“把数据合成 + 结构化验证” 工程化落到 OR 建模任务上</strong>：核心贡献在于把“渐进式生成（进化）” 与 “分步检查器（含反馈重写）” 组合成一个能自动产出可用于微调的数据流水线，并在复杂 OR 基准上取得明显提升</li>
+<li>本文优点包括
+<ol>
+<li>对错误纠正这个痛点处理得比较系统，较好地缓解了 ORLM 的痛点问题</li>
+<li>数据生成策略可控，深度/广度进化被 OR 化为可操作算子</li>
+<li>做了一个很实用的消融：训练样本里同时输出“数学模型 + 代码”，<strong>去掉数学模型会掉点；并把数学模型类比成一种结构化推理桥梁（类似 CoT），帮助从描述过渡到代码</strong></li>
+</ol>
+</li>
+<li>本文缺点包括
+<ol>
+<li>创新有限，更多是把已有套路在 OR 建模上做任务化/工程化落地。数据生成部分基本就是把 Evol-Instruct 方法迁移到 OR 任务；错误纠正部分也比较直白，感觉都是比较常规的思路</li>
+<li>验证机制的覆盖面有限，很难覆盖 OR 中 “种类繁多的建模技巧”</li>
+<li>数据生成成本与筛除率较高：为 instance generation 做了 64K queries、179M tokens；8,400 次生成只留下 4,464 个样本，约 46.86% 被丢弃，平均每次迭代 7.66 次查询（其中描述生成/验证 3.14、solution 生成/验证 4.52）。如果换更复杂基准或更复杂技巧，成本可能进一步上升</li>
+</ol>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/LLM-OR/" class="print-no-link">#LLM-OR</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【LLM-OR】——【Step-Opt】Training LLMs for Optimization Modeling via Iterative Data Synthesis and</div>
+      <div>https://wxc971231.github.io/MyBlog/2026/01/31/论文理解LLM_OR_Step_OptTrainingLLMsforOptimizationModelingviaIterativeDataSynthesisand/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年1月31日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/02/02/%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0%E6%8B%BE%E9%81%97_%E5%86%8D%E7%9C%8B%E5%A5%96%E5%8A%B1%E5%87%BD%E6%95%B0/" title="强化学习拾遗 —— 再看奖励函数">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">强化学习拾遗 —— 再看奖励函数</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/01/25/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_PaMOPGuidinglargelanguagemodelsinmodelingoptimizationproblemsviaquestionpartitioning/" title="论文理解【LLM-OR】—— 【PaMOP】Guiding large language models in modeling optimization problems via question partitioning">
+                        <span class="hidden-mobile">论文理解【LLM-OR】—— 【PaMOP】Guiding large language models in modeling optimization problems via question partitioning</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

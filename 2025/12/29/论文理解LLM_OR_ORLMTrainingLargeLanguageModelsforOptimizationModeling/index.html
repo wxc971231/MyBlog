@@ -1,0 +1,825 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="LLM 有能力将自然语言描述的工业场景问题建模为数学运筹优化问题，然后通过写代码调用经典求解器的方式加以解决。本文提出的 ORLM 方法主要关注如何合成数据来训练或微调这种领域模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/12/29/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="LLM 有能力将自然语言描述的工业场景问题建模为数学运筹优化问题，然后通过写代码调用经典求解器的方式加以解决。本文提出的 ORLM 方法主要关注如何合成数据来训练或微调这种领域模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/index.png">
+<meta property="article:published_time" content="2025-12-29T20:36:31.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LLM-OR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/index.png">
+  
+  
+  
+  <title>论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-12-29 20:36" pubdate>
+          2025年12月29日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141610882">论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2405.17743">ORLM: Training Large Language Models for Optimization Modeling</a></li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/Cardinal-Operations/ORLM">Cardinal-Operations/ORLM</a></li>
+<li>发表：Operations Research 2025</li>
+<li>领域：LLM-OR
+<blockquote>
+<p>本文解读基于 <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2405.17743v2">arXiv v2</a> 版本；<a target="_blank" rel="noopener" href="https://pubsonline.informs.org/doi/10.1287/opre.2024.1233">最新版本</a>投稿至期刊，篇幅有较大扩展，新增实验与讨论，见本文末更新”</p>
+</blockquote>
+</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：得益于大型语言模型（LLMs）的优化建模能力，其已成为处理复杂运筹学（OR）问题的强大工具。然而，目前的方法严重依赖于提示工程（如不同 prompt 诱导的 multi-agent 协作）和专有 LLMs，在工业应用场景中这可能导致敏感的数据泄露问题。为了解决这一问题，我们建议<strong>针对 “自然语言-&gt;优化问题建模” 任务训练开源领域 LLMs</strong>。我们确定了构造 OR LLMs 训练<strong>数据集的四个关键要求</strong>，并提出了 <strong>OR-Instruct 数据合成框架</strong>，可以针对特定要求半自动化地创建合成数据。我们还介绍了 <strong>IndustryOR benchmark，这是第一个用于测试 LLMs 在解决实际 OR 问题上的工业基准</strong>。我们将 OR-Instruct 的合成数据应用于多个 7b 大小的开源 LLMs（称为ORLMs），显著提高了模型的优化问题建模能力。我们最佳表现的 ORLM 在 NL4OPT、MAMO 和 IndustryOR 基 准测试上取得了最佳性能</li>
+</ul>
+<p></p>
+<h1 id="1-方法"><a class="markdownIt-Anchor" href="#1-方法"></a> 1 方法</h1>
+<ul>
+<li>
+<p>本文研究<strong>复杂运筹学 (OR) 问题的自动建模与编程，以减轻对人类专家的严重依赖</strong>。具体而言，这类问题要求输入一段<strong>自然语言</strong>描述的显示工业问题（比如配送货、生产规划等问题），要求模型或系统写出求解问题的代码（比如调用启发式求解器等）</p>
+</li>
+<li>
+<p>过去的方法大多使用多个 LLM 构建 multi agent 协作框架，每个 agent 复制整个管线的一部分，比如术语解释、数学建模、代码生成、代码运行评估等，它们通过 <strong>“多步问题分解”</strong> 和 <strong>“反思循环纠错”</strong> 来生成正确的求解代码。作者认为这种方法有两个问题</p>
+<ol>
+<li><strong>误差会在多步分解中被积累</strong>，影响泛化性能</li>
+<li>过去方法大多使用预训练的 LLM，通过  prompting engineering 来配置各个 agent。这意味着求解过程中，具体工业问题的敏感信息将被上传到 LLM 服务提供商（如 OpenAI）等，会导致<strong>隐私问题</strong></li>
+</ol>
+</li>
+<li>
+<p>针对以上问题，作者提出通过训练单一 LLM 本地运行来解决以上两个问题。因此这里的<strong>核心问题被转换为如何构造良好的训练数据</strong>，数据形式为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>p</mi><mo separator="true">,</mo><mi>m</mi><mo separator="true">,</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(p,m,c)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span>，其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span></span></span></span> 为自然语言描述的问题，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">m</span></span></span></span> 为问题的数学建模，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">c</span></span></span></span> 为求解代码（调用 COPT 求解器），整个系统可以表示为一个映射</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>f</mi><mo>:</mo><mi>p</mi><mo>→</mo><mo stretchy="false">(</mo><mi>m</mi><mo separator="true">,</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">f:p\to (m,c)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">:</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span></span></p>
+<p>作者认为训练数据集应该满足以下四个关键需求</p>
+<ol>
+<li>为了提高模型鲁棒性，数据集应该<strong>涵盖各种场景、问题类型和不同难度</strong></li>
+<li>由于业务目标、市场条件或资源可用性的变化，运筹问题的<strong>优化目标和约束条件可能经常发生变化</strong>，数据集应该反映这些变化</li>
+<li>由于不同客户可能会使用<strong>不同的术语来描述相同的问题</strong>，数据集应该适应这种语言多样性</li>
+<li>对于<strong>同一个问题，可以有多种数学建模方案</strong>（例如通过引入辅助变量把多项式优化转为线性优化），数据集中应该包含这种数据</li>
+</ol>
+</li>
+<li>
+<p>作者提出了一个半自动化方法来合成具有以上性质的高质量数据，如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ol>
+<li>从一组<strong>种子数据开始</strong>（686个来自不用行业的问题+求解数据），将它们添加到数据池中</li>
+<li>使用两种策略扩展数据，将合成数据添加到数据池中
+<ol>
+<li><strong>数据扩展</strong>：使用 GPT-4 生成涵盖更广泛的场景和问题类型的数据。每次迭代，从数据集采样 3 个样本（如果存在合成样本，则有1个是合成的）作为示例，使用一个预置的 prompt 模板进行 in-context learning 来生成扩展数据，上下文长度限制在 GPT-4 最大长度以内。这种方法部分扩展了场景和问题类型的覆盖度（要求 1），但是无法满足其他 3 个要求</li>
+<li><strong>数据增强</strong>：使用三种增强手段，满足以上其他数据要求
+<ul>
+<li><strong>修改目标和约束</strong>（要求 2）：使用预置 prompt 模板进行 in-context learning 来实现。首先向 GPT-4 提供原始例子，要求其首先列出优化目标和约束条件的 5 个潜在变化， 然后把潜在变化和一个 few-shot 提示模板组合后再次输入 GPT-4，从而相应地修改问题、模型和程序。</li>
+<li><strong>重新描述问题</strong>（要求 3）：使用预置 prompt 模板，要求 GPT-4 修改问题的表述，在确保核心逻辑与解决方案保持一致的情况下使其简化或复杂化，从而模拟不同客户的表达习惯</li>
+<li><strong>扩展数学建模方案</strong>（要求 4）：作者从工程师的经验中确定了五种常用数学建模技术（如引入辅助变量或使用 Big M 方法），使用预置 prompt 模板，要求 GPT-4 使用新的建模技术重写问题的数学建模方案</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>最后，<strong>使用启发式方法自动过滤出明显低质量的数据</strong>，通过数据扩展合成的数据正确性约70%，通过数据增强合成的数据正确性约75%。以上整个过程可以多次迭代，直到总数据量达到要求为止</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-实验"><a class="markdownIt-Anchor" href="#2-实验"></a> 2. 实验</h1>
+<ul>
+<li>
+<p>作者使用以上流程，将 686 个种子数据扩展为拥有 30k 数据的 OR-INSTRUCT 数据集，行业分布和问题类型分布如下</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+</li>
+<li>
+<p>作者使用以上数据集微调了几个 7B 左右规模的开源 LLM，包括 Mistral-7B、Deepseek-math-7B 和 LLaMA-3-8B</p>
+<ul>
+<li>训练过程中，数据被包装为类似 Alpaca 的模板进行训练，输入数据的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>p</mi><mo separator="true">,</mo><mi>m</mi><mo separator="true">,</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(p,m,c)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal">p</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span> 问题的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span></span></span></span> 部分，要求模型预测出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo separator="true">,</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">m,c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span></span></span></span>，仅在预测部分计算损失</li>
+<li>评估过程中，输入目标问题描述 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>p</mi></mrow><annotation encoding="application/x-tex">p</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">p</span></span></span></span>，使用 greedy 解码策略生成 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo separator="true">,</mo><mi>c</mi></mrow><annotation encoding="application/x-tex">m,c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">m</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">c</span></span></span></span>，从中提取程序 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>c</mi></mrow><annotation encoding="application/x-tex">c</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">c</span></span></span></span> 并执行以得到模型解的量化性能</li>
+</ul>
+</li>
+</ul>
+<h1 id="3-结论"><a class="markdownIt-Anchor" href="#3-结论"></a> 3. 结论</h1>
+<ul>
+<li>
+<p>作者在 NL4OPT、 IndustryOR 和 MAMO 三个 benchmark  上评估模型性能，对比方法包括 NIPS 竞赛冠军方法 tag-BART、多 LLM agent 方法 Chain-of-Experts 和 OptiMUS 等。实验结果显示，<strong>经过 OR-INSTRUCT 数据集微调的 LLaMA-3-8B 模型（记为 ORLM-LLaMA-3-8B）在所有 benchmark 上取得了 SOTA 性能</strong>，大幅超越了所有 Baseline 方法，相比直接使用 GPT-4 求解（记为 Stander）平均提升 55.4%</p>
+<ul>
+<li>在分问题难度评估时，ORLM-LLaMA-3-8B 在所有难度的问题上超越 Stander GPT-4，尤其是在困难问题上超越更多</li>
+<li>在分问题类型评估时，ORLM-LLaMA-3-8B 和 Stander GPT-4 都无法求解任何非线性规划和某些罕见类型问题，这可能是因为这些类型的问题过于复杂，且数据量不足</li>
+</ul>
+<p><strong>总的来说，本文提出的数据合成方法有效提升了问题类型和难度的覆盖度</strong></p>
+</li>
+<li>
+<p>作者进一步进行消融实验，验证三种数据增强方案的有效性。具体而言</p>
+<ol>
+<li>从 OR-INSTRUCT 数据集中选择了一个 4 个尺寸为 3k 的子集，第一个应用了所有三种数据增强方法，其他三个分别剔除某种增强数据</li>
+<li>使用选出的 4 个数据集微调具有相同超参数的 LLaMA-3-8B 模型，对比性能</li>
+</ol>
+<p>发现去除任何一种增强方法都会导致性能下降，说明<strong>三种增强方法都有效，其中 “重新描述问题” 对性能影响最大</strong></p>
+</li>
+<li>
+<p>本文关注的运筹优化问题确实是一个非常现实的问题，对于生产生活中遇到的具体优化问题，使用这种方法，不再需要专家进行数学建模，只需普通工人用自然语言描述问题即可求解，这个具体问题上已经产生了多篇相关文章</p>
+</li>
+</ul>
+<h1 id="4-期刊中稿版本更新内容"><a class="markdownIt-Anchor" href="#4-期刊中稿版本更新内容"></a> 4. 期刊中稿版本更新内容</h1>
+<ol>
+<li><strong>定位</strong>：从 preprint 到期刊风格长稿，篇幅从约 18 页扩展到约 51 页，结构更完整（更长的相关工作/讨论/附录），标题也改为强调 “可定制框架Customizable Framework”</li>
+<li><strong>数据与训练集</strong>：OR-Instruct 训练数据规模明确为 32,481 cases，并更强调通过新增 seed/scenario 做 <code>定向增强customizable enhancement</code></li>
+<li><strong>模型与基座覆盖更全</strong>：训练 backbone 增加了 Qwen-2.5-7B（v2 主要是 Mistral/Deepseek-Math/LLaMA3 系列），并给出更系统的超参搜索/训练设置说明。、</li>
+<li><strong>baseline 对比补齐到 2025</strong>：增补了多种更“当下”的开源/推理模型作为 baselines（例如 Llama-3.1-Instruct、DeepSeek-v2-Chat、DeepSeek-R1、Qwen2-Instruct、Mistral-Nemo 等），使对比更接近当前生态</li>
+<li><strong>推理策略与 “会做但排不对” 现象被系统化分析</strong>：在保持 greedy 主评测的同时，新增 Pass@k / rerank / self-consistency / tree-search / agent revision 等推理策略讨论，并指出复杂实例上 Pass@8 提升明显：模型往往“能生成正确建模”，但 ranking 能力不足（top-1 不是最优）</li>
+<li><strong>新增人类对照与用户研究（期刊化关键增量）</strong>：引入学生/专家对照评测；还加入面向用户的实验与统计检验（正态性/方差齐性检验、t-test / Mann–Whitney U 等），从“模型指标”扩展到“人使用时的收益”（准确率、耗时等）</li>
+<li><strong>结论主线调整</strong>：更强调 scaling 与 RL 的提升路径，更确提出 scaling law + reinforcement learning 是进一步提升（尤其补 ranking 短板）的关键方向</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/LLM-OR/" class="print-no-link">#LLM-OR</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【LLM-OR】——【ORLM】Training Large Language Models for Optimization Modeling</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/12/29/论文理解LLM_OR_ORLMTrainingLargeLanguageModelsforOptimizationModeling/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年12月29日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/01/25/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_PaMOPGuidinglargelanguagemodelsinmodelingoptimizationproblemsviaquestionpartitioning/" title="论文理解【LLM-OR】—— 【PaMOP】Guiding large language models in modeling optimization problems via question partitioning">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">论文理解【LLM-OR】—— 【PaMOP】Guiding large language models in modeling optimization problems via question partitioning</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/12/29/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_OptiTreeHierarchicalthoughtsgenerationwithtreesearchforLLMoptimizationmodel/" title="论文理解【LLM-OR】——【OptiTree】Hierarchical thoughts generation with tree search for LLM optimization model">
+                        <span class="hidden-mobile">论文理解【LLM-OR】——【OptiTree】Hierarchical thoughts generation with tree search for LLM optimization model</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

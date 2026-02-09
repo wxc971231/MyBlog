@@ -1,0 +1,930 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="SimCLR 是一种简洁的自监督对比学习方法，通过强数据增强、非线性投影头与大批量训练，在无标签条件下学习判别性表示，在线性评估与下游任务中表现优异，大幅减少对人工标注的依赖。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/09/15/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3CV_%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="SimCLR 是一种简洁的自监督对比学习方法，通过强数据增强、非线性投影头与大批量训练，在无标签条件下学习判别性表示，在线性评估与下游任务中表现优异，大幅减少对人工标注的依赖。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3CV_%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/index.png">
+<meta property="article:published_time" content="2025-09-15T12:06:40.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="自监督预训练">
+<meta property="article:tag" content="对比学习">
+<meta property="article:tag" content="CV">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3CV_%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/index.png">
+  
+  
+  
+  <title>论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-15 12:06" pubdate>
+          2025年9月15日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/151573325">论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="http://proceedings.mlr.press/v119/chen20j.html">A Simple Framework for Contrastive Learning of Visual Representations</a></li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/google-research/simclr">google-research/simclr</a></li>
+<li>发表：ICML 2020</li>
+<li>领域：CV-对比学习</li>
+<li>一句话总结：SimCLR 通过强数据增强、非线性投影头和大规模训练，构建了一个简单但高效的<strong>对比学习框架</strong>，在<strong>自监督与半监督视觉表征学习</strong>上大幅提升了性能</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：本文提出 SimCLR：一个用于<strong>对比学习视觉表征</strong>的简洁框架。我们简化了近期提出的自监督对比学习方法，无需专门的网络结构或记忆库。为了理解对比预测任务为何能学习到有用的表征，我们系统性地研究了框架中的关键组成部分。实验表明：(1) <strong>数据增强的组合</strong>在定义有效预测任务时起关键作用；(2) 在表征与对比损失之间引入<strong>可学习的非线性变换</strong>显著提升了表征质量；(3) 相比监督学习，对比学习更依赖于<strong>更大的 batch size 和更长的训练过程</strong>。通过结合这些发现，我们显著超越了此前的自监督和半监督学习方法，在 ImageNet 上取得了新的最优结果。基于 SimCLR 表征的线性分类器在 ImageNet 上达到了 76.5% top-1 准确率，比此前的最佳方法提升了 7%，并且与监督训练的 ResNet-50 相当。在仅使用 1% 标签的情况下，微调后的模型实现了 85.8% top-5 准确率，比 AlexNet 少用 100 倍的标签却超越了其性能</li>
+</ul>
+<h1 id="1-背景"><a class="markdownIt-Anchor" href="#1-背景"></a> 1. 背景</h1>
+<h2 id="11-视觉表征学习"><a class="markdownIt-Anchor" href="#11-视觉表征学习"></a> 1.1 视觉表征学习</h2>
+<ul>
+<li>本文考虑的问题是<strong>以自监督形式学习通用的视觉表征</strong>，即在<strong>无需人工标签</strong>的情况下训练可用于各类下游任务的 <strong>CV backbone</strong>。本文之前的主要有三种技术路线
+<ol>
+<li><strong>生成式方法</strong>：目标是生成或建模输入像素空间，代表方法有 VAE、GAN 等。这类方法的缺点是计算开销大，而且未必对表征学习必要</li>
+<li><strong>判别式方法</strong>：通过设计 “监督学习预训练任务” 来学习表征，输入和标签都来自无监督数据。常见代表任务有图像上下文预测、Jigsaw拼图、图像上色、旋转预测等。这类方法依赖启发式任务设计，可能限制学习到表示的通用性</li>
+<li><strong>自监督学习</strong>：
+<ol>
+<li><strong>基于对比学习的自监督学习</strong>：通过拉近正样本对、推远负样本对来学习潜在空间中的表征。一般认为此类方法学到的视觉表征更倾向于语义级别（物体之间关系、整体布局、类别等抽象特征）。代表方法有 Instance Discrimination, CPC, MoCo 等，以及本文提出的 SimCLR
+<blockquote>
+<p>本文之前的对比学习方法比较复杂，CPC依赖预测网络处理时序数据，MoCo依赖队列式内存库存储负样本</p>
+</blockquote>
+</li>
+<li><strong>基于重建的自监督学习</strong>：让模型通过还原部分缺失的信息来学习有效的特征表示，一般认为此类方法学到的视觉表征更倾向于细节级别（边缘/纹理/局部形状等底层特征），代表方法有 Autoencoder、BEiT、<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/142708130">MAE</a> 等</li>
+</ol>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="12-对比学习"><a class="markdownIt-Anchor" href="#12-对比学习"></a> 1.2 对比学习</h2>
+<ul>
+<li>
+<p>对比学习的核心思想是：通过构造正负样本对，让模型学到一个判别性的表示空间，在这个表示空间中 <strong>相似的样本尽量靠近，不同的样本尽量分开</strong>，这是当前自监督学习的主流方法</p>
+<blockquote>
+<p>所谓判别性，是指同类样本聚在一起，不同类样本分得开，空间中的样本分布能有效地区分不同类别或语义</p>
+</blockquote>
+</li>
+<li>
+<p>作为一种无监督（自监督）方法，对比学习的目标是<strong>学习样本特征的表示方法，即得到一个样本编码器</strong>。在此基础上增加分类/回归头并微调即可适用于各种下游任务，这样一种半监督（Semi-supervised）/ 自监督（Self-supervised）结合监督微调的典型流程如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<ol>
+<li><strong>无监督预训练</strong>：使用 SimCLR 等方法，利用大量无标签数据训练 Encoder，其一般由任务无关的大规模 CNN 和映射到表示空间的投影头 MLP 组成</li>
+<li><strong>监督微调</strong>：经过预训练后，使用针对下游任务的少量有标签数据进行监督学习，将原本 “通用” 的特征调整为对特定任务有用的特征
+<blockquote>
+<p>若监督数据量大，微调后即可以直接用于下游任务，或在第3步蒸馏到小模型
+若监督数据极少，这一步后很可能过拟合到微调数据，需在第3步进行自监督训练</p>
+</blockquote>
+</li>
+<li><strong>自监督/蒸馏</strong>：用微调后的模型为大量未标注数据构造伪标签，从而扩展第2步的小数据集。然后可以继续微调模型（常见于 FixMatch 等半监督方法），或重新训练一个新模型（常见于模型蒸馏或 Noisy Student 等 “教师-学生” 框架）。现代方法通常倾向于 “教师-学生” 框架，因为它可以反复迭代，逐步提升性能
+<blockquote>
+<p>扩展数据集的标签来自第2步的微调模型，伪标签并不提供新知识，为何自监督训练还能提升性能呢。原因包括</p>
+<ol>
+<li><strong>无标签数据覆盖了更大的目标分布空间</strong>，迫使模型在更大的空间进行拟合，缓解了对真实标记数据集的过拟合问题。这类似于数据增强思想：标签不完美但覆盖广，能正则化模型</li>
+<li><strong>高置信度伪标签相对可靠</strong>，模型对部分样本的预测可能非常自信，如果只挑选置信度高的伪标签来训练（confidence filtering），那扩展数据集的质量其实不错。通常这些样本落在真实标记数据集样本的内插空间中，可以让模型对这部分的拟合更精细</li>
+<li><strong>即使部分伪标签是错的，但只要噪声不系统性偏向某类，其可以看作一种正则化手段</strong>，深度模型通常能从大规模数据中“滤掉”一部分噪声。引入噪声标签后，模型训练时会受到 “矛盾的监督信号”，这迫使其不能死记硬背标签，而要在更大数据分布里找到决策边界，比如 NLP 中的标签平滑就是这个思路</li>
+<li><strong>Student 可以比 Teacher 更强</strong>，Noisy Student 框架里，Student 用到了更大模型、更多数据增强、Dropout 等正则，使其性能比 Teacher 更强</li>
+</ol>
+</blockquote>
+</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-本文方法"><a class="markdownIt-Anchor" href="#2-本文方法"></a> 2. 本文方法</h1>
+<ul>
+<li>本文的研究重点在于：
+<ol>
+<li>如何在不依赖专门架构或记忆库的情况下简化对比学习算法；</li>
+<li>如何通过数据增强和损失函数的设计来提高表示质量；</li>
+<li>如何在训练过程中利用更大的批量大小和更长的训练时间</li>
+</ol>
+</li>
+</ul>
+<h2 id="21-对比学习框架"><a class="markdownIt-Anchor" href="#21-对比学习框架"></a> 2.1 对比学习框架</h2>
+<ul>
+<li>
+<p>下图展示了 SimCLR 的训练方法</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_002.gif" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 70%;">
+  </div>
+<ol>
+<li>从无标签数据集随机抽取样本，使用简单的图像增强（随机裁剪、随机颜色失真和高斯模糊）组合对每个样本进行两次变换
+<blockquote>
+<p>实验表明，数据增强的方式很重要，<strong>作者在此连续应用三种简单的增强方法：随机裁剪然后将大小调整回原始大小，随机颜色失真，以及随机高斯模糊</strong></p>
+</blockquote>
+</li>
+<li>用一个 CNN 骨干网络 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span> 提取增强样本特征 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span>，再用 MLP 投影头 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span></span></span></span> 将特征投影到表示空间得到 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>z</mi></mrow><annotation encoding="application/x-tex">z</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.04398em;">z</span></span></span></span>
+<blockquote>
+<p>本文使用 ResNet-50 作为特征提取网络 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span>，用带一个隐藏层的 Relu 激活 MLP 作为投影头 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span></span></span></span>。实验表明，<strong>引入非线性变换 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi></mrow><annotation encoding="application/x-tex">g</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span></span></span></span> 非常重要，其有效过滤了数据增强本身引入的特征，只保留下游任务所需的语义特征信息</strong></p>
+</blockquote>
+</li>
+<li>抽取 mini-batch 进行训练，设其中有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi></mrow><annotation encoding="application/x-tex">N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个原始样本，增强后得到 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>N</mi></mrow><annotation encoding="application/x-tex">2N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span> 个增强样本。我们认为经过简单变换的图像没有语义差异，应具有一致的表征，<strong>故令来自相同原始样本的增强图像构成正样本对，令来自不同原始图像的增强图像构造负样本对</strong>。因此对于任意增强样本 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>i</mi></mrow><annotation encoding="application/x-tex">i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.65952em;vertical-align:0em;"></span><span class="mord mathnormal">i</span></span></span></span>，设其和增强样本 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>j</mi></mrow><annotation encoding="application/x-tex">j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span> 构造成正样本对，同时和其他 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>N</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2N-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.76666em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span> 个增强样本构造成负样本对。优化如下 NT-Xent 损失<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="normal">ℓ</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub><mo>=</mo><mo>−</mo><mi>log</mi><mo>⁡</mo><mfrac><mrow><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mi mathvariant="normal">sim</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">z</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi mathvariant="bold-italic">z</mi><mi>j</mi></msub><mo fence="true">)</mo></mrow><mi mathvariant="normal">/</mi><mi>τ</mi><mo fence="true">)</mo></mrow></mrow><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mrow><mn>2</mn><mi>N</mi></mrow></munderover><msub><mn mathvariant="double-struck">1</mn><mrow><mo stretchy="false">[</mo><mi>k</mi><mo mathvariant="normal">≠</mo><mi>i</mi><mo stretchy="false">]</mo></mrow></msub><mi>exp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mi mathvariant="normal">sim</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msub><mi mathvariant="bold-italic">z</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi mathvariant="bold-italic">z</mi><mi>k</mi></msub><mo fence="true">)</mo></mrow><mi mathvariant="normal">/</mi><mi>τ</mi><mo fence="true">)</mo></mrow></mrow></mfrac></mrow><annotation encoding="application/x-tex">\ell_{i, j}=-\log \frac{\exp \left(\operatorname{sim}\left(\boldsymbol{z}_{i}, \boldsymbol{z}_{j}\right) / \tau\right)}{\sum_{k=1}^{2 N} \mathbb{1}_{[k \neq i]} \exp \left(\operatorname{sim}\left(\boldsymbol{z}_{i}, \boldsymbol{z}_{k}\right) / \tau\right)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.653431em;vertical-align:-1.2264309999999998em;"></span><span class="mord">−</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">lo<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.128769em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord">1</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">[</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight"><span class="mrel mtight"><span class="mord vbox mtight"><span class="thinbox mtight"><span class="rlap mtight"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel mtight"></span></span><span class="fix"></span></span></span></span></span><span class="mrel mtight">=</span></span><span class="mord mathnormal mtight">i</span><span class="mclose mtight">]</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop">exp</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mop"><span class="mord mathrm">s</span><span class="mord mathrm">i</span><span class="mord mathrm">m</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop">exp</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mop"><span class="mord mathrm">s</span><span class="mord mathrm">i</span><span class="mord mathrm">m</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2264309999999998em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mn mathvariant="double-struck">1</mn><mrow><mo stretchy="false">[</mo><mi>k</mi><mo mathvariant="normal">≠</mo><mi>i</mi><mo stretchy="false">]</mo></mrow></msub></mrow><annotation encoding="application/x-tex">\mathbb{1}_{[k \neq i]}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9996399999999999em;vertical-align:-0.3551999999999999em;"></span><span class="mord"><span class="mord"><span class="mord">1</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mopen mtight">[</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight"><span class="mrel mtight"><span class="mord vbox mtight"><span class="thinbox mtight"><span class="rlap mtight"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel mtight"></span></span><span class="fix"></span></span></span></span></span><span class="mrel mtight">=</span></span><span class="mord mathnormal mtight">i</span><span class="mclose mtight">]</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span></span></span></span> 是指示函数，当且仅当 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo mathvariant="normal">≠</mo><mi>j</mi></mrow><annotation encoding="application/x-tex">k\neq j</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel"><span class="mrel"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="inner"><span class="mrel"></span></span><span class="fix"></span></span></span></span></span><span class="mrel">=</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.85396em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span></span></span></span> 时为1，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi></mrow><annotation encoding="application/x-tex">\tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span></span></span></span> 是温度稀疏，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>sim</mtext></mrow><annotation encoding="application/x-tex">\text{sim}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.66786em;vertical-align:0em;"></span><span class="mord text"><span class="mord">sim</span></span></span></span></span> 是余弦相似度，即两个向量 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>l</mi><mn>2</mn></msub></mrow><annotation encoding="application/x-tex">l_2</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.30110799999999993em;"><span style="top:-2.5500000000000003em;margin-left:-0.01968em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 规范化后的点积<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">sim</mi><mo>⁡</mo><mo stretchy="false">(</mo><msub><mi mathvariant="bold-italic">z</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi mathvariant="bold-italic">z</mi><mi>j</mi></msub><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><msubsup><mi mathvariant="bold-italic">z</mi><mi>i</mi><mi mathvariant="normal">⊤</mi></msubsup><msub><mi mathvariant="bold-italic">z</mi><mi>j</mi></msub></mrow><mrow><mi mathvariant="normal">∥</mi><msub><mi mathvariant="bold-italic">z</mi><mi>i</mi></msub><mi mathvariant="normal">∥</mi><mi mathvariant="normal">∥</mi><msub><mi mathvariant="bold-italic">z</mi><mi>j</mi></msub><mi mathvariant="normal">∥</mi><mstyle mathsize="1.44em"></mstyle></mrow></mfrac></mrow><annotation encoding="application/x-tex">\operatorname{sim}(\boldsymbol{z}_i, \boldsymbol{z}_j)=\frac{\boldsymbol{z}_i^{\top} \boldsymbol{z}_j}{\|\boldsymbol{z}_i\|\|\boldsymbol{z}_j\|{\Large }}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.036108em;vertical-align:-0.286108em;"></span><span class="mop"><span class="mord mathrm">s</span><span class="mord mathrm">i</span><span class="mord mathrm">m</span></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.498216em;vertical-align:-0.972108em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.526108em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">∥</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∥</span><span class="mord">∥</span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mord">∥</span><span class="mord"></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.849108em;"><span style="top:-2.441336em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">⊤</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.04213em;">z</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.972108em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+优化 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="normal">ℓ</mi><mrow><mi>i</mi><mo separator="true">,</mo><mi>j</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\ell_{i, j}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.980548em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord">ℓ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.311664em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">i</span><span class="mpunct mtight">,</span><span class="mord mathnormal mtight" style="margin-right:0.05724em;">j</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span></span></span></span> 可以理解为分母尽量小（负样本对更远）且分子尽量大（正样本对更近）。<strong>NT-Xent 损失本质上是更有名的 InfoNCE loss 的一个实例</strong></li>
+</ol>
+</li>
+<li>
+<p>SimCLR 完整训练框架如下所示。<strong>最终只保留能够提取图像特征的编码器网络</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi></mrow><annotation encoding="application/x-tex">f</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span></span></span></span><strong>用于下游任务</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 85%;">
+  </div>
+</li>
+<li>
+<p>SimCLR 伪代码如下</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+</li>
+</ul>
+<h2 id="22-训练细节"><a class="markdownIt-Anchor" href="#22-训练细节"></a> 2.2 训练细节</h2>
+<ol>
+<li>
+<p><strong>增大 Batch Size</strong>：对比学习依赖大量负样本提供丰富的训练信号，如果每个样本只有少数负例，模型可能学不到好的判别边界。Memory bank 是早期对比学习方法常用的一个 trick，其将历史样本的特征表示缓存在一个全局字典中，并在计算当前批次损失时将这些缓存特征作为额外的负样本参与对比。这种方式使得模型即便在小 batch 条件下，也能拥有大量负样本，缓解了显存和计算资源不足带来的限制。然而，由于 memory bank 中的特征来自于旧的模型参数，可能会出现表示不一致或过时的问题，因此后续方法（如 MoCo）又提出了动量编码器与队列机制，以保持负样本表征的更新稳定性。<strong>SimCLR 追求精简，没有使用 memory bank，仅靠同一个 batch 内的样本来构建对比关系</strong>，因此需要很大的 Batch size（文中设为 8192），为了稳定训练，使用了 LARS 优化器</p>
+<blockquote>
+<p>LARS主要针对大规模数据和模型，可能会遇到参数更新太大导致模型不稳定的问题。LARS通过逐层调整学习率来解决这个问题</p>
+</blockquote>
+</li>
+<li>
+<p><strong>全局 Batch Norm</strong>：在分布式训练时，每张 GPU 上只处理一个 mini-batch 的子集，标准 BN 只在 单卡的局部 batch 上计算均值和方差，归一化尺度不同不同导致不同 GPU 上样本的 embedding 空间不同，对比关系失真，影响训练。全局 BN 通过跨 GPU 通信收集整个全局 batch 的均值和方差，保证 BN 使用全局一致的统计量，稳定相似度计算</p>
+</li>
+<li>
+<p><strong>数据增强组合</strong>：本文系统地研究了数据增强的影响，考虑了多种常见增强策略。<strong>所有数据增强都基于 “随机裁剪” 增强，这是最关键的增强手段，且能消除 ImageNet 数据集的图像尺寸不统一问题</strong>。随机裁剪会自然地构造出两种优化任务。如下图所示，高重叠正样本对（a）可以给模型提供稳定的低层视觉对齐信号；低重叠正样本对（b）迫使模型学习更强的语义一致性</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+ </div>
+<p>在此基础上，作者系统研究了随机裁剪和其他数据增强方法的组合情况</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+ </div>
+<p>结论如下，<strong>随机裁剪和随机颜色失真的组合表现最好</strong>，作者认为这是因为仅使用随机裁剪时，模型可以通过颜色相似度很简单地判别正负样本，而随机颜色失真使模型无法作弊</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+ </div>
+</li>
+</ol>
+<h1 id="3-实验"><a class="markdownIt-Anchor" href="#3-实验"></a> 3. 实验</h1>
+<h2 id="31-表示质量"><a class="markdownIt-Anchor" href="#31-表示质量"></a> 3.1 表示质量</h2>
+<ul>
+<li>
+<p>作者使用对比学习领域广泛使用的 linear evaluation protocol 评估 SimCLR 学到的表示质量。其做法是：自监督预训练完成后，冻结 backbone（encoder）参数，在它的输出表示上面训练一个线性分类器（通常是一个单层全连接层，softmax 输出），来评估表示的质量（文中使用 top-1 / top-5 分类准确率）</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_008.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+<p>这里SimCLR预训练和微调、ResNet监督学习使用的都是全量数据。注意到<strong>虽然监督学习在相同模型规模下表现更好，但 SimCLR 的性能随模型规模增加而提升更快，表明自监督对比学习学到的表示在大模型条件下更具潜力</strong></p>
+</li>
+<li>
+<p><strong>SimCLR 在半监督学习场景下表现良好。结果表明，即使只使用 1% 或 10% 的 ImageNet 标签对预训练模型进行微调，SimCLR 也能显著超过监督学习的基线模型</strong>，说明 SimCLR 学到的表示在少标签环境下尤为有效，大幅降低了对大规模标注数据的依赖</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_009.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+</li>
+</ul>
+<h2 id="32-消融实验"><a class="markdownIt-Anchor" href="#32-消融实验"></a> 3.2 消融实验</h2>
+<ol>
+<li>
+<p><strong>非线性投影头提高了表示质量</strong>：作者对比了(1)恒等映射；(2)线性投影；(3)具有一个额外隐藏层的默认非线性投影（ReLU激活）三种投影头，发现非线性成分能够提升性能</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_010.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+ </div>
+<p>作者认为这是因为非线性 MLP 能有效消除数据增强本身引入的特征</p>
+<blockquote>
+<p>作者构造实验，分别用预训练后 backbone 输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> 和 backbone + projection head 输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>g</mi><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">g(h)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">g</span><span class="mopen">(</span><span class="mord mathnormal">h</span><span class="mclose">)</span></span></span></span> 训练额外的 MLP 分类器，预测输入样本经历了哪种数据增强变换。后者预测精度显著下降，接近随机</p>
+</blockquote>
+</li>
+<li>
+<p><strong>NT-Xent 损失最优</strong>：作者探讨了损失函数的选择</p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_011.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+ </div>
+</li>
+<li>
+<p><strong>对比学习需要更大 Batch Size 和更长训练时间</strong>：下图展示了模型训练不同数量的 epoch 后，Batch Size 的影响，注意到大 Batch Size 优势明显。与监督学习不同，<strong>对比学习中更大的 Batch Size 和更长的训练时间提供了更多的负例，有助于提升收敛速度和性能</strong></p>
+ <div align="center">
+     <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_012.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+ </div>
+</li>
+</ol>
+<h2 id="32-下游任务性能"><a class="markdownIt-Anchor" href="#32-下游任务性能"></a> 3.2 下游任务性能</h2>
+<ul>
+<li>
+<p>在 ImageNet 上的 linear evaluation（固定 encoder，只训练线性分类器）评估，SimCLR 超越了当时的其他 SOTA 自监督方法（MoCo、PIRL、CPC v2、AMDIM 等）</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_013.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 60%;">
+  </div>
+</li>
+<li>
+<p>在 12 个下游分类数据集（如 CIFAR-10、VOC2007、Flowers、Caltech-101 等）上做迁移学习对比，比较 SimCLR 和全监督预训练的模型</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/img_014.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<p>注意到 <strong>SimCLR 学到的表示具有良好的迁移性和泛化性，在下游任务中不输甚至超过监督学习</strong>：</p>
+<ul>
+<li>linear evaluation（frozen encoder）设定下，SimCLR 在多个数据集上和监督学习接近甚至更优</li>
+<li>full fine-tuning 设定下，SimCLR 在 5 个数据集上优于监督预训练，5 个数据集相当，仅在 Pets 和 Flowers 上稍弱</li>
+</ul>
+</li>
+</ul>
+<h1 id="4-总结"><a class="markdownIt-Anchor" href="#4-总结"></a> 4. 总结</h1>
+<ul>
+<li>SimCLR 提出了一个简洁而高效的自监督对比学习框架，在无需额外结构（如记忆库或专门的架构设计）的情况下，通过 <strong>大规模数据增强、非线性投影头以及大批量训练，显著提升了表示学习的效果</strong>。其创新点在于：
+<ol>
+<li>强调了数据增强组合（随机裁剪+颜色扰动+模糊）在构造对比任务中的关键作用；</li>
+<li>证明了简单的架构配合适当的训练策略即可在 ImageNet 上超越既有自监督方法，达到与监督学习接近的性能</li>
+</ol>
+</li>
+<li>SimCLR 展示了对比学习在 <strong>少标签场景</strong> 和 <strong>下游迁移任务</strong> 中的巨大潜力，大幅降低了对大规模人工标注的依赖。它不仅推动了自监督学习方法走向主流，也为后续如 BYOL、DINO、CLIP 等一系列工作奠定了基础。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/%E8%87%AA%E7%9B%91%E7%9D%A3%E9%A2%84%E8%AE%AD%E7%BB%83/" class="print-no-link">#自监督预训练</a>
+      
+        <a href="/MyBlog/tags/%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0/" class="print-no-link">#对比学习</a>
+      
+        <a href="/MyBlog/tags/CV/" class="print-no-link">#CV</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【CV-对比学习】——【SimCLR】A Simple Framework for Contrastive Learning of Visual Representations</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/09/15/论文理解CV_对比学习_SimCLRASimpleFrameworkforContrastiveLearningofVisualRepresentations/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月15日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/19/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3CV_%E5%AF%B9%E6%AF%94%E5%AD%A6%E4%B9%A0_BYOLBootstrapYourOwnLatent_ANewApproachtoSelf_SupervisedLearning/" title="论文理解【CV-对比学习】——【BYOL】Bootstrap Your Own Latent-A New Approach to Self-Supervised Learning">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">论文理解【CV-对比学习】——【BYOL】Bootstrap Your Own Latent-A New Approach to Self-Supervised Learning</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3VisionTransformer_MAEMaskedAutoencodersAreScalableVisionLearners/" title="论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners">
+                        <span class="hidden-mobile">论文理解【Vision Transformer】—— 【MAE】Masked Autoencoders Are Scalable Vision Learners</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

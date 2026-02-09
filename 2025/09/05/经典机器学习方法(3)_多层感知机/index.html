@@ -1,0 +1,991 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="本文主要介绍了多层感知机（MLP）的基本概念、原理和实现，包括隐藏层的作用、激活函数的重要性（ReLU、Sigmoid、tanh）、多层感知机的数学表示，以及使用 PyTorch 在 Fashion-MNIST 数据集上实现多层感知机进行图像分类的完整代码示例。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="经典机器学习方法(3)——多层感知机">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/09/05/%E7%BB%8F%E5%85%B8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95(3)_%E5%A4%9A%E5%B1%82%E6%84%9F%E7%9F%A5%E6%9C%BA/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="本文主要介绍了多层感知机（MLP）的基本概念、原理和实现，包括隐藏层的作用、激活函数的重要性（ReLU、Sigmoid、tanh）、多层感知机的数学表示，以及使用 PyTorch 在 Fashion-MNIST 数据集上实现多层感知机进行图像分类的完整代码示例。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E7%BB%8F%E5%85%B8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95(3)_%E5%A4%9A%E5%B1%82%E6%84%9F%E7%9F%A5%E6%9C%BA/img_001.png">
+<meta property="article:published_time" content="2025-09-05T20:55:55.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.097Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="pytorch">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="神经网络">
+<meta property="article:tag" content="多层感知机">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E7%BB%8F%E5%85%B8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95(3)_%E5%A4%9A%E5%B1%82%E6%84%9F%E7%9F%A5%E6%9C%BA/img_001.png">
+  
+  
+  
+  <title>经典机器学习方法(3)——多层感知机 - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="经典机器学习方法(3)——多层感知机"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-05 20:55" pubdate>
+          2025年9月5日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          48 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">经典机器学习方法(3)——多层感知机</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/126397515">经典机器学习方法(3)——多层感知机</a></li>
+<li>参考：动手学深度学习</li>
+<li>注：本文是 jupyter notebook 文档转换而来，部分代码可能无法直接复制运行！</li>
+</ul>
+<hr />
+<ul>
+<li>
+<p>前文介绍的<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/122869916">线性回归</a>和 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/124629256">softmax回归</a>，在模型结构上都属于<strong>单层神经网络</strong>（只有一个输入层和一个输出层，输入层不计入层数），<strong>网络内部本质上只做了一次仿射变换</strong></p>
+</li>
+<li>
+<p>为了提升模型的表示能力和性能，深度学习主要关注多层模型，并且在神经元中增加激活函数来引入非线性成分。本节以多层感知机（multilayer perceptron，MLP）为例，介绍多层神经网络的概念</p>
+<blockquote>
+<p>Note：<code>多层感知机</code>其实一个历史遗留词汇，它的前身是 <code>单层感知机</code> 或直接称 <code>感知机模型</code>，是 Frank Rosenblatt 在1957年所发明的一种二元线性分类器，感知机是第一个能根据每个类别的输入样本来学习权重的模型，引发了神经网络相关研究的第一次浪潮，由于当时没有激活函数的概念，这个纯线性模型无法学习异或函数，这次浪潮也由此衰退。目前我们正处于以“深度学习”为代表的第三波神经网络浪潮中。关于感知机的详细介绍可以参考 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/126512982">经典机器学习方法（4）—— 感知机</a></p>
+</blockquote>
+<blockquote>
+<p>Note：几十年的研究历程中，先后有 “控制论”、“联结主义”、“神经网络”直到现在的“深度学习”等多个术语指代神经网络相关的研究，现代术语“深度学习”超越了目前机器学习模型的神经科学观点。它诉诸于<strong>学习多层次组合</strong>这一更普遍的原理，这一原理也可以应用于那些并非受神经科学启发的机器学习框架</p>
+</blockquote>
+</li>
+<li>
+<p>理清概念</p>
+<ol>
+<li><code>感知机</code> = 受生物神经元启发设计的一种二元线性分类器，是神经网络和支持向量机的前身</li>
+<li><code>多层感知机MLP</code> = 至少带一个隐藏层的，深度至少两层的神经网络</li>
+<li><code>BP神经网络</code> = 采用 BP 算法进行训练的神经网络</li>
+</ol>
+</li>
+</ul>
+<h1 id="1-多层感知机"><a class="markdownIt-Anchor" href="#1-多层感知机"></a> 1. 多层感知机</h1>
+<h2 id="11-隐藏层"><a class="markdownIt-Anchor" href="#11-隐藏层"></a> 1.1 隐藏层</h2>
+<ul>
+<li>
+<p>多层感知机<strong>在单层神经网络的输入层和输出层之间引入了一到多个<code>隐藏层（hidden layer）</code></strong>，其中的神经元称为<code>隐藏单元（hidden unit）</code>，其输出称为<code>隐藏层变量/隐藏变量</code>。如下图例</p>
+  <div align="center">
+      <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+  </div>
+<p>这里输入输出和隐藏层的尺寸分别为 4、3、5，由于输入层不涉及计算，以上多层感知机的层数为2，注意<strong>多层感知机中的隐藏层和输出层都是全连接层</strong></p>
+</li>
+<li>
+<p>具体来说，给定由 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">n</span></span></span></span> 个 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>d</mi></mrow><annotation encoding="application/x-tex">d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">d</span></span></span></span> 维特征样本组成的 batch data <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">X</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>d</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\pmb{X}\in\mathbb{R}^{n\times d}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72243em;vertical-align:-0.0391em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8491079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">d</span></span></span></span></span></span></span></span></span></span></span></span>，假设多层感知机设输出个数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>q</mi></mrow><annotation encoding="application/x-tex">q</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">q</span></span></span></span>，只有一个含 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> 个隐藏单元的隐藏层，记其输出的隐藏变量为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">H</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>h</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\pmb{H}\in\mathbb{R}^{n\times h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72243em;vertical-align:-0.0391em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8491079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span></span></span></span></span></span></span></span>，由于都是全连接层，设</p>
+<ol>
+<li>隐藏层的权重和偏置参数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">W</mi><mi>h</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>d</mi><mo>×</mo><mi>h</mi></mrow></msup><mo separator="true">,</mo><msub><mi mathvariant="bold">b</mi><mi>h</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>1</mn><mo>×</mo><mi>h</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\pmb{W}_h\in \mathbb{R}^{d\times h}, \pmb{b}_h\in\mathbb{R}^{1\times h}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.043548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal">b</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal">b</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8491079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span></span></span></span></span></span></span></span></li>
+<li>输出层的权重和偏置参数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">W</mi><mi>o</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>h</mi><mo>×</mo><mi>q</mi></mrow></msup><mo separator="true">,</mo><msub><mi mathvariant="bold">b</mi><mi>o</mi></msub><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mn>1</mn><mo>×</mo><mi>q</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\pmb{W}_o\in \mathbb{R}^{h\times q}, \pmb{b}_o\in\mathbb{R}^{1\times q}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.043548em;vertical-align:-0.19444em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8491079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">h</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal">b</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal">b</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8141079999999999em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141079999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span></span></span></span></span></span></span></span></li>
+</ol>
+<p>则 batch data 的输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">O</mi><mo>∈</mo><msup><mi mathvariant="double-struck">R</mi><mrow><mi>n</mi><mo>×</mo><mi>q</mi></mrow></msup></mrow><annotation encoding="application/x-tex">\pmb{O}\in\mathbb{R}^{n\times q}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72243em;vertical-align:-0.0391em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.771331em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord mathbb">R</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.771331em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span></span></span></span></span></span></span></span> 如下计算（其中加法用到广播机制）</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">H</mi><mrow><mi>n</mi><mo>×</mo><mi>h</mi></mrow></msub><mo>=</mo><msub><mi mathvariant="bold">X</mi><mrow><mi>n</mi><mo>×</mo><mi>d</mi></mrow></msub><msub><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">h</mi></msub><mrow><mi>d</mi><mo>×</mo><mi>h</mi></mrow></msub><mo>+</mo><msub><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">h</mi></msub><mrow><mn>1</mn><mo>×</mo><mi>h</mi></mrow></msub><mspace linebreak="newline"></mspace><msub><mi mathvariant="bold">O</mi><mrow><mi>n</mi><mo>×</mo><mi>q</mi></mrow></msub><mo>=</mo><msub><mi mathvariant="bold">H</mi><mrow><mi>n</mi><mo>×</mo><mi>h</mi></mrow></msub><msub><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub><mrow><mi>h</mi><mo>×</mo><mi>q</mi></mrow></msub><mo>+</mo><msub><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">o</mi></msub><mrow><mn>1</mn><mo>×</mo><mi>q</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\pmb{H}_{n\times h} = \pmb{X}_{n\times d}\pmb{W_h}_{d\times h}+\pmb{b_h}_{1\times h}\\
+\pmb{O}_{n\times q} = \pmb{H}_{n\times h}\pmb{W_o}_{h\times q}+\pmb{b_o}_{1\times q}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.891661em;vertical-align:-0.208331em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.208331em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.941361em;vertical-align:-0.258031em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.208331em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2864079999999999em;"><span style="top:-2.5003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258031em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.952471em;vertical-align:-0.258031em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2864079999999999em;"><span style="top:-2.5003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258031em;"><span></span></span></span></span></span></span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.969438em;vertical-align:-0.286108em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.25833100000000003em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.286108em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.0191379999999999em;vertical-align:-0.335808em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361079999999999em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">n</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight">h</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.208331em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2864079999999999em;"><span style="top:-2.5003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">h</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.335808em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.0302479999999998em;vertical-align:-0.335808em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.25140799999999996em;"><span style="top:-2.5003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">×</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">q</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.335808em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>注意到我们直接将隐藏层的输出作为输出层的输入。上述式子可以合并为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="bold">O</mi><mo>=</mo><mo stretchy="false">(</mo><mrow><mi mathvariant="bold">X</mi><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">h</mi></msub></mrow><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">h</mi></msub><mo stretchy="false">)</mo><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">o</mi></msub><mo>=</mo><mrow><mi mathvariant="bold">X</mi><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">h</mi></msub><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub></mrow><mo>+</mo><mrow><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">h</mi></msub><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub></mrow><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">o</mi></msub></mrow><annotation encoding="application/x-tex">\pmb{O} = (\pmb{XW_h}+\pmb{b_h})\pmb{W_o}+\pmb{b_o} = \pmb{XW_hW_o}+\pmb{b_hW_o}+\pmb{b_o}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>从这个式子可以看出，<strong>如果仅仅引入隐藏层，不管多少层都依然等价于一个单层神经网络</strong></p>
+</li>
+</ul>
+<h2 id="12-激活函数"><a class="markdownIt-Anchor" href="#12-激活函数"></a> 1.2 激活函数</h2>
+<ul>
+<li>1.1 节中问题的根源在于<strong>全连接层只是做仿射变换，多个仿射变换的叠加仍然是仿射变换</strong>。解决此问题的方法就是引入非线性变换，具体地说：<strong>对隐藏层的每个隐层变量按使用按元素运算的非线性函数进行变换，然后再作为下一层的输入</strong>。这里使用的非线性函数就称为 <code>激活函数（activate function）</code></li>
+<li>激活函数可以<strong>在网络中加入非线性成分</strong>，具有一定的生物学基础
+<ol>
+<li>在生物神经元的输入和输出之间不是线性关系，而是在输入信号强度达到一定程度时发出一个脉冲信号，然后经历一段不应期才能再次发射。神经元的信号强度是一定的，但是发射频率会随输入强度<strong>非线性</strong>变化</li>
+<li>对应到人工神经网络中，<strong>人工神经元的输出相当于生物神经元的放电频率，激活函数则相当于描述了输入强度和放电频率的关系</strong></li>
+</ol>
+<blockquote>
+<p>Note：人工神经网络模型只是生物脑的极简模型，有一派研究人员专门从生物视角研究智能及其人工复现，对应的学科称为“认知神经科学”，那边有很多更贴近生物脑的神经网络模型</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="121-激活函数的作用"><a class="markdownIt-Anchor" href="#121-激活函数的作用"></a> 1.2.1 激活函数的作用</h3>
+<ul>
+<li>更重要的是，<strong>引入激活函数后神经网络具有了“拟合任何函数”的能力，这非常重要，因为机器学习的本质，无论 CV 还是 NLP 甚至 RL，都是拟合函数</strong>（尽管这个函数很可能复杂到无法表示），在<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1m3411p7wD?p=3">李宏毅老师的课程</a>中对这一点有着非常清晰的讲解，请看以下图示
+<ol>
+<li>
+<p>简单线性模型表示能力有限，无法拟合复杂的红色目标函数（这个问题称为 <code>model bias</code>）</p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+ </div>
+</li>
+<li>
+<p><strong>任意分段函数都可以用一个常数偏置加上一组反Z字型函数（蓝色）拟合</strong></p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+ </div>
+<p>注意任意曲线都可以用一大堆小直线拟合，因此使用这种方法就能拟合出任意函数。<strong>神经网络中常用的 sigmoid 和 tanh 激活函数就是这个蓝色反Z字函数的近似连续函数</strong></p>
+</li>
+<li>
+<p>这个反Z字本质也是一个分段函数，<strong>进一步拆开就得到了 ReLU 激活函数图形</strong></p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+ </div>
+</li>
+</ol>
+</li>
+</ul>
+<h3 id="122-各种激活函数"><a class="markdownIt-Anchor" href="#122-各种激活函数"></a> 1.2.2 各种激活函数</h3>
+<ul>
+<li>
+<p>本节介绍常见的激活函数及其导数的图像</p>
+<ol>
+<li>
+<p><strong><code>ReLU (rectified linear unit 线性整流单元)</code></strong>，它是一个很简单的线性变换，给定元素 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span>，该函数定义为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>ReLU</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mi>max</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>x</mi><mo separator="true">,</mo><mn>0</mn><mo stretchy="false">)</mo><mo>=</mo><mrow><mo fence="true">{</mo><mtable rowspacing="0.24999999999999992em" columnalign="right left right" columnspacing="0em 1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mo separator="true">,</mo><mi>x</mi><mo>≤</mo><mn>0</mn></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mi>x</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mo separator="true">,</mo><mi>x</mi><mo>&gt;</mo><mn>0</mn></mrow></mstyle></mtd></mtr></mtable></mrow></mrow><annotation encoding="application/x-tex">\text{ReLU}(x) = \max(x,0) = \left\{
+\begin{aligned}
+0 &amp;&amp; ,x\leq 0\\
+x &amp;&amp; ,x &gt;0
+\end{aligned}
+\right.
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">ReLU</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mop">max</span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">0</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.00003em;vertical-align:-1.25003em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size4">{</span></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7500000000000002em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">x</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2500000000000002em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7500000000000002em;"><span style="top:-3.75em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"><span class="mord"></span></span></span><span style="top:-2.25em;"><span class="pstrut" style="height:2.84em;"></span><span class="mord"><span class="mord"></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2500000000000002em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:1em;"></span><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7500000000000002em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord">0</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2500000000000002em;"><span></span></span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>可见 <strong>ReLU 就是输入为负数时输出零，否则保持原样输出</strong>的一个分段函数</p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+ </div>
+</li>
+<li>
+<p><strong><code>Sigmoid</code></strong> 函数可以<strong>将元素的值变换到</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(0,1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span><strong>范围</strong>，该函数定义为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>sigmoid</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mn>1</mn><mrow><mn>1</mn><mo>+</mo><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mo>−</mo><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\text{sigmoid}(x) = \frac{1}{1+\exp(-x)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">sigmoid</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.25744em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord">−</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p><strong>sigmoid 函数在早期的神经网络中较为普遍，但它目前逐渐被更简单的ReLU函数取代</strong>。它的特点是输出值域在0到1之间，在 RNN 网络中利用此特性来控制信息在神经网络中的流动。其导数为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mtext>sigmoid</mtext><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mtext>sigmoid</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mtext>sigmoid</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{sigmoid}&#x27;(x) = \text{sigmoid}(x)(1-\text{sigmoid}(x))
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0862319999999999em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord text"><span class="mord">sigmoid</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.836232em;"><span style="top:-3.1473400000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">sigmoid</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">sigmoid</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mclose">)</span></span></span></span></span></p>
+<p>如下图所示，当输入为0时，sigmoid 函数的导数达到最大值0.25；当输入越偏离0时，sigmoid 函数的导数越接近0</p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+ </div>
+</li>
+<li>
+<p><strong><code>tanh（双曲正切）</code></strong> 函数可以加<strong>将元素的值变换到</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mo>−</mo><mn>1</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(-1,1)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">−</span><span class="mord">1</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mclose">)</span></span></span></span><strong>范围</strong>，该函数定义为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>tanh</mtext><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><mn>1</mn><mo>−</mo><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mo>−</mo><mn>2</mn><mi>x</mi><mo stretchy="false">)</mo></mrow><mrow><mn>1</mn><mo>+</mo><mi>exp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mo>−</mo><mn>2</mn><mi>x</mi><mo stretchy="false">)</mo></mrow></mfrac></mrow><annotation encoding="application/x-tex">\text{tanh}(x) = \frac{1-\exp(-2x)}{1+\exp(-2x)}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">tanh</span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.363em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord">−</span><span class="mord">2</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mop">exp</span><span class="mopen">(</span><span class="mord">−</span><span class="mord">2</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>tanh 和 sigmoid 函数的形状很像，但 <strong>tanh 函数在坐标系的原点上对称</strong>。其导数为</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mtext>tanh</mtext><mo mathvariant="normal" lspace="0em" rspace="0em">′</mo></msup><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo><mo>=</mo><mn>1</mn><mo>−</mo><msup><mtext>tanh</mtext><mn>2</mn></msup><mo stretchy="false">(</mo><mi>x</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\text{tanh}&#x27;(x) = 1-\text{tanh}^2(x)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.0862319999999999em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord text"><span class="mord">tanh</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.836232em;"><span style="top:-3.1473400000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′</span></span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.148448em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord text"><span class="mord">tanh</span></span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8984479999999999em;"><span style="top:-3.1473400000000002em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">x</span><span class="mclose">)</span></span></span></span></span></p>
+<p>如下图所示，当输入为0时，tanh 函数的导数达到最大值1；当输入越偏离0时，sigmoid函数的导数越接近0</p>
+ <div align="center">
+     <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+ </div>
+</li>
+</ol>
+</li>
+<li>
+<p>用以下代码片绘制图像</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt<br><span class="hljs-keyword">import</span> torch<br><br><span class="hljs-comment"># 这两行代码解决 plt 中文显示的问题</span><br>plt.rcParams[<span class="hljs-string">&#x27;font.sans-serif&#x27;</span>] = [<span class="hljs-string">&#x27;SimHei&#x27;</span>]<br>plt.rcParams[<span class="hljs-string">&#x27;axes.unicode_minus&#x27;</span>] = <span class="hljs-literal">False</span><br><br>x = torch.arange(-<span class="hljs-number">8.0</span>, <span class="hljs-number">8.0</span>, <span class="hljs-number">0.1</span>, requires_grad=<span class="hljs-literal">True</span>)<br>funcs = [x.relu(),x.sigmoid(),x.tanh()]<br>names = [<span class="hljs-string">&#x27;ReLU&#x27;</span>, <span class="hljs-string">&#x27;sigmoid&#x27;</span>, <span class="hljs-string">&#x27;tanh&#x27;</span>]<br>fig = plt.figure(figsize = (<span class="hljs-number">12</span>,<span class="hljs-number">9</span>))<br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">3</span>):<br>    p1 = fig.add_subplot(<span class="hljs-number">3</span>,<span class="hljs-number">2</span>,<span class="hljs-number">1</span>+i*<span class="hljs-number">2</span>,label=<span class="hljs-string">&#x27;a&#123;&#125;&#x27;</span>.<span class="hljs-built_in">format</span>(<span class="hljs-number">1</span>+i*<span class="hljs-number">2</span>))<br>    p2 = fig.add_subplot(<span class="hljs-number">3</span>,<span class="hljs-number">2</span>,<span class="hljs-number">2</span>+i*<span class="hljs-number">2</span>,label=<span class="hljs-string">&#x27;a&#123;&#125;&#x27;</span>.<span class="hljs-built_in">format</span>(<span class="hljs-number">2</span>+i*<span class="hljs-number">2</span>))<br><br>    name = names[i]<br>    y = funcs[i] <br>    <br>    <span class="hljs-keyword">if</span> x.grad != <span class="hljs-literal">None</span>:  <span class="hljs-comment"># 清除上次计算的梯度</span><br>        x.grad.zero_()<br>    y.<span class="hljs-built_in">sum</span>().backward()  <span class="hljs-comment"># 这样会计算x中各元素梯度，存在x.grad中</span><br>    <br>    p1.plot(x.detach().numpy(), y.detach().numpy(), <span class="hljs-string">&quot;r-&quot;</span>,linewidth=<span class="hljs-number">2</span>,c=<span class="hljs-string">&#x27;r&#x27;</span>)<br>    p1.set_title(name)<br>    p1.grid(which=<span class="hljs-string">&#x27;major&#x27;</span>,alpha=<span class="hljs-number">0.8</span>)   <br>    p2.plot(x.detach().numpy(), x.grad, <span class="hljs-string">&quot;r-&quot;</span>,linewidth=<span class="hljs-number">2</span>,c=<span class="hljs-string">&#x27;r&#x27;</span>)<br>    p2.set_title(name+<span class="hljs-string">&#x27;梯度&#x27;</span>)<br>    p2.grid(which=<span class="hljs-string">&#x27;major&#x27;</span>,alpha=<span class="hljs-number">0.8</span>)   <br><br>plt.tight_layout()  <span class="hljs-comment"># 防止子图title和轴标签重叠</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="13-多层感知机"><a class="markdownIt-Anchor" href="#13-多层感知机"></a> 1.3 多层感知机</h2>
+<ul>
+<li>
+<p><strong>多层感知机就是含有至少一个隐藏层的由全连接层组成的神经网络，且每个隐藏层的输出通过激活函数进行变换</strong>。其<strong>网络层数</strong>和<strong>各隐藏层中隐藏单元个数</strong>都是超参数。以单隐藏层为例，输出可以如下计算：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.24999999999999992em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mi mathvariant="bold">H</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mi>ϕ</mi><mo stretchy="false">(</mo><mrow><mi mathvariant="bold">X</mi><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">h</mi></msub></mrow><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">h</mi></msub><mo stretchy="false">)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mi mathvariant="bold">O</mi></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mrow><mi mathvariant="bold">H</mi><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub></mrow><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">o</mi></msub></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}
+\pmb{H} &amp;= \phi(\pmb{XW_h}+\pmb{b_h}) \\
+\pmb{O} &amp;= \pmb{HW_o}+\pmb{b_o}
+\end{aligned}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.0000000000000004em;vertical-align:-1.2500000000000002em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7500000000000002em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2500000000000002em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.7500000000000002em;"><span style="top:-3.91em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord mathnormal">ϕ</span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mclose">)</span></span></span><span style="top:-2.41em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2500000000000002em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϕ</mi></mrow><annotation encoding="application/x-tex">\phi</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">ϕ</span></span></span></span> 表示激活函数</p>
+<ol>
+<li>对于分类问题，可以像 softmax 回归那样对输出 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">O</mi></mrow><annotation encoding="application/x-tex">\pmb{O}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span></span></span> 进行 softmax 运算，然后优化交叉熵损失</li>
+<li>对于回归问题，可以像线性回归那样将输出个数设为 1，然后优化平方损失函数</li>
+</ol>
+</li>
+</ul>
+<h3 id="131-理解多层感知机全连接神经网络-数据升维"><a class="markdownIt-Anchor" href="#131-理解多层感知机全连接神经网络-数据升维"></a> 1.3.1 理解多层感知机（全连接神经网络） —— 数据升维</h3>
+<ul>
+<li>
+<p>注意到真正数据分类过程/回归过程发生在最后一个隐藏层和输出层之间。假设输入数据维度为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">n</span></span></span></span>，最后一个隐藏层的隐藏单元数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>&gt;</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">m&gt;n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">m</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">n</span></span></span></span>，可见<strong>这些隐藏层做的事其实是把数据从</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi></mrow><annotation encoding="application/x-tex">n</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">n</span></span></span></span><strong>维上升到 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi></mrow><annotation encoding="application/x-tex">m</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">m</span></span></span></span> 维</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_008.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<p>在二维空间中无法线性分开的两类样本，升维到三维空间中就变得线性可分了，<strong>神经网络特别善于构造复杂的高维空间</strong></p>
+</li>
+</ul>
+<h3 id="132-理解多层感知机全连接神经网络-提取特征"><a class="markdownIt-Anchor" href="#132-理解多层感知机全连接神经网络-提取特征"></a> 1.3.2 理解多层感知机（全连接神经网络） —— 提取特征</h3>
+<ul>
+<li>
+<p>有些时候，<strong>神经网络最后一个隐藏层的隐藏单元数目比输入维度更小（CV 相关的任务中常有这种情况）这时神经网络的作用就不是升维了，而是提取特征</strong>，比如在情感辨析任务中提取人物神态神态</p>
+  <div align="center">
+      <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_009.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+</li>
+<li>
+<p>每一个隐藏层都是对上一层的一次抽象/概括/整合，<strong>当隐藏层很多时，靠前的隐藏层会提取出更底层/基础的特征，靠后的隐藏层会得到更复杂一点的特征，并在这个过程中实现基础特征的复用</strong>，比如下面这是手写数字识别任务：</p>
+  <div align="center">
+      <img src="/MyBlog/img/经典机器学习方法(3)_多层感知机/img_010.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<p>靠前的层提取出各种笔画的特征，靠后的层将这些基础特征整合成圆圈、折线等复杂特征（<strong>整合过程会复用上一层的基础特征</strong>），最后输出层的每个神经元都代表一个具体数字的特征（<strong>所谓 “某个神经元代表一个特征”，是指输入含有整个特征时，这个神经元的输出会变大</strong>）</p>
+<blockquote>
+<p>Note: 纯全连接网络不具有 “平移不变性”，注意构成数字 “8” 的上下两个圆形特征，对于全连接网络而言，<strong>即时这两个圆一模一样，再图像中的位置不同也会导致网络将其识别为不同的特征</strong>，而图片中物体位置移动是很常见的。<strong>卷积神经网络具有 “平移不变性”，因此在 CV 中特别常用</strong></p>
+</blockquote>
+</li>
+</ul>
+<h1 id="2-实现多层感知机"><a class="markdownIt-Anchor" href="#2-实现多层感知机"></a> 2. 实现多层感知机</h1>
+<ul>
+<li>使用和 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/124629256">softmax 回归</a>实验中相同的 Fashion-MNIST 数据集，利用多层感知机完成图像分类任务</li>
+</ul>
+<h2 id="21-数据准备"><a class="markdownIt-Anchor" href="#21-数据准备"></a> 2.1 数据准备</h2>
+<ul>
+<li>定义好读取小批量数据的方法，构造数据读取迭代器  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torchvision<br><span class="hljs-keyword">import</span> torchvision.transforms <span class="hljs-keyword">as</span> transforms<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">load_data_fashion_mnist</span>(<span class="hljs-params">batch_size, num_workers=<span class="hljs-number">0</span>, root=<span class="hljs-string">&#x27;./Datasets/FashionMNIST&#x27;</span></span>):<br>    mnist_train = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">True</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br>    mnist_test = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">False</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br><br>    train_iter = torch.utils.data.DataLoader(mnist_train, batch_size=batch_size, shuffle=<span class="hljs-literal">True</span>, num_workers=num_workers)<br>    test_iter = torch.utils.data.DataLoader(mnist_test, batch_size=batch_size, shuffle=<span class="hljs-literal">False</span>, num_workers=num_workers)<br><br>    <span class="hljs-keyword">return</span> train_iter, test_iter<br><br><span class="hljs-comment"># 数据读取迭代器</span><br>batch_size = <span class="hljs-number">256</span><br>train_iter, test_iter = load_data_fashion_mnist(batch_size, <span class="hljs-number">4</span>)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="22-模型设计"><a class="markdownIt-Anchor" href="#22-模型设计"></a> 2.2 模型设计</h2>
+<ul>
+<li>
+<p><strong>模型参数初始化</strong>：Fashion-MNIST 数据集中图像形状为 28×28，类别数为10。我们将图像拉平为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>28</mn><mo>×</mo><mn>28</mn><mo>=</mo><mn>784</mn></mrow><annotation encoding="application/x-tex">28\times 28=784</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">2</span><span class="mord">8</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span><span class="mord">8</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">7</span><span class="mord">8</span><span class="mord">4</span></span></span></span> 的向量作为输入，即</p>
+<ol>
+<li>输入层单元数为 728</li>
+<li>输出层单元数为 10，使用 softmax 运算将输出转为分类概率分布，构造交叉熵损失</li>
+<li>隐藏层和输出层的所有权重参数都从正态分布 $ N(0,0.01^2)$ 采样初始化；所有偏置参数都初始化为 0</li>
+<li>隐藏单元个数是超参数，这里设为 256</li>
+</ol>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">num_inputs, num_outputs, num_hiddens = <span class="hljs-number">784</span>, <span class="hljs-number">10</span>, <span class="hljs-number">256</span><br>    <br>W1 = torch.tensor(np.random.normal(<span class="hljs-number">0</span>, <span class="hljs-number">0.01</span>, (num_inputs, num_hiddens)), dtype=torch.<span class="hljs-built_in">float</span>)<br>b1 = torch.zeros(num_hiddens, dtype=torch.<span class="hljs-built_in">float</span>)<br>W2 = torch.tensor(np.random.normal(<span class="hljs-number">0</span>, <span class="hljs-number">0.01</span>, (num_hiddens, num_outputs)), dtype=torch.<span class="hljs-built_in">float</span>)<br>b2 = torch.zeros(num_outputs, dtype=torch.<span class="hljs-built_in">float</span>)<br>    <br>params = [W1, b1, W2, b2]<br><span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>param.requires_grad_(requires_grad=<span class="hljs-literal">True</span>)<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>定义激活函数</strong>：这里使用 ReLU 激活函数，用 <code>max</code> 函数手动实现之</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">relu</span>(<span class="hljs-params">X</span>):<br>    <span class="hljs-keyword">return</span> torch.<span class="hljs-built_in">max</span>(<span class="hljs-built_in">input</span>=X, other=torch.tensor(<span class="hljs-number">0.0</span>))<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>定义模型</strong>：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">O</mi><mo>=</mo><mtext>ReLU</mtext><mo stretchy="false">(</mo><mrow><mi mathvariant="bold">X</mi><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">h</mi></msub></mrow><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">h</mi></msub><mo stretchy="false">)</mo><msub><mi mathvariant="bold">W</mi><mi mathvariant="bold">o</mi></msub><mo>+</mo><msub><mi mathvariant="bold">b</mi><mi mathvariant="bold">o</mi></msub></mrow><annotation encoding="application/x-tex">\pmb{O} = \text{ReLU}(\pmb{XW_h}+\pmb{b_h})\pmb{W_o}+\pmb{b_o}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord text"><span class="mord">ReLU</span></span><span class="mopen">(</span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord mathnormal" style="margin-right:0.07847em;">X</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">h</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord"><span class="mord vbox"><span class="thinbox"><span class="rlap"><span class="strut" style="height:0.84444em;vertical-align:-0.15em;"></span><span class="inner"><span class="mord"><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span><span class="fix"></span></span></span></span><span class="mspace" style="margin-right:0.050187499999999996em;"></span><span class="mord"><span class="mord mathnormal">b</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">o</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">net</span>(<span class="hljs-params">X</span>):<br>    X = X.view((-<span class="hljs-number">1</span>, num_inputs))        <span class="hljs-comment"># 原始图像拉平为一维向量输入</span><br>    H = relu(torch.matmul(X, W1) + b1)  <span class="hljs-comment"># 隐藏层计算</span><br>    <span class="hljs-keyword">return</span> torch.matmul(H, W2) + b2     <span class="hljs-comment"># 输出层计算并返回</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>定义损失函数</strong>：直接用 Pytorch 提供的 <code>CrossEntropyLoss</code> 方法实现交叉熵损失，它内部是用  logsoftmax + NLLLoss 实现的，可以避免数据溢出，保证数据稳定性</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">loss = torch.nn.CrossEntropyLoss()<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="23-模型训练"><a class="markdownIt-Anchor" href="#23-模型训练"></a> 2.3 模型训练</h2>
+<ul>
+<li>
+<p>手动编写小批量随机梯度下降（sgd）方法来优化参数</p>
+<blockquote>
+<p>Note：PyTorch在计算 <code>torch.nn.CrossEntropyLoss</code> 时除过一次 <code>batch_size</code>，因此学习率设得比较大</p>
+</blockquote>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br></pre></td><td class="code"><pre><code class="hljs python">num_epochs = <span class="hljs-number">5</span>  <span class="hljs-comment"># 训练轮数</span><br>lr = <span class="hljs-number">100.0</span>          <span class="hljs-comment"># 学习率</span><br>batch_size = <span class="hljs-number">256</span>    <span class="hljs-comment"># batch容量</span><br><br><span class="hljs-comment"># 小批量随机梯度下降</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">sgd</span>(<span class="hljs-params">params, lr, batch_size</span>):<br>    <span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>        param.data -= lr * param.grad / batch_size <span class="hljs-comment"># 注意这里更改 param 时用的param.data，这样不会影响梯度计算</span><br><br><span class="hljs-comment"># 评估模型准确率</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_accuracy</span>(<span class="hljs-params">data_iter, net</span>):<br>    acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 所有样本总准确率</span><br>    n =  <span class="hljs-number">0</span>         <span class="hljs-comment"># 总样本数量</span><br>    <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> data_iter:<br>        acc_sum += (net(X).argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">float</span>().<span class="hljs-built_in">sum</span>().item() <span class="hljs-comment"># 注意这里中间的 mean() 改成 sum() 了</span><br>        n += y.shape[<span class="hljs-number">0</span>]<br>    <span class="hljs-keyword">return</span> acc_sum / n<br>        <br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train</span>(<span class="hljs-params">net, train_iter, test_iter, loss, num_epochs, batch_size, params=<span class="hljs-literal">None</span>, lr=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-comment"># 训练执行 num_epochs 轮</span><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>        train_l_sum = <span class="hljs-number">0.0</span>    <span class="hljs-comment"># 本 epoch 总损失</span><br>        train_acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 本 epoch 总准确率</span><br>        n = <span class="hljs-number">0</span>                <span class="hljs-comment"># 本 epoch 总样本数</span><br>        <br>        <span class="hljs-comment"># 逐小批次地遍历训练数据</span><br>        <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> train_iter:<br>            <br>            <span class="hljs-comment"># 计算小批量损失</span><br>            y_hat = net(X)<br>            l = loss(y_hat, y).<span class="hljs-built_in">sum</span>()  <br><br>            <span class="hljs-comment"># 梯度清零</span><br>            <span class="hljs-keyword">if</span> params <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> params[<span class="hljs-number">0</span>].grad <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>                    param.grad.data.zero_()<br>        <br>            <span class="hljs-comment"># 小批量的损失对模型参数求梯度</span><br>            l.backward()<br>            <br>            <span class="hljs-comment"># 做小批量随机梯度下降进行优化</span><br>            sgd(params, lr, batch_size)   <span class="hljs-comment"># 手动实现优化算法</span><br> <br>            <span class="hljs-comment"># 记录训练数据</span><br>            train_l_sum += l.item()<br>            train_acc_sum += (y_hat.argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">sum</span>().item()<br>            n += y.shape[<span class="hljs-number">0</span>]<br>        <br>        <span class="hljs-comment"># 训练完成一个 epoch 后，评估测试集上的准确率</span><br>        test_acc = evaluate_accuracy(test_iter, net)<br>        <br>        <span class="hljs-comment"># 打印提示信息</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;epoch %d, loss %.4f, train acc %.3f, test acc %.3f&#x27;</span><br>              % (epoch + <span class="hljs-number">1</span>, train_l_sum / n, train_acc_sum / n, test_acc))<br><br>        <br><span class="hljs-comment"># 进行训练</span><br>train(net, train_iter, test_iter, loss, num_epochs, batch_size, params, lr)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">epoch 1, loss 0.0030, train acc 0.719, test acc 0.735</span><br><span class="hljs-string">epoch 2, loss 0.0019, train acc 0.826, test acc 0.807</span><br><span class="hljs-string">epoch 3, loss 0.0017, train acc 0.844, test acc 0.793</span><br><span class="hljs-string">epoch 4, loss 0.0015, train acc 0.855, test acc 0.842</span><br><span class="hljs-string">epoch 5, loss 0.0015, train acc 0.863, test acc 0.852</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="24-完整代码"><a class="markdownIt-Anchor" href="#24-完整代码"></a> 2.4 完整代码</h2>
+<ul>
+<li>
+<p>以下代码可以直接复制到 vscode 运行</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torchvision<br><span class="hljs-keyword">import</span> torchvision.transforms <span class="hljs-keyword">as</span> transforms<br><span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np<br><br><span class="hljs-comment"># 数据集相关 --------------------------------------------------------------------------------------------------</span><br><span class="hljs-comment"># 加载数据集</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">load_data_fashion_mnist</span>(<span class="hljs-params">batch_size, num_workers=<span class="hljs-number">0</span>, root=<span class="hljs-string">&#x27;./Datasets/FashionMNIST&#x27;</span></span>):<br>    mnist_train = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">True</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br>    mnist_test = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">False</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br><br>    train_iter = torch.utils.data.DataLoader(mnist_train, batch_size=batch_size, shuffle=<span class="hljs-literal">True</span>, num_workers=num_workers)<br>    test_iter = torch.utils.data.DataLoader(mnist_test, batch_size=batch_size, shuffle=<span class="hljs-literal">False</span>, num_workers=num_workers)<br><br>    <span class="hljs-keyword">return</span> train_iter, test_iter<br><br><span class="hljs-comment"># 模型相关 --------------------------------------------------------------------------------------------------------</span><br><span class="hljs-comment"># 激活函数</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">relu</span>(<span class="hljs-params">X</span>):<br>    <span class="hljs-keyword">return</span> torch.<span class="hljs-built_in">max</span>(<span class="hljs-built_in">input</span>=X, other=torch.tensor(<span class="hljs-number">0.0</span>))<br><br><span class="hljs-comment"># 定义模型</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">net</span>(<span class="hljs-params">X</span>):<br>    X = X.view((-<span class="hljs-number">1</span>, num_inputs))        <span class="hljs-comment"># 原始图像拉平为一维向量输入</span><br>    H = relu(torch.matmul(X, W1) + b1)  <span class="hljs-comment"># 隐藏层计算</span><br>    <span class="hljs-keyword">return</span> torch.matmul(H, W2) + b2     <span class="hljs-comment"># 输出层计算并返回</span><br><br><span class="hljs-comment"># 小批量随机梯度下降</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">sgd</span>(<span class="hljs-params">params, lr, batch_size</span>):<br>    <span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>        param.data -= lr * param.grad / batch_size <span class="hljs-comment"># 注意这里更改 param 时用的param.data，这样不会影响梯度计算</span><br><br><span class="hljs-comment"># 评估模型准确率</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_accuracy</span>(<span class="hljs-params">data_iter, net</span>):<br>    acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 所有样本总准确率</span><br>    n =  <span class="hljs-number">0</span>         <span class="hljs-comment"># 总样本数量</span><br>    <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> data_iter:<br>        acc_sum += (net(X).argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">float</span>().<span class="hljs-built_in">sum</span>().item() <span class="hljs-comment"># 注意这里中间的 mean() 改成 sum() 了</span><br>        n += y.shape[<span class="hljs-number">0</span>]<br>    <span class="hljs-keyword">return</span> acc_sum / n<br><br><span class="hljs-comment"># 进行训练</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train</span>(<span class="hljs-params">net, train_iter, test_iter, loss, num_epochs, batch_size, params=<span class="hljs-literal">None</span>, lr=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-comment"># 训练执行 num_epochs 轮</span><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>        train_l_sum = <span class="hljs-number">0.0</span>    <span class="hljs-comment"># 本 epoch 总损失</span><br>        train_acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 本 epoch 总准确率</span><br>        n = <span class="hljs-number">0</span>                <span class="hljs-comment"># 本 epoch 总样本数</span><br>        <br>        <span class="hljs-comment"># 逐小批次地遍历训练数据</span><br>        <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> train_iter:<br>            <br>            <span class="hljs-comment"># 计算小批量损失</span><br>            y_hat = net(X)<br>            l = loss(y_hat, y).<span class="hljs-built_in">sum</span>()  <br><br>            <span class="hljs-comment"># 梯度清零</span><br>            <span class="hljs-keyword">if</span> params <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span> <span class="hljs-keyword">and</span> params[<span class="hljs-number">0</span>].grad <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>                <span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>                    param.grad.data.zero_()<br>        <br>            <span class="hljs-comment"># 小批量的损失对模型参数求梯度</span><br>            l.backward()<br>            <br>            <span class="hljs-comment"># 做小批量随机梯度下降进行优化</span><br>            sgd(params, lr, batch_size)   <span class="hljs-comment"># 手动实现优化算法</span><br> <br>            <span class="hljs-comment"># 记录训练数据</span><br>            train_l_sum += l.item()<br>            train_acc_sum += (y_hat.argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">sum</span>().item()<br>            n += y.shape[<span class="hljs-number">0</span>]<br>        <br>        <span class="hljs-comment"># 训练完成一个 epoch 后，评估测试集上的准确率</span><br>        test_acc = evaluate_accuracy(test_iter, net)<br>        <br>        <span class="hljs-comment"># 打印提示信息</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;epoch %d, loss %.4f, train acc %.3f, test acc %.3f&#x27;</span><br>              % (epoch + <span class="hljs-number">1</span>, train_l_sum / n, train_acc_sum / n, test_acc))<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:<br>    <span class="hljs-comment"># 模型参数</span><br>    num_inputs, num_outputs, num_hiddens = <span class="hljs-number">784</span>, <span class="hljs-number">10</span>, <span class="hljs-number">256</span><br>    W1 = torch.tensor(np.random.normal(<span class="hljs-number">0</span>, <span class="hljs-number">0.01</span>, (num_inputs, num_hiddens)), dtype=torch.<span class="hljs-built_in">float</span>)<br>    b1 = torch.zeros(num_hiddens, dtype=torch.<span class="hljs-built_in">float</span>)<br>    W2 = torch.tensor(np.random.normal(<span class="hljs-number">0</span>, <span class="hljs-number">0.01</span>, (num_hiddens, num_outputs)), dtype=torch.<span class="hljs-built_in">float</span>)<br>    b2 = torch.zeros(num_outputs, dtype=torch.<span class="hljs-built_in">float</span>)<br>    params = [W1, b1, W2, b2]<br><br>    <span class="hljs-keyword">for</span> param <span class="hljs-keyword">in</span> params:<br>        param.requires_grad_(requires_grad=<span class="hljs-literal">True</span>)    <span class="hljs-comment"># 全部设为允许梯度追踪</span><br><br>    <span class="hljs-comment"># 数据读取迭代器</span><br>    batch_size = <span class="hljs-number">256</span><br>    train_iter, test_iter = load_data_fashion_mnist(batch_size, <span class="hljs-number">4</span>)<br>        <br>    <span class="hljs-comment"># 交叉熵损失</span><br>    loss = torch.nn.CrossEntropyLoss()<br><br>    <span class="hljs-comment"># 训练</span><br>    num_epochs = <span class="hljs-number">5</span>      <span class="hljs-comment"># 训练轮数</span><br>    lr = <span class="hljs-number">100.0</span>          <span class="hljs-comment"># 学习率</span><br>    batch_size = <span class="hljs-number">256</span>    <span class="hljs-comment"># batch容量</span><br><br>    train(net, train_iter, test_iter, loss, num_epochs, batch_size, params, lr)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="3-利用-pytorch-简洁地实现线性回归"><a class="markdownIt-Anchor" href="#3-利用-pytorch-简洁地实现线性回归"></a> 3. 利用 Pytorch 简洁地实现线性回归</h1>
+<ul>
+<li>pytorch 中提供了大量预定义的神经网络层，常用损失函数及优化器，可以大大简化 softmax 回归模型的实现</li>
+<li>数据准备、模型评价、使用模型进行预测等部分和第 2 节实现相同，本节不再重复</li>
+</ul>
+<h2 id="31-模型设计"><a class="markdownIt-Anchor" href="#31-模型设计"></a> 3.1 模型设计</h2>
+<ul>
+<li>
+<p>和之前 softmax 回归实验一样，按照深度学习习惯把数据拉平这件事定义成神经网络的一个层，然后用 <code>Sequential</code> 容器搭建网络模型</p>
+</li>
+<li>
+<p>相比之前的 softmax 回归网络，唯一的区别就是多加了一个全连接层作为隐藏层。它的隐藏单元个数为256，并使用ReLU函数作为激活函数</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">class</span> <span class="hljs-title class_">FlattenLayer</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>(FlattenLayer, <span class="hljs-variable language_">self</span>).__init__()<br>        <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>): <span class="hljs-comment"># x shape: (batch, *, *, ...)</span><br>        <span class="hljs-keyword">return</span> x.view(x.shape[<span class="hljs-number">0</span>], -<span class="hljs-number">1</span>)<br><br>num_inputs, num_outputs, num_hiddens = <span class="hljs-number">784</span>, <span class="hljs-number">10</span>, <span class="hljs-number">256</span><br>    <br>net = nn.Sequential(<br>    FlattenLayer(),<br>    nn.Linear(num_inputs, num_hiddens),<br>    nn.ReLU(),<br>    nn.Linear(num_hiddens, num_outputs), <br>)<br><br><span class="hljs-keyword">for</span> params <span class="hljs-keyword">in</span> net.parameters():<br>    init.normal_(params, mean=<span class="hljs-number">0</span>, std=<span class="hljs-number">0.01</span>) <span class="hljs-comment"># 用 nn.init 进行参数初始化</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="32-模型训练"><a class="markdownIt-Anchor" href="#32-模型训练"></a> 3.2 模型训练</h2>
+<ul>
+<li>
+<p>训练步骤和 softmax 回归几乎相同</p>
+<blockquote>
+<p>Note：这里使用了 PyTorch 的 SGD，里面没有除 <code>batch_size</code>，所以学习率不用设得太大了</p>
+</blockquote>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs python">num_epochs = <span class="hljs-number">5</span><br>batch_size = <span class="hljs-number">256</span><br>loss = torch.nn.CrossEntropyLoss()<br><br>optimizer = torch.optim.SGD(net.parameters(), lr=<span class="hljs-number">0.5</span>)<br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train</span>(<span class="hljs-params">net, train_iter, test_iter, loss, num_epochs, batch_size, params=<span class="hljs-literal">None</span>, lr=<span class="hljs-literal">None</span>, optimizer=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-comment"># 训练执行 num_epochs 轮</span><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>        train_l_sum = <span class="hljs-number">0.0</span>    <span class="hljs-comment"># 本 epoch 总损失</span><br>        train_acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 本 epoch 总准确率</span><br>        n = <span class="hljs-number">0</span>                <span class="hljs-comment"># 本 epoch 总样本数</span><br>        <br>        <span class="hljs-comment"># 逐小批次地遍历训练数据</span><br>        <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> train_iter:<br>            <br>            <span class="hljs-comment"># 计算小批量损失</span><br>            y_hat = net(X)<br>            l = loss(y_hat, y).<span class="hljs-built_in">sum</span>()  <br><br>            <span class="hljs-comment"># 梯度清零</span><br>            optimizer.zero_grad()<br><br>            <span class="hljs-comment"># 小批量的损失对模型参数求梯度</span><br>            l.backward()<br>            <br>            <span class="hljs-comment"># 做小批量随机梯度下降进行优化</span><br>            optimizer.step()              <br><br>            <span class="hljs-comment"># 记录训练数据</span><br>            train_l_sum += l.item()<br>            train_acc_sum += (y_hat.argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">sum</span>().item()<br>            n += y.shape[<span class="hljs-number">0</span>]<br>        <br>        <span class="hljs-comment"># 训练完成一个 epoch 后，评估测试集上的准确率</span><br>        test_acc = evaluate_accuracy(test_iter, net)<br>        <br>        <span class="hljs-comment"># 打印提示信息</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;epoch %d, loss %.4f, train acc %.3f, test acc %.3f&#x27;</span><br>              % (epoch + <span class="hljs-number">1</span>, train_l_sum / n, train_acc_sum / n, test_acc))<br><br>train(net, train_iter, test_iter, loss, num_epochs, batch_size, <span class="hljs-literal">None</span>, <span class="hljs-literal">None</span>, optimizer)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">epoch 1, loss 0.0033, train acc 0.690, test acc 0.754</span><br><span class="hljs-string">epoch 2, loss 0.0019, train acc 0.824, test acc 0.809</span><br><span class="hljs-string">epoch 3, loss 0.0016, train acc 0.845, test acc 0.803</span><br><span class="hljs-string">epoch 4, loss 0.0015, train acc 0.857, test acc 0.804</span><br><span class="hljs-string">epoch 5, loss 0.0014, train acc 0.865, test acc 0.823</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="33-完整代码"><a class="markdownIt-Anchor" href="#33-完整代码"></a> 3.3 完整代码</h2>
+<ul>
+<li>
+<p>以下代码可以直接复制到 vscode 运行</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> torch<br><span class="hljs-keyword">import</span> torchvision<br><span class="hljs-keyword">import</span> torchvision.transforms <span class="hljs-keyword">as</span> transforms<br><span class="hljs-keyword">from</span> torch <span class="hljs-keyword">import</span> nn<br><span class="hljs-keyword">from</span> torch.nn <span class="hljs-keyword">import</span> init<br><br><span class="hljs-comment"># 数据集相关 --------------------------------------------------------------------------------------------------</span><br><span class="hljs-comment"># 加载数据集</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">load_data_fashion_mnist</span>(<span class="hljs-params">batch_size, num_workers=<span class="hljs-number">0</span>, root=<span class="hljs-string">&#x27;./Datasets/FashionMNIST&#x27;</span></span>):<br>    mnist_train = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">True</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br>    mnist_test = torchvision.datasets.FashionMNIST(root=root, train=<span class="hljs-literal">False</span>, download=<span class="hljs-literal">True</span>,transform=transforms.ToTensor())<br><br>    train_iter = torch.utils.data.DataLoader(mnist_train, batch_size=batch_size, shuffle=<span class="hljs-literal">True</span>, num_workers=num_workers)<br>    test_iter = torch.utils.data.DataLoader(mnist_test, batch_size=batch_size, shuffle=<span class="hljs-literal">False</span>, num_workers=num_workers)<br><br>    <span class="hljs-keyword">return</span> train_iter, test_iter<br><br><span class="hljs-comment"># 模型相关 --------------------------------------------------------------------------------------------------------</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">FlattenLayer</span>(nn.Module):<br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">__init__</span>(<span class="hljs-params">self</span>):<br>        <span class="hljs-built_in">super</span>(FlattenLayer, <span class="hljs-variable language_">self</span>).__init__()<br>        <br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">forward</span>(<span class="hljs-params">self, x</span>): <span class="hljs-comment"># x shape: (batch, *, *, ...)</span><br>        <span class="hljs-keyword">return</span> x.view(x.shape[<span class="hljs-number">0</span>], -<span class="hljs-number">1</span>)<br><br><span class="hljs-comment"># 评估模型准确率</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_accuracy</span>(<span class="hljs-params">data_iter, net</span>):<br>    acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 所有样本总准确率</span><br>    n =  <span class="hljs-number">0</span>         <span class="hljs-comment"># 总样本数量</span><br>    <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> data_iter:<br>        acc_sum += (net(X).argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">float</span>().<span class="hljs-built_in">sum</span>().item() <span class="hljs-comment"># 注意这里中间的 mean() 改成 sum() 了</span><br>        n += y.shape[<span class="hljs-number">0</span>]<br>    <span class="hljs-keyword">return</span> acc_sum / n<br><br><span class="hljs-comment"># 进行训练</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">train</span>(<span class="hljs-params">net, train_iter, test_iter, loss, num_epochs, batch_size, params=<span class="hljs-literal">None</span>, lr=<span class="hljs-literal">None</span>, optimizer=<span class="hljs-literal">None</span></span>):<br>    <span class="hljs-comment"># 训练执行 num_epochs 轮</span><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(num_epochs):<br>        train_l_sum = <span class="hljs-number">0.0</span>    <span class="hljs-comment"># 本 epoch 总损失</span><br>        train_acc_sum = <span class="hljs-number">0.0</span>  <span class="hljs-comment"># 本 epoch 总准确率</span><br>        n = <span class="hljs-number">0</span>                <span class="hljs-comment"># 本 epoch 总样本数</span><br>        <br>        <span class="hljs-comment"># 逐小批次地遍历训练数据</span><br>        <span class="hljs-keyword">for</span> X, y <span class="hljs-keyword">in</span> train_iter:<br>            <br>            <span class="hljs-comment"># 计算小批量损失</span><br>            y_hat = net(X)<br>            l = loss(y_hat, y).<span class="hljs-built_in">sum</span>()  <br><br>            <span class="hljs-comment"># 梯度清零</span><br>            optimizer.zero_grad()<br><br>            <span class="hljs-comment"># 小批量的损失对模型参数求梯度</span><br>            l.backward()<br>            <br>            <span class="hljs-comment"># 做小批量随机梯度下降进行优化</span><br>            optimizer.step()              <br><br>            <span class="hljs-comment"># 记录训练数据</span><br>            train_l_sum += l.item()<br>            train_acc_sum += (y_hat.argmax(dim=<span class="hljs-number">1</span>) == y).<span class="hljs-built_in">sum</span>().item()<br>            n += y.shape[<span class="hljs-number">0</span>]<br>        <br>        <span class="hljs-comment"># 训练完成一个 epoch 后，评估测试集上的准确率</span><br>        test_acc = evaluate_accuracy(test_iter, net)<br>        <br>        <span class="hljs-comment"># 打印提示信息</span><br>        <span class="hljs-built_in">print</span>(<span class="hljs-string">&#x27;epoch %d, loss %.4f, train acc %.3f, test acc %.3f&#x27;</span><br>              % (epoch + <span class="hljs-number">1</span>, train_l_sum / n, train_acc_sum / n, test_acc))<br><br><br><span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">&#x27;__main__&#x27;</span>:<br>    <span class="hljs-comment"># 模型参数</span><br>    num_inputs, num_outputs, num_hiddens = <span class="hljs-number">784</span>, <span class="hljs-number">10</span>, <span class="hljs-number">256</span><br>    <br>    <span class="hljs-comment"># 数据读取迭代器</span><br>    batch_size = <span class="hljs-number">256</span><br>    train_iter, test_iter = load_data_fashion_mnist(batch_size, <span class="hljs-number">4</span>)<br><br>    <span class="hljs-comment"># 定义模型网络结构</span><br>    net = nn.Sequential(<br>    FlattenLayer(),<br>    nn.Linear(num_inputs, num_hiddens),<br>    nn.ReLU(),<br>    nn.Linear(num_hiddens, num_outputs), <br>    )<br><br>    <span class="hljs-comment"># 初始化模型参数</span><br>    <span class="hljs-keyword">for</span> params <span class="hljs-keyword">in</span> net.parameters():<br>        init.normal_(params, mean=<span class="hljs-number">0</span>, std=<span class="hljs-number">0.01</span>)<br><br>    <span class="hljs-comment"># 交叉熵损失 &amp; 优化器</span><br>    loss = torch.nn.CrossEntropyLoss()<br>    optimizer = torch.optim.SGD(net.parameters(), lr=<span class="hljs-number">0.5</span>)<br><br>    <span class="hljs-comment"># 训练</span><br>    num_epochs = <span class="hljs-number">5</span>      <span class="hljs-comment"># 训练轮数</span><br>    batch_size = <span class="hljs-number">256</span>    <span class="hljs-comment"># batch容量</span><br><br>    train(net, train_iter, test_iter, loss, num_epochs, batch_size, <span class="hljs-literal">None</span>, <span class="hljs-literal">None</span>, optimizer)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E5%AE%9E%E8%B7%B5/" class="category-chain-item">实践</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/pytorch/" class="print-no-link">#pytorch</a>
+      
+        <a href="/MyBlog/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/" class="print-no-link">#深度学习</a>
+      
+        <a href="/MyBlog/tags/%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C/" class="print-no-link">#神经网络</a>
+      
+        <a href="/MyBlog/tags/%E5%A4%9A%E5%B1%82%E6%84%9F%E7%9F%A5%E6%9C%BA/" class="print-no-link">#多层感知机</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>经典机器学习方法(3)——多层感知机</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/09/05/经典机器学习方法(3)_多层感知机/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/05/%E7%BB%8F%E5%85%B8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95(4)_%E6%84%9F%E7%9F%A5%E6%9C%BA/" title="经典机器学习方法(4)——感知机">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">经典机器学习方法(4)——感知机</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/09/05/%E7%BB%8F%E5%85%B8%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95(2)_Softmax%E5%9B%9E%E5%BD%92/" title="经典机器学习方法(2)——Softmax 回归">
+                        <span class="hidden-mobile">经典机器学习方法(2)——Softmax 回归</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

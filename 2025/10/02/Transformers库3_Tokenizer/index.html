@@ -1,0 +1,859 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="本文介绍了 Transformers 库中的 Tokenizer 组件相关 API 的用法，包括其基本概念、使用方法和在不同任务中的应用。Tokenizer 是将原始字符串转换为模型可以计算的数值形式的工具">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Transformers库（3）—— Tokenizer">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2025/10/02/Transformers%E5%BA%933_Tokenizer/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="本文介绍了 Transformers 库中的 Tokenizer 组件相关 API 的用法，包括其基本概念、使用方法和在不同任务中的应用。Tokenizer 是将原始字符串转换为模型可以计算的数值形式的工具">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/Transformers%E5%BA%933_Tokenizer/Transformers.png">
+<meta property="article:published_time" content="2025-10-02T18:45:25.000Z">
+<meta property="article:modified_time" content="2026-02-09T22:02:40.095Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="Transformers库">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/Transformers%E5%BA%933_Tokenizer/Transformers.png">
+  
+  
+  
+  <title>Transformers库（3）—— Tokenizer - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="Transformers库（3）—— Tokenizer"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-10-02 18:45" pubdate>
+          2025年10月2日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">Transformers库（3）—— Tokenizer</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/140234490">Transformers库（3）—— Tokenizer</a></li>
+<li>Hugging Face 是一家在 AI 领域具有重要影响力的科技公司，他们的开源工具和社区建设为NLP研究和开发提供了强大的支持。它们拥有当前最活跃、最受关注、影响力最大的 <a target="_blank" rel="noopener" href="https://huggingface.co/">NLP 社区</a>，最新最强的 NLP 模型大多在这里发布和开源。该社区也提供了丰富的教程、文档和示例代码，帮助用户快速上手并深入理解各类 Transformer 模型和 NLP 技术</li>
+<li>Transformers 库是 Hugging Face 最著名的贡献之一，它最初是 Transformer 模型的 pytorch 复现库，随着不断建设，至今已经成为 NLP 领域最重要，影响最大的基础设施之一。该库提供了大量预训练的模型，涵盖了多种语言和任务，成为当今大模型工程实现的主流标准，换句话说，<strong>如果你正在开发一个大模型，那么按 Transformer 库的代码格式进行工程实现、将 check point 打包成 hugging face 格式开源到社区，对于推广你的工作有很大的助力作用</strong>。本系列文章将介绍 <a target="_blank" rel="noopener" href="https://github.com/huggingface/transformers">Transformers库</a> 的基本使用方法</li>
+<li>前文：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/140233173">Hugging face Transformers（2）—— Pipeline</a></li>
+</ul>
+<hr />
+<h1 id="1-tokenizer-及其基本使用"><a class="markdownIt-Anchor" href="#1-tokenizer-及其基本使用"></a> 1. Tokenizer 及其基本使用</h1>
+<ul>
+<li><strong>Tokenizer 是将原始字符串转换为模型可以计算的数值形式（通常是 token IDs）的工具</strong>。不同的模型可能需要不同的 tokenizer，因为不同的预训练任务和数据集可能会导致不同的词汇表（vocabulary）和 tokenization 策略。</li>
+<li>Tokenizer 用于数据预处理，其作用包括
+<ol>
+<li><strong>分词</strong>：使用分词器对文本数据进行分词 (字、字词)</li>
+<li><strong>构建词典</strong>：根据数据集分词的结果，构建词典映射 (这步并不绝对，如果采用预训练词向量，词典映射要根据词向量文件进行处理)</li>
+<li><strong>数据转换</strong>：根据构建好的词典，将分词处理后的数据做映射，将文本序列转换为数字序列。其中可能涉及添加特殊标记（如 <code>[CLS]</code>、<code>[SEP]</code>、<code>[MASK]</code> 等），以便模型能够识别文本的不同部分或执行特定的任务（如分类、问答等）</li>
+<li><strong>数据填充与截断</strong>：在以batch输入到模型的方式中，需要对过短的数据进行填充，过长的数据进行截断，保证数据长度符合模型能接受的范围，同时batch内的数据维度大小一致</li>
+</ol>
+</li>
+</ul>
+<h2 id="11-保存与加载"><a class="markdownIt-Anchor" href="#11-保存与加载"></a> 1.1 保存与加载</h2>
+<ul>
+<li>如前文 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/140233173">Hugging face Transformers（2）—— Pipeline</a> 3.2 节所述，可以用 <code>AutoTokenizer</code> 自动类，从模型地址直接识别、创建并初始化所需的 tokenizer 对象。这里我们还是使用前文的中文情感分类模型的 tokenizer  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># AutoTokenizer 包可以根据传入的参数（如模型名）自动判断所需的 tokenizer</span><br><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer<br><br><span class="hljs-comment"># 样例字符串</span><br>sen = <span class="hljs-string">&quot;这是一段测试文本&quot;</span><br><br><span class="hljs-comment"># 从 hugging face 加载，输入模型名称即可加载对应的分词器</span><br>tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;uer/roberta-base-finetuned-dianping-chinese&quot;</span>)<br>tokenizer<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">BertTokenizerFast(name_or_path=&#x27;uer/roberta-base-finetuned-dianping-chinese&#x27;, vocab_size=21128, model_max_length=1000000000000000019884624838656, is_fast=True, padding_side=&#x27;right&#x27;, truncation_side=&#x27;right&#x27;, special_tokens=&#123;&#x27;unk_token&#x27;: &#x27;[UNK]&#x27;, &#x27;sep_token&#x27;: &#x27;[SEP]&#x27;, &#x27;pad_token&#x27;: &#x27;[PAD]&#x27;, &#x27;cls_token&#x27;: &#x27;[CLS]&#x27;, &#x27;mask_token&#x27;: &#x27;[MASK]&#x27;&#125;, clean_up_tokenization_spaces=True),  added_tokens_decoder=&#123;<br>    0: AddedToken(&quot;[PAD]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    100: AddedToken(&quot;[UNK]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    101: AddedToken(&quot;[CLS]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    102: AddedToken(&quot;[SEP]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    103: AddedToken(&quot;[MASK]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>&#125;<br></code></pre></td></tr></table></figure>
+从打印信息可见，这是一个 BERT 模型的 Tokenizer，其中有五个特殊符号，在右侧进行填充或截断...</li>
+<li>第一次创建 Tokenizer 对象时，词表等相关配置文件会下载并保存至默认路径 C:\Users\username\.cache\huggingface\hub，之后会默认从此处重新加载。可以将构造的 tokenizer 对象手动保存到指定路径，并从指定路径加载  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 自动下载的 model 和 tokenizer 等组件位于 C:\Users\username\.cache\huggingface\hub 中</span><br><span class="hljs-comment"># 可以把 tokenizer 单独保存到指定路径</span><br>tokenizer.save_pretrained(<span class="hljs-string">&quot;./roberta_tokenizer&quot;</span>)<br><br><span class="hljs-comment"># 可以从本地加载保存的 tokenizer</span><br>tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;./roberta_tokenizer&quot;</span>)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="12-句子分词"><a class="markdownIt-Anchor" href="#12-句子分词"></a> 1.2 句子分词</h2>
+<ul>
+<li>
+<p>Tokenizer 工作的第一步是文本分割，即<strong>将原始输入字符串拆开成一系列字符、词、字节码或短句（称之为<code>token</code>）</strong>。在中文自然语言处理中分词尤为重要，因为中文的词与词之间没有空格这样明显的分隔符。分词方法的设计是开放的，相同句子可以有多种不同的分词方案，常见的包括</p>
+<ol>
+<li>
+<p><strong>Word-based tokenize (基于词的分词)：将原始文本拆分为单词</strong>，如下所示这类方法有多种变体，通常需要设置 “unknown” token（“[UNK]” 或 “&lt;unk&gt;”），制作词表时的一个目标是将尽可能少的单词标记为 “[UNK]”，因此通常会构成非常大的词表</p>
+ <div align="center">
+     <img src="/MyBlog/img/Transformers库3_Tokenizer/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+<li>
+<p><strong>Character-based tokenize (基于字符的分词)：将文本拆分为字符</strong>，这种方式构成的词表小得多，且能有效减少 “unknown” token，但这种方法也不完美。和单词不同，直觉上拉丁语言中每个字符本身并没有多大意义，而且这样做会导致模型需要处理大量的 tokens，导致计算复杂度上升</p>
+ <div align="center">
+     <img src="/MyBlog/img/Transformers库3_Tokenizer/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+</li>
+<li>
+<p><strong>Subword-based tokenize (基于子词的分词)：这种方法基于一个原则，常用词不应被分解为更小的子词，但罕见词应被分解为有意义的子词</strong>。下例中，“tokenization” 被分割成 “token” 和 “ization”，这两个 tokens 在保持空间效率的同时具有语义意义，这让我们能够在词汇量小的情况下获得相对良好的覆盖率，并且几乎没有未知的 token</p>
+ <div align="center">
+     <img src="/MyBlog/img/Transformers库3_Tokenizer/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+ </div>
+<p>这种方法在土耳其语等粘着型语言（agglutinative languages）中特别有用，可以通过将子词串在一起来形成（几乎）任意长的复杂词</p>
+</li>
+<li>
+<p><strong>其他先进技术</strong>：分词技术在 LLM 流行之前就在 NLP 领域得到大量研究，其他先进方案包括 GPT-2 使用的 Byte-level BPE、BERT 使用的 WordPiece、多个语言模型使用的 SentencePiece or Unigram 等</p>
+</li>
+</ol>
+</li>
+<li>
+<p>根据分词方法不同，对应的词表也会有所区别。一般而言，较大的词表可以包含更多的词汇，有助于模型更好地理解和表达文本，提高模型性能，增强泛化能力。然而，随着词表尺寸的增加，模型的计算复杂度和内存需求也会相应增加。可以通过 Tokenizer 对象的 <code>.vocab</code> 属性查看词表</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs python">tokenizer.vocab<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs shell">&#123;&#x27;##净&#x27;: 14169,<br> &#x27;ま&#x27;: 567,<br> &#x27;##copyright&#x27;: 13291,<br> &#x27;疡&#x27;: 4550,<br> &#x27;抢&#x27;: 2843,<br> &#x27;枇&#x27;: 3355,<br> &#x27;##尘&#x27;: 15269,<br> &#x27;贺&#x27;: 6590,<br> &#x27;ne&#x27;: 10564,<br> &#x27;庸&#x27;: 2435,<br> &#x27;##馬&#x27;: 20736,<br> &#x27;臾&#x27;: 5640,<br> &#x27;勖&#x27;: 1241,<br> &#x27;##粱&#x27;: 18175,<br> &#x27;##⒋&#x27;: 13574,<br> &#x27;褥&#x27;: 6191,<br> &#x27;doc&#x27;: 9656,<br> &#x27;釁&#x27;: 7022,<br> &#x27;alex&#x27;: 10179,<br> &#x27;##フト&#x27;: 10868,<br> &#x27;屹&#x27;: 2256,<br> &#x27;yumi&#x27;: 11697,<br> &#x27;##nne&#x27;: 12866,<br> &#x27;莫&#x27;: 5811,<br> &#x27;816&#x27;: 10937,<br>...<br> &#x27;##躍&#x27;: 19770,<br> &#x27;皺&#x27;: 4653,<br> &#x27;##ろ&#x27;: 10460,<br> &#x27;##孪&#x27;: 15169,<br> ...&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>Transformers 库的 tokenizer 支持传入原始字符串或原始字符串列表，如下所示</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">tokens = tokenizer.tokenize(sen)<br><span class="hljs-built_in">print</span>(tokens)   <span class="hljs-comment"># [&#x27;这&#x27;, &#x27;是&#x27;, &#x27;一&#x27;, &#x27;段&#x27;, &#x27;测&#x27;, &#x27;试&#x27;, &#x27;文&#x27;, &#x27;本&#x27;]</span><br><br>tokens = tokenizer.tokenize([sen, sen])<br><span class="hljs-built_in">print</span>(tokens)   <span class="hljs-comment"># [&#x27;这&#x27;, &#x27;是&#x27;, &#x27;一&#x27;, &#x27;段&#x27;, &#x27;测&#x27;, &#x27;试&#x27;, &#x27;文&#x27;, &#x27;本&#x27;, &#x27;这&#x27;, &#x27;是&#x27;, &#x27;一&#x27;, &#x27;段&#x27;, &#x27;测&#x27;, &#x27;试&#x27;, &#x27;文&#x27;, &#x27;本&#x27;]</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="13-索引转换"><a class="markdownIt-Anchor" href="#13-索引转换"></a> 1.3 索引转换</h2>
+<ul>
+<li><strong>只进行分词，得到的还是一些字符串和字符对象，还需要进行一步索引转换才能变成可计算的数值数据</strong>。所谓索引转换，其实就是把分词结果一一替换为词表中的索引（称之为 token id），之后在做 embedding 的时候，这些 id 会先转换为 one-hot 向量，再通过线性层投影到嵌入空间（也称为 lookup table 操作），此后就可以在隐空间向量上进行注意力计算了</li>
+<li>结合 1.2 节的分词和索引转换，完整的 tokenize 过程如下  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Tokenize流程：原始字符串 -&gt; token 序列 -&gt; id 序列</span><br>tokens = tokenizer.tokenize(sen)<br>ids = tokenizer.convert_tokens_to_ids(tokens)<br><span class="hljs-built_in">print</span>(ids)        <span class="hljs-comment"># [6821, 3221, 671, 3667, 3844, 6407, 3152, 3315]</span><br><br><span class="hljs-comment"># 也可以逆向操作：id 序列-&gt; token 序列</span><br>tokens = tokenizer.convert_ids_to_tokens(ids)<br><span class="hljs-built_in">print</span>(tokens)    <span class="hljs-comment"># [&#x27;这&#x27;, &#x27;是&#x27;, &#x27;一&#x27;, &#x27;段&#x27;, &#x27;测&#x27;, &#x27;试&#x27;, &#x27;文&#x27;, &#x27;本&#x27;]</span><br><br><span class="hljs-comment"># 也可以逆向操作：token 序列 -&gt; 字符串</span><br>str_sen = tokenizer.convert_tokens_to_string(tokens)<br><span class="hljs-built_in">print</span>(str_sen)    <span class="hljs-comment"># 这 是 一 段 测 试 文 本</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>Transformers 库还提供称为 “编码” 和 “解法” 的简便方法，实现从原始字符串到 id 序列相互转换的一步操作  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># “编码”: 原始字符串 -&gt; id 序列</span><br>ids = tokenizer.encode(sen, add_special_tokens=<span class="hljs-literal">True</span>)        <span class="hljs-comment"># add_special_tokens 在 tokenize 时序列设置特殊 token</span><br><span class="hljs-built_in">print</span>(ids)                                                  <span class="hljs-comment"># 注意到首尾多了特殊 token [CLS](101) 和 [SEP](102)</span><br><span class="hljs-comment"># “解码”：id 序列 -&gt; 原始字符串</span><br>str_sen = tokenizer.decode(ids, skip_special_tokens=<span class="hljs-literal">False</span>)  <span class="hljs-comment"># skip_special_tokens 可以跳过可能存在的特殊 token</span><br><span class="hljs-built_in">print</span>(str_sen)<br>str_sen = tokenizer.decode(ids, skip_special_tokens=<span class="hljs-literal">True</span>)<br><span class="hljs-built_in">print</span>(str_sen)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">[101, 6821, 3221, 671, 3667, 3844, 6407, 3152, 3315, 102]</span><br><span class="hljs-string">[CLS] 这 是 一 段 测 试 文 本 [SEP]</span><br><span class="hljs-string">这 是 一 段 测 试 文 本</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+注意，在 <code>encode</code> 方法传入 <code>add_special_tokens</code> 参数；在 <code>decode</code> 方法传入 <code>skip_special_tokens</code> 参数，可以控制特殊 token 的引入和跳过</li>
+</ul>
+<h2 id="14-截断和填充"><a class="markdownIt-Anchor" href="#14-截断和填充"></a> 1.4 截断和填充</h2>
+<ul>
+<li>通常使用 batch 形式训练 Transformer 类模型，这要求我们把序列数据长度全部处理成和模型输入一致的状态。为此，需要进行截断或填充操作  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 填充</span><br>ids = tokenizer.encode(sen, padding=<span class="hljs-string">&quot;max_length&quot;</span>, max_length=<span class="hljs-number">15</span>)<br><span class="hljs-built_in">print</span>(ids)  <span class="hljs-comment"># [101, 6821, 3221, 671, 3667, 3844, 6407, 3152, 3315, 102, 0, 0, 0, 0, 0]</span><br><br><span class="hljs-comment"># 截断</span><br>ids = tokenizer.encode(sen, max_length=<span class="hljs-number">5</span>, truncation=<span class="hljs-literal">True</span>)<br><span class="hljs-built_in">print</span>(ids)  <span class="hljs-comment"># [101, 6821, 3221, 671, 102]</span><br>ids = tokenizer.encode(sen, max_length=<span class="hljs-number">5</span>, truncation=<span class="hljs-literal">False</span>)    <span class="hljs-comment"># 禁止截断则正常做 tokenize</span><br><span class="hljs-built_in">print</span>(ids)  <span class="hljs-comment"># [101, 6821, 3221, 671, 3667, 3844, 6407, 3152, 3315, 102]</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>如上所示，通过在 <code>encode</code> 方法传入 <code>max_length</code> 参数控制最终序列长度，通过 <code>padding</code> 参数控制填充类型。注意到该 tokenizer 是在右侧进行 zero-padding 的，该设置可以在 1.1 节的 tokenizer 信息中观察到。另外可以通过 <code>truncation</code> 参数控制是否截断</li>
+<li>需要注意的是，对于 BERT 类双向注意力模型来说，引入的 Padding token 会影响句子内容 logits 的计算，因此我们需要告诉模型的 attention layer 忽略 padding token。这是通过使用注意力掩码（attention mask）层来实现的，例如  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs python">model = AutoModelForSequenceClassification.from_pretrained(checkpoint)<br><br><span class="hljs-comment"># batch 内 padding 到相同长度，logits 值被 padding token 影响</span><br>sequence1_ids = [[<span class="hljs-number">200</span>, <span class="hljs-number">200</span>, <span class="hljs-number">200</span>]]<br>sequence2_ids = [[<span class="hljs-number">200</span>, <span class="hljs-number">200</span>]]<br>batched_ids = [<br>    [<span class="hljs-number">200</span>, <span class="hljs-number">200</span>, <span class="hljs-number">200</span>],<br>    [<span class="hljs-number">200</span>, <span class="hljs-number">200</span>, tokenizer.pad_token_id],<br>]<br><span class="hljs-built_in">print</span>(model(torch.tensor(sequence1_ids)).logits)<br><span class="hljs-built_in">print</span>(model(torch.tensor(sequence2_ids)).logits)<br><span class="hljs-built_in">print</span>(model(torch.tensor(batched_ids)).logits)<br><br><span class="hljs-comment"># 引入注意力掩码，消除 padding token 影响</span><br>attention_mask = [<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">1</span>],<br>    [<span class="hljs-number">1</span>, <span class="hljs-number">1</span>, <span class="hljs-number">0</span>],<br>]<br>outputs = model(torch.tensor(batched_ids), attention_mask=torch.tensor(attention_mask))<br><span class="hljs-built_in">print</span>(outputs.logits)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">tensor([[ 1.5694, -1.3895]], grad_fn=&lt;AddmmBackward&gt;)</span><br><span class="hljs-string">tensor([[ 0.5803, -0.4125]], grad_fn=&lt;AddmmBackward&gt;)</span><br><span class="hljs-string">tensor([[ 1.5694, -1.3895],</span><br><span class="hljs-string">        [ 1.3373, -1.2163]], grad_fn=&lt;AddmmBackward&gt;)    # 不使用 attention mask，logits 值被影响</span><br><span class="hljs-string">tensor([[ 1.5694, -1.3895],</span><br><span class="hljs-string">        [ 0.5803, -0.4125]], grad_fn=&lt;AddmmBackward&gt;)    # 使用 attention mask，logits 值不被影响</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="15-高级封装"><a class="markdownIt-Anchor" href="#15-高级封装"></a> 1.5 高级封装</h2>
+<ul>
+<li>以上 1.2 到 1.5 节中，我们探索了 tokenizer 的运行机制，并且了解了分词、转换为 inputs ID、填充、截断和注意力掩码的处理方式</li>
+<li>Transformers API 提供了一个高级函数为我们处理所有这些工作，直接以 <code>tokenizer()</code> 形式调用即可</li>
+</ul>
+<h3 id="151-附加信息"><a class="markdownIt-Anchor" href="#151-附加信息"></a> 1.5.1 附加信息</h3>
+<ul>
+<li>除 token id 以外，Transformer 类模型的前向过程通常还需要一些附加信息，比如在 BERT 的上下句预训练任务中，不仅需要 attention_mask 遮盖 zero padding 的部分，还需要明确各个 token 所属的上下句信息。这些信息我们可以像 1.4 节一样手动构造  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python">ids = tokenizer.encode(sen, padding=<span class="hljs-string">&quot;max_length&quot;</span>, max_length=<span class="hljs-number">15</span>)<br><br><span class="hljs-comment"># 除 token 外，Transformer 类模型的输入往往还有一些附加信息</span><br>attention_mask = [<span class="hljs-number">1</span> <span class="hljs-keyword">if</span> idx != <span class="hljs-number">0</span> <span class="hljs-keyword">else</span> <span class="hljs-number">0</span> <span class="hljs-keyword">for</span> idx <span class="hljs-keyword">in</span> ids]  <span class="hljs-comment"># attention_mask 用于遮盖 zero padding 部分</span><br>token_type_ids = [<span class="hljs-number">0</span>] * <span class="hljs-built_in">len</span>(ids)                         <span class="hljs-comment"># bert 有一个判断上下句任务，模型预训练时需要 token 所属句子 id 信息</span><br>ids, attention_mask, token_type_ids<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs shell">([101, 6821, 3221, 671, 3667, 3844, 6407, 3152, 3315, 102, 0, 0, 0, 0, 0],<br> [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],<br> [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])<br></code></pre></td></tr></table></figure>
+这些信息的生成方法已经被集成到 tokenizer 高级封装中  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">inputs = tokenizer(sen, padding=<span class="hljs-string">&quot;max_length&quot;</span>, max_length=<span class="hljs-number">15</span>)<br><span class="hljs-built_in">print</span>(inputs)    <span class="hljs-comment"># &#123;&#x27;input_ids&#x27;: [101, 6821, 3221, 671, 3667, 3844, 6407, 3152, 3315, 102, 0, 0, 0, 0, 0], &#x27;token_type_ids&#x27;: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], &#x27;attention_mask&#x27;: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0]&#125;</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="152-处理-batch-数据"><a class="markdownIt-Anchor" href="#152-处理-batch-数据"></a> 1.5.2 处理 batch 数据</h3>
+<ul>
+<li>前文 1.2 节提到过，tokenizer 支持字符串和字符串列表形式的输入，其中后者是为了 batch 数据而专门设计的，可以有效提高 tokenize 效率。基本使用如下  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">sens = [<br>    <span class="hljs-string">&quot;AABBCCDDEEFF&quot;</span>,<br>    <span class="hljs-string">&quot;哈哈哈哈哈哈哈哈哈哈哈&quot;</span>,<br>    <span class="hljs-string">&quot;你好你好你好你好&quot;</span><br>]<br>res = tokenizer(sens)    <span class="hljs-comment"># batch tokenize 不要求各原始字符串长度一致</span><br>res<br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs shell">&#123;&#x27;input_ids&#x27;: [[101, 9563, 10214, 8860, 9879, 8854, 9049, 102], [101, 1506, 1506, 1506, 1506, 1506, 1506, 1506, 1506, 1506, 1506, 1506, 102], [101, 872, 1962, 872, 1962, 872, 1962, 872, 1962, 102]], &#x27;token_type_ids&#x27;: [[0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], &#x27;attention_mask&#x27;: [[1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>对比单条操作+循环和成批量操作的时间消耗  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python">%%time<br><span class="hljs-comment"># 单条循环处理，慢</span><br><span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(<span class="hljs-number">1000</span>):<br>    tokenizer(sen)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">CPU times: total: 172 ms</span><br><span class="hljs-string">Wall time: 242 ms</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python">%%time<br><span class="hljs-comment"># 成 batch 批量计算，快</span><br>tokenizer([sen] * <span class="hljs-number">1000</span>)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">CPU times: total: 78.1 ms</span><br><span class="hljs-string">Wall time: 27.9 ms</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="153-填充-截断和张量类型转换"><a class="markdownIt-Anchor" href="#153-填充-截断和张量类型转换"></a> 1.5.3 填充、截断和张量类型转换</h3>
+<ul>
+<li>高级封装提供以上 1.2-1.4 描述的所有填充、截断功能，且能以指定类型返回数据  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> transformers <span class="hljs-keyword">import</span> AutoTokenizer<br><br>checkpoint = <span class="hljs-string">&quot;distilbert-base-uncased-finetuned-sst-2-english&quot;</span><br>tokenizer = AutoTokenizer.from_pretrained(checkpoint)<br><br>sequences = [<br>    <span class="hljs-string">&quot;I&#x27;ve been waiting for a HuggingFace course my whole life.&quot;</span>, <br>    <span class="hljs-string">&quot;So have I!&quot;</span><br>]<br><br><span class="hljs-comment"># 使用多种方式进行填充</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-string">&quot;longest&quot;</span>)      <span class="hljs-comment"># 将句子序列填充到最长句子的长度</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">len</span>(model_inputs[<span class="hljs-string">&quot;input_ids&quot;</span>][<span class="hljs-number">0</span>]))                    <span class="hljs-comment"># 16</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-string">&quot;max_length&quot;</span>)   <span class="hljs-comment"># 将句子序列填充到模型的最大长度 (512 for BERT or DistilBERT)</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">len</span>(model_inputs[<span class="hljs-string">&quot;input_ids&quot;</span>][<span class="hljs-number">0</span>]))                    <span class="hljs-comment"># 512</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-string">&quot;max_length&quot;</span>, max_length=<span class="hljs-number">8</span>) <span class="hljs-comment"># 将句子序列填充到指定的最大长度</span><br><span class="hljs-built_in">print</span>(<span class="hljs-built_in">len</span>(model_inputs[<span class="hljs-string">&quot;input_ids&quot;</span>][<span class="hljs-number">0</span>]))                                <span class="hljs-comment"># 16</span><br><br><span class="hljs-comment"># 使用多种方式进行截断</span><br>model_inputs = tokenizer(sequences, truncation=<span class="hljs-literal">True</span>)                <span class="hljs-comment"># 截断比模型最大长度长的句子序列 (512 for BERT or DistilBERT)</span><br>model_inputs = tokenizer(sequences, max_length=<span class="hljs-number">8</span>, truncation=<span class="hljs-literal">True</span>)  <span class="hljs-comment"># 将截断长于指定最大长度的句子序列</span><br><br><span class="hljs-comment"># 处理指定框架张量的转换</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-literal">True</span>, return_tensors=<span class="hljs-string">&quot;pt&quot;</span>)  <span class="hljs-comment"># 返回 PyTorch tensors</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-literal">True</span>, return_tensors=<span class="hljs-string">&quot;tf&quot;</span>)  <span class="hljs-comment"># 返回 TensorFlow tensors</span><br>model_inputs = tokenizer(sequences, padding=<span class="hljs-literal">True</span>, return_tensors=<span class="hljs-string">&quot;np&quot;</span>)  <span class="hljs-comment"># 返回 NumPy arrays</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="2-fastslow-tokenizer"><a class="markdownIt-Anchor" href="#2-fastslow-tokenizer"></a> 2. Fast/Slow Tokenizer</h1>
+<ul>
+<li>
+<p>Transformer 库提供了两种 tokenizer</p>
+<ol>
+<li><code>FastTokenizer</code>: 基于 Rust 实现，速度快，可以提供更多附加信息，类型名有后缀 Fast</li>
+<li><code>SlowTokenizer</code>: 基于 python 实现，速度慢</li>
+</ol>
+</li>
+<li>
+<p>直接创建的 Tokenizer，<strong>如果存在 Fast 类型，则默认都是 Fast 类型</strong></p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">sen = <span class="hljs-string">&quot;快慢Tokenizer测试&quot;</span><br>fast_tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;uer/roberta-base-finetuned-dianping-chinese&quot;</span>)<br>fast_tokenizer <span class="hljs-comment"># 类型名有后缀 Fast</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">BertTokenizerFast(name_or_path=<span class="hljs-string">&#x27;uer/roberta-base-finetuned-dianping-chinese&#x27;</span>, vocab_size=<span class="hljs-number">21128</span>, model_max_length=<span class="hljs-number">1000000000000000019884624838656</span>, is_fast=<span class="hljs-literal">True</span>, padding_side=<span class="hljs-string">&#x27;right&#x27;</span>, truncation_side=<span class="hljs-string">&#x27;right&#x27;</span>, special_tokens=&#123;<span class="hljs-string">&#x27;unk_token&#x27;</span>: <span class="hljs-string">&#x27;[UNK]&#x27;</span>, <span class="hljs-string">&#x27;sep_token&#x27;</span>: <span class="hljs-string">&#x27;[SEP]&#x27;</span>, <span class="hljs-string">&#x27;pad_token&#x27;</span>: <span class="hljs-string">&#x27;[PAD]&#x27;</span>, <span class="hljs-string">&#x27;cls_token&#x27;</span>: <span class="hljs-string">&#x27;[CLS]&#x27;</span>, <span class="hljs-string">&#x27;mask_token&#x27;</span>: <span class="hljs-string">&#x27;[MASK]&#x27;</span>&#125;, clean_up_tokenization_spaces=<span class="hljs-literal">True</span>),  added_tokens_decoder=&#123;<br>    <span class="hljs-number">0</span>: AddedToken(<span class="hljs-string">&quot;[PAD]&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">False</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">100</span>: AddedToken(<span class="hljs-string">&quot;[UNK]&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">False</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">101</span>: AddedToken(<span class="hljs-string">&quot;[CLS]&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">False</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">102</span>: AddedToken(<span class="hljs-string">&quot;[SEP]&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">False</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">103</span>: AddedToken(<span class="hljs-string">&quot;[MASK]&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">False</span>, special=<span class="hljs-literal">True</span>),<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>构造 Tokenizer 时，可以通过传入 <code>use_fast=False</code> 强制构造 Slow Tokenizer</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># 设置 use_fast=False 来构造 SlowTokenizer</span><br>slow_tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;uer/roberta-base-finetuned-dianping-chinese&quot;</span>, use_fast=<span class="hljs-literal">False</span>)<br>slow_tokenizer <span class="hljs-comment"># 类型名无后缀 Fast</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs shell">BertTokenizer(name_or_path=&#x27;uer/roberta-base-finetuned-dianping-chinese&#x27;, vocab_size=21128, model_max_length=1000000000000000019884624838656, is_fast=False, padding_side=&#x27;right&#x27;, truncation_side=&#x27;right&#x27;, special_tokens=&#123;&#x27;unk_token&#x27;: &#x27;[UNK]&#x27;, &#x27;sep_token&#x27;: &#x27;[SEP]&#x27;, &#x27;pad_token&#x27;: &#x27;[PAD]&#x27;, &#x27;cls_token&#x27;: &#x27;[CLS]&#x27;, &#x27;mask_token&#x27;: &#x27;[MASK]&#x27;&#125;, clean_up_tokenization_spaces=True),  added_tokens_decoder=&#123;<br>    0: AddedToken(&quot;[PAD]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    100: AddedToken(&quot;[UNK]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    101: AddedToken(&quot;[CLS]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    102: AddedToken(&quot;[SEP]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>    103: AddedToken(&quot;[MASK]&quot;, rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意到 Tokenizer 对象类型名没有 Fast 后缀了。两种 Tokenizer 具有明显的速度差距</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">%%time<br>fast_tokenizer([sen] * <span class="hljs-number">10000</span>)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">CPU times: total: 1.02 s</span><br><span class="hljs-string">Wall time: 349 ms</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python">%%time<br>slow_tokenizer([sen] * <span class="hljs-number">10000</span>)<br><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br><span class="hljs-string">CPU times: total: 2.89 s</span><br><span class="hljs-string">Wall time: 3.05 s</span><br><span class="hljs-string">&#x27;&#x27;&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>Fast Tokenizer 有时会返回一些额外信息，例如有时候原始输入字符串中的英文不会按字母分词，而是按词根词缀分词，这时相应的 token 会对应到原始字符串中的一个索引区域，Fast Tokenizer 可以通过设置 <code>return_offsets_mapping=True</code> 获取 token 和原始索引区域的对应信息</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python">sen = <span class="hljs-string">&quot;快慢Tokenizer测试&quot;</span><br>inputs = fast_tokenizer(sen, return_offsets_mapping=<span class="hljs-literal">True</span>) <span class="hljs-comment"># (只有 FastTokenizer 可以设置 return_offsets_mapping=True)</span><br><span class="hljs-built_in">print</span>(sen)                       <span class="hljs-comment"># 打印原始字符串</span><br><span class="hljs-built_in">print</span>(inputs.word_ids())         <span class="hljs-comment"># 打印各个 token 对应到原始字符串的 “词索引”，注意到原始字符串中 ”Tokenizer“ 这个词被拆成了4个token (只有 FastTokenizer 可以调用这个)</span><br><span class="hljs-built_in">print</span>(inputs[<span class="hljs-string">&#x27;offset_mapping&#x27;</span>])  <span class="hljs-comment"># offset_mapping 指示了各个 token 对应的原始字符串索引区域</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python">快慢Tokenizer测试<br>[<span class="hljs-literal">None</span>, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>, <span class="hljs-literal">None</span>]<br>[(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>), (<span class="hljs-number">0</span>, <span class="hljs-number">1</span>), (<span class="hljs-number">1</span>, <span class="hljs-number">2</span>), (<span class="hljs-number">2</span>, <span class="hljs-number">4</span>), (<span class="hljs-number">4</span>, <span class="hljs-number">7</span>), (<span class="hljs-number">7</span>, <span class="hljs-number">10</span>), (<span class="hljs-number">10</span>, <span class="hljs-number">11</span>), (<span class="hljs-number">11</span>, <span class="hljs-number">12</span>), (<span class="hljs-number">12</span>, <span class="hljs-number">13</span>), (<span class="hljs-number">0</span>, <span class="hljs-number">0</span>)]<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="3-加载特殊-tokenizer"><a class="markdownIt-Anchor" href="#3-加载特殊-tokenizer"></a> 3. 加载特殊 Tokenizer</h1>
+<ul>
+<li>
+<p>有些开源模型的 Tokenizer 没有嵌入到 Transformers 库中，而是由作者在开源时于其远程仓库中提供，这种情况下 Tokenizer 的行为可能和 Transformers 库中其他 Tokenizer 的一般行为有所不同，直接加载这些模型会报错</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python">tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;Skywork/Skywork-13B-base&quot;</span>, trust_remote_code=<span class="hljs-literal">False</span>)<br><span class="hljs-comment"># ValueError: Loading Skywork/Skywork-13B-base requires you to execute the configuration file in that repo on your local machine. Make sure you have read the code there to avoid malicious use, then set the option `trust_remote_code=True` to remove this error.</span><br></code></pre></td></tr></table></figure>
+<p>这时，<strong>需要在 <code>.from_pretrained</code> 方法中传入 <code>trust_remote_code=True</code> 对远程代码添加信任</strong>，才能正常下载目标 tokenizer</p>
+  <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">tokenizer = AutoTokenizer.from_pretrained(<span class="hljs-string">&quot;Skywork/Skywork-13B-base&quot;</span>, trust_remote_code=<span class="hljs-literal">True</span>)<br>tokenizer<br>```    <br>```shell<br>You are using the legacy behaviour of the &lt;<span class="hljs-keyword">class</span> <span class="hljs-string">&#x27;transformers_modules.Skywork.Skywork-13B-base.bc35915066fbbf15b77a1a4a74e9b574ab167816.tokenization_skywork.SkyworkTokenizer&#x27;</span>&gt;. This means that tokens that come after special tokens will <span class="hljs-keyword">not</span> be properly handled. <br>SkyworkTokenizer(name_or_path=<span class="hljs-string">&#x27;Skywork/Skywork-13B-base&#x27;</span>, vocab_size=<span class="hljs-number">65519</span>, model_max_length=<span class="hljs-number">1000000000000000019884624838656</span>, is_fast=<span class="hljs-literal">False</span>, padding_side=<span class="hljs-string">&#x27;right&#x27;</span>, truncation_side=<span class="hljs-string">&#x27;right&#x27;</span>, special_tokens=&#123;<span class="hljs-string">&#x27;bos_token&#x27;</span>: <span class="hljs-string">&#x27;&lt;s&gt;&#x27;</span>, <span class="hljs-string">&#x27;eos_token&#x27;</span>: <span class="hljs-string">&#x27;&lt;/s&gt;&#x27;</span>, <span class="hljs-string">&#x27;unk_token&#x27;</span>: <span class="hljs-string">&#x27;&lt;unk&gt;&#x27;</span>&#125;, clean_up_tokenization_spaces=<span class="hljs-literal">False</span>),  added_tokens_decoder=&#123;<br>    <span class="hljs-number">0</span>: AddedToken(<span class="hljs-string">&quot;&lt;unk&gt;&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">True</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">1</span>: AddedToken(<span class="hljs-string">&quot;&lt;s&gt;&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">True</span>, special=<span class="hljs-literal">True</span>),<br>    <span class="hljs-number">2</span>: AddedToken(<span class="hljs-string">&quot;&lt;/s&gt;&quot;</span>, rstrip=<span class="hljs-literal">False</span>, lstrip=<span class="hljs-literal">False</span>, single_word=<span class="hljs-literal">False</span>, normalized=<span class="hljs-literal">True</span>, special=<span class="hljs-literal">True</span>),<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>下载之后，可以用前文 1.1 节方法将其保存到本地</p>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E5%B8%B8%E7%94%A8%E5%BA%93/" class="category-chain-item">常用库</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E5%B8%B8%E7%94%A8%E5%BA%93/Transformers%E5%BA%93/" class="category-chain-item">Transformers库</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/Transformers%E5%BA%93/" class="print-no-link">#Transformers库</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>Transformers库（3）—— Tokenizer</div>
+      <div>https://wxc971231.github.io/MyBlog/2025/10/02/Transformers库3_Tokenizer/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年10月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/10/03/Transformers%E5%BA%934_Model/" title="Transformers库（4）—— Model">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">Transformers库（4）—— Model</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2025/10/01/Transformers%E5%BA%932_Pipeline/" title="Transformers库（2）—— Pipeline">
+                        <span class="hidden-mobile">Transformers库（2）—— Pipeline</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

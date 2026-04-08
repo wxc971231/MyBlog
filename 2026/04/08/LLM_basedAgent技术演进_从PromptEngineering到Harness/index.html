@@ -1,0 +1,1098 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="本文梳理了LLM应用工程形态的演进路径，划分为三个阶段：能力增强（Prompt Engineering、RAG、Function Calling、MCP）、流程沉淀（Skill）和系统编排（Harness），并对 Skill 进行深入介绍">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2026/04/08/LLM_basedAgent%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B_%E4%BB%8EPromptEngineering%E5%88%B0Harness/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="本文梳理了LLM应用工程形态的演进路径，划分为三个阶段：能力增强（Prompt Engineering、RAG、Function Calling、MCP）、流程沉淀（Skill）和系统编排（Harness），并对 Skill 进行深入介绍">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/LLM_basedAgent%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B_%E4%BB%8EPromptEngineering%E5%88%B0Harness/img_001.png">
+<meta property="article:published_time" content="2026-04-08T20:48:07.000Z">
+<meta property="article:modified_time" content="2026-04-08T12:59:56.737Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="Skill">
+<meta property="article:tag" content="AI Engineering">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/LLM_basedAgent%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B_%E4%BB%8EPromptEngineering%E5%88%B0Harness/img_001.png">
+  
+  
+  
+  <title>LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-04-08 20:48" pubdate>
+          2026年4月8日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          42 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/159929908">LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness</a></li>
+<li>自 ChatGPT 发布以来，LLM 应用的工程形态经历了快速演进，其产品形态也逐步<strong>从以 Chat 为主扩展到更复杂的 Agent 系统</strong>。本文对近年来 LLM 技术范式的关键演进节点进行梳理，可以将其抽象为如下路径：<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>Prompt Engineering → RAG → Function Calling → MCP → Skill → Harness</mtext></mrow><annotation encoding="application/x-tex">\text{Prompt Engineering → RAG → Function Calling → MCP → Skill → Harness}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord text"><span class="mord">Prompt Engineering → RAG → Function Calling → MCP → Skill → Harness</span></span></span></span></span></span></p>
+</li>
+<li>在这一演进过程中，我个人认为 <strong>Skill 是一个非常关键的分水岭，利用它可以创建小而美的 LLM-based Agent 工作闭环</strong>，并且这一层已经开始沉淀出相对稳定的实践范式，因此具有较高的学习与工程价值
+<ul>
+<li>在 Skill 之前，各阶段的核心仍然是为模型能力打基础：通过不断探索与固化“如何指导 LLM 工作”的方法，提升模型的指令遵循能力与工具使用能力。这一时期整体仍停留在 <strong>“增强 Chat 能力”</strong> 的范式，即围绕单次任务不断优化输入与执行方式</li>
+<li>Skill 的引入带来了一个关键跃迁，即实现了 <strong>“Agent 工作指南”</strong> 的抽象。它将任务所需的流程、规则、工具使用方式与上下文组织方式封装为一个整体，使其可以被重复调用与复用。其本质是从 “单次任务优化” 转向 “可复用的工作方法 / 流程”，可以视作 LLM-based Agent 走向工程化与规模化的标志</li>
+<li>Skill 之后，当下的研究热点是 Harness。这一阶段的重点不再是定义单个任务能力，而是提升 Agent 在复杂环境中的长任务稳健性与系统级运行能力，引入了基于文件的记忆管理、上下文管理、子任务拆解与委派、多组件协同与执行控制等技术要点，其目标是构建一个 <strong>“Agent 稳定工作框架”</strong>。不过，目前这一方向仍处于快速演进阶段，尚未形成统一且成熟的最佳实践</li>
+</ul>
+</li>
+<li>本文将对以上技术里程碑进行简要介绍，并对 Skill 展开讨论</li>
+</ul>
+<hr />
+<h1 id="1-概述"><a class="markdownIt-Anchor" href="#1-概述"></a> 1. 概述</h1>
+<ul>
+<li>
+<p>回顾近两年 LLM 应用的发展，可以发现一个非常清晰的趋势：LLM 的能力提升固然重要，但真正推动应用形态变化的，是围绕 LLM 构建的工程范式演进。如果从工程视角来看，这一演进大致可以分为三个阶段：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>能力增强 → 能力封装 → 系统编排</mtext></mrow><annotation encoding="application/x-tex">\text{能力增强 → 能力封装 → 系统编排}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord text"><span class="mord cjk_fallback">能力增强</span><span class="mord"> → </span><span class="mord cjk_fallback">能力封装</span><span class="mord"> → </span><span class="mord cjk_fallback">系统编排</span></span></span></span></span></span></p>
+<p>关键里程碑中，我把 Prompt Engineering、RAG、Function Calling、MCP 划为第一阶段，Skill 划为第二阶段，Harness 划为第三阶段，如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+</li>
+<li>
+<p>这条演进路线可以概括如下：</p>
+<ul>
+<li>Prompt Engineering 教会模型听懂需求</li>
+<li>RAG 教会模型先查资料</li>
+<li>Function Calling 教会模型调用工具</li>
+<li>MCP 让工具接入开始标准化</li>
+<li>Skill 把工作经验沉淀为可复用能力</li>
+<li>Harness 把以上所有能力真正组织成一个可持续运行的 Agent 系统</li>
+</ul>
+</li>
+</ul>
+<h2 id="11-阶段一能力增强prompt-rag-tool"><a class="markdownIt-Anchor" href="#11-阶段一能力增强prompt-rag-tool"></a> 1.1 阶段一：能力增强（Prompt / RAG / Tool）</h2>
+<ul>
+<li>该阶段 LLM 应用的核心问题是 <strong>“如何让模型更好地完成一次任务”</strong>，业界围绕该目标进行了如下进行探索：
+<ol>
+<li><strong><a target="_blank" rel="noopener" href="https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-engineering-guidelines.html">提示工程，让模型更好地理解人类需求</a></strong>：最早的时候，LLM 主要被当做 “超强文本接口” 来用：通过不断修改 system prompt、few-shot 示例和输出格式约束，尽量把任务描述清楚，让模型在一次对话里给出更稳定的结果。这一阶段的核心思想很直接——<strong>如果模型表现不好，那就继续改 prompt</strong>。提示工程直到今天依然重要，因为它决定了模型如何理解角色、目标和约束，但其局限也很明显：很多复杂能力并不能只靠几段提示词稳定获得，prompt 既难复用，也难维护，更难沉淀成团队级资产</li>
+<li><strong><a target="_blank" rel="noopener" href="https://docs.aws.amazon.com/bedrock/latest/userguide/knowledge-base.html">RAG，补充领域知识，减弱生成幻觉</a></strong>：由于 LLM 上下文窗口有限，仅靠提示工程无法良好地引入私有知识。RAG 的目标就是在模型回答之前，先从文档库、知识库、产品手册、代码仓库等外部相关信息检索出来，再作为上下文喂给模型。这样一来，模型回答问题时不再只依赖参数记忆，而是能够结合最新、最相关的外部材料生成答案。RAG 极大提升了企业场景中的可用性，因为它把问题从“训练一个知道一切的模型”转换成“<strong>让模型在回答前先查资料</strong>”。RAG 主要解决的是 “知道什么” 的问题，而不是 “该怎么做”的问题：它擅长补知识，却不天然擅长执行复杂流程</li>
+<li><strong><a target="_blank" rel="noopener" href="https://www.anthropic.com/research/building-effective-agents">Function Calling / Tool Use，与外部能力交互</a></strong>：这里的关键变化是模型不再只是生成文本，而是可以根据需要去调用外部函数或工具，例如搜索网页、查询数据库、执行代码、发送邮件、读取日历等。这一步非常关键，它第一次<strong>让模型具备了 “行动能力”</strong>，LLM-based agent 的雏形也开始出现。不过，function calling 本质上仍然偏原子化：模型会不会调用工具、调用哪个工具、调用后如何衔接下一步，很多时候仍依赖开发者手工设计。也就是说，这一阶段解决的是 “模型可以做事了”，但还没有彻底解决 “模型如何系统地完成一整类事”</li>
+<li><strong><a target="_blank" rel="noopener" href="https://www.anthropic.com/news/model-context-protocol">MCP，外部能力标准化</a></strong>：Tool Using 带来了重要问题：如果每个平台、每个数据源、每个工具系统都要单独适配，那 Agent 工程会迅速碎片化。针对该问题，Anthropic 在 2024 年 11 月 25 日正式发布 MCP，将其定义为一种开放标准，用来把 AI 应用和外部数据源、工具、安全授权机制连接起来；官方文档也把它形容为 AI 应用的 “USB-C 接口”。MCP 的意义不在于“又多了一个工具”，而在于它试图<strong>统一 “模型如何接入世界” 的方式</strong>：工具、资源、工作流不再需要针对每个 Agent 框架各写一套接入逻辑，而可以通过统一协议暴露出来</li>
+</ol>
+</li>
+<li>在这一阶段，<strong>所有方法都围绕 “增强单次调用能力” 展开，从本质上看，这一阶段仍然属于 Chat 范式的延伸与强化</strong>
+<ul>
+<li>每一次调用都是“临时构建”的</li>
+<li>能力依赖当前上下文（prompt + retrieved context）</li>
+<li>缺乏结构化的能力沉淀</li>
+</ul>
+</li>
+</ul>
+<h2 id="12-阶段二流程沉淀skill"><a class="markdownIt-Anchor" href="#12-阶段二流程沉淀skill"></a> 1.2 阶段二：流程沉淀（Skill）</h2>
+<ul>
+<li>随着 MCP 和工具接入逐渐成熟，LLM 已经不再只是一个 “会聊天、会回答问题” 的模型，而开始具备调用外部资源和执行操作的能力</li>
+<li>第二阶段 LLM 应用的核心问题是 <strong>“如何围绕模型基础能力和外部工具能力组织出一套可复用的工作流程”</strong>：
+<ul>
+<li><strong><a target="_blank" rel="noopener" href="https://www.anthropic.com/news/skills?utm_source=chatgpt.com">Skill，把零散能力沉淀成可复用工作方法</a></strong>：一个真正可用的 Agent，不仅要知道什么时候调用 Excel、什么时候读 PDF、什么时候执行脚本，还要知道某类任务通常应遵循什么流程、遵守哪些规则、参考哪些模板、输出成什么结构。在这种背景下，Anthropic 在 2025 年 10 月 16 日 正式发布 Agent Skills，把 Skill 描述为一种可由文件、文件夹、说明文档和执行逻辑组成的模块化能力，并在 2025 年明显走向主流。Skill 的关键变化在于：它不再只是给模型补一句说明、补一段知识，或者补一个可调用函数，而是<strong>把某一类任务所需的程序性知识、领域约束、参考模板、工具使用方法与输出规范一起封装起来，形成一个可以重复调用的工作单元</strong></li>
+</ul>
+</li>
+</ul>
+<h2 id="13-阶段三系统编排harness"><a class="markdownIt-Anchor" href="#13-阶段三系统编排harness"></a> 1.3 阶段三：系统编排（Harness）</h2>
+<ul>
+<li>随着 Skill 逐渐成熟，LLM-based agent 已可以通过组合复用 Skill 稳定完成各类多步任务，但在面对复杂任务时，一个 Agent 往往需要具备多轮推理、长程运行、多能力协同、状态记忆、动态决策等能力，仅仅依靠 Skill，已经不足以完成上下文管理、记忆管理、任务拆解与委派、多组件编排、执行控制等挑战。</li>
+<li>第三阶段 LLM 应用的核心问题是 <strong>“如何让 Agent 在真实环境中稳定、长期、可控地工作”</strong>：
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents">Harness，围绕各种能力构造可持续运行的 Agent 系统</a>：如果说 Skill 是 “能力模块”，那么 Harness 更像是“Agent 的运行时系统或外部控制框架”。这个词在 2025–2026 年的 Agent 工程讨论里开始越来越常见。Anthropic 把 Agent SDK 直接称为一种 general-purpose agent harness，强调它负责上下文压缩、工具调用、计划执行和长时运行；LangChain 也把 harness 描述为连接 LLM 与其环境的那一层，其中包含系统提示、工具、middleware、skills、子代理委派和记忆系统等部件。也就是说，Harness 不是某一个具体能力，而是<strong>把 prompt、memory、tools、MCP connectors、skills、guardrails、evaluation hooks 统一编排起来的整套执行框架</strong></li>
+</ul>
+</li>
+</ul>
+<h2 id="14-小结"><a class="markdownIt-Anchor" href="#14-小结"></a> 1.4 小结</h2>
+<ul>
+<li>
+<p>以上各里程碑可以整理如下</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">阶段</th>
+<th style="text-align:left">时间</th>
+<th style="text-align:left">目标</th>
+<th style="text-align:left">典型工作流</th>
+<th style="text-align:left">主要局限</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>Prompt Engineering</strong></td>
+<td style="text-align:left"><strong>2022 年底—2023 年</strong> 开始爆发</td>
+<td style="text-align:left">通过提示词让模型更好理解任务</td>
+<td style="text-align:left">写 system prompt、few-shot、格式约束，让模型一次性输出结果</td>
+<td style="text-align:left">强依赖手工调 prompt，难复用、难维护、稳定性有限。ChatGPT 于 <strong>2022-11-30</strong> 发布后迅速流行 (<a target="_blank" rel="noopener" href="https://openai.com/index/chatgpt/?utm_source=chatgpt.com" title="Introducing ChatGPT">OpenAI</a>)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>RAG</strong></td>
+<td style="text-align:left"><strong>2023 年</strong> 在应用侧迅速普及（概念源头可追溯到 <strong>2020 年</strong>）</td>
+<td style="text-align:left">让模型在回答前先检索外部知识</td>
+<td style="text-align:left">向量检索/关键词检索 → 取回文档片段 → 拼进上下文 → 再生成答案</td>
+<td style="text-align:left">主要解决“知道什么”，不直接解决“怎么做”；检索质量决定上限。RAG 的经典论文发表于 <strong>2020-05-22</strong> (<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2005.11401?utm_source=chatgpt.com" title="Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks">arXiv</a>)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Function Calling / Tool Use</strong></td>
+<td style="text-align:left"><strong>2023 年中</strong></td>
+<td style="text-align:left">让模型不仅会说，还会调用外部工具执行操作</td>
+<td style="text-align:left">模型判断是否调用函数 → 输出结构化参数 → 系统执行函数 → 结果回填模型继续推理</td>
+<td style="text-align:left">工具通常是原子能力，多步流程仍需开发者手工编排。OpenAI 于 <strong>2023-06-13</strong> 公布 function calling (<a target="_blank" rel="noopener" href="https://openai.com/index/function-calling-and-other-api-updates/?utm_source=chatgpt.com" title="Function calling and other API updates">OpenAI</a>)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>MCP</strong></td>
+<td style="text-align:left"><strong>2024 年底</strong> 发布，<strong>2025 年</strong> 快速扩散</td>
+<td style="text-align:left">标准化模型与外部工具/数据源的连接方式</td>
+<td style="text-align:left">通过 MCP server 暴露工具、资源、上下文；Agent 统一接入</td>
+<td style="text-align:left">解决的是“怎么接”，不自动解决“怎么用得好”。Anthropic 于 <strong>2024-11-25</strong> 发布 MCP，并在 2025 年称其快速成为事实标准 (<a target="_blank" rel="noopener" href="https://www.anthropic.com/news/model-context-protocol?utm_source=chatgpt.com" title="Introducing the Model Context Protocol">Anthropic</a>)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Skill</strong></td>
+<td style="text-align:left"><strong>2025 年</strong> 走向主流</td>
+<td style="text-align:left">把某类任务的方法、规则、脚本、资源封装成可复用能力</td>
+<td style="text-align:left">模型按需动态加载某个 skill，调用其中的说明、脚本和资源完成任务</td>
+<td style="text-align:left">比 tool 更高层，但仍需要宿主系统决定调度、记忆、上下文管理。Anthropic 于 <strong>2025-10-16</strong> 发布 Agent Skills (<a target="_blank" rel="noopener" href="https://docs.anthropic.com/en/release-notes/overview?utm_source=chatgpt.com" title="Claude Platform - Claude API Docs">Claude API Docs</a>)</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Harness</strong></td>
+<td style="text-align:left"><strong>2025 年下半年—2026 年</strong> 成为更明确的工程概念</td>
+<td style="text-align:left">为 Agent 提供长任务运行的“外骨骼”与执行环境</td>
+<td style="text-align:left">把 prompt、tools、skills、memory、planning、delegation、context management 统一编排</td>
+<td style="text-align:left">复杂度更高，重点从“模型能力”转向“系统设计能力”。LangChain 将 harness 定义为包含 planning、文件系统、delegation、context/token management 等能力的组合  (<a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents?utm_source=chatgpt.com" title="Effective harnesses for long-running agents">Anthropic</a>)</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>综合来看，这条演进路径可以用一句话总结：<strong>LLM 应用正在从“优化单次调用”，走向“构建可复用能力”，再走向“设计完整运行系统”</strong></p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>核心问题</th>
+<th>抽象层</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Prompt / RAG / Tool</td>
+<td>如何让模型更好完成一次任务？</td>
+<td>调用层（Call-level）</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td>如何沉淀可复用的工作方法？</td>
+<td>能力层（Capability-level）</td>
+</tr>
+<tr>
+<td>Harness</td>
+<td>如何让 Agent 稳定运行？</td>
+<td>系统层（System-level）</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>在这一框架下，Skill 之所以关键，是因为它恰好位于 “能力” 与 “系统” 之间的桥梁位置</p>
+</li>
+</ul>
+<h1 id="2-skill-for-llm-based-agent"><a class="markdownIt-Anchor" href="#2-skill-for-llm-based-agent"></a> 2. Skill for LLM-based Agent</h1>
+<ul>
+<li>
+<p>Skills 本质上就是教 AI 按固定流程做事的操作说明书，一旦写好，就能像函数一样反复调用，可以看作是<strong>把 <code>某类事情应该怎么专业做</code> 这件事封装成一个可复用、可自动触发的能力模块</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+</li>
+<li>
+<p>和之前的关键节点对比</p>
+<ul>
+<li>与 Prompt 相比：Skill 天然本地固化，支持按需加载 + 渐进式披露，包含资源脚本
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>普通 Prompt</th>
+<th>Skills 机制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>使用方式</td>
+<td>每次重新发送</td>
+<td>读取本地固化文件</td>
+</tr>
+<tr>
+<td>维护方式</td>
+<td>重新描述发送</td>
+<td>修改本地固化文件，全局/项目生效</td>
+</tr>
+<tr>
+<td>上下文</td>
+<td>每次全量输入</td>
+<td>渐进披露</td>
+</tr>
+<tr>
+<td>LLM 行为一致性</td>
+<td>低（依赖每次 prompt 质量）</td>
+<td>高（固定 SOP + 模板）</td>
+</tr>
+<tr>
+<td>复用性</td>
+<td>手动复制粘贴</td>
+<td>自动匹配 / 项目共享 / 跨平台（OpenClaw、Claude、Cursor）</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>与 MCP 相比：Skill 用于知识复用，MCP 用于能力扩展  <div align="center">
+      <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 99%;">
+  </div>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="21-skill-的核心结构"><a class="markdownIt-Anchor" href="#21-skill-的核心结构"></a> 2.1 Skill 的核心结构</h2>
+<ul>
+<li>本文以 OpenClaw 的组织方式对 Skill 进行介绍。它采用的是 AgentSkills-compatible 的文件夹结构，每个 skill 就是一个独立目录，目录里至少要有一个 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a>，这个文件既是技能说明书，也是元数据入口，如下  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">skill-name/<br>├── SKILL.md                      <span class="hljs-comment"># 必需，包含工作流说明和元数据</span><br>│   ├── YAML frontmatter          <span class="hljs-comment"># 必需元数据</span><br>│   │   ├── name<br>│   │   └── description<br>│   └── Markdown instructions      <span class="hljs-comment"># 技能说明/工作流程</span><br>└── bundled resources/    <span class="hljs-comment"># 可选</span><br>    ├── scripts/          <span class="hljs-comment"># 可执行脚本，如 Python / Bash</span><br>    ├── references/       <span class="hljs-comment"># 需要按需加载进上下文的参考资料</span><br>    └── assets/           <span class="hljs-comment"># 模板、图标、字体等输出资源</span><br></code></pre></td></tr></table></figure>
+OpenClaw 默认把一个 Skill 看成 <strong>说明文档 + 元数据 + 可选资源文件</strong> 的组合，用一个文件夹来承载 “这类任务该怎么做”。这种组织方式使 Skill 天然适合承载“可复用工作流”，而不仅仅是一次性的提示词</li>
+<li>其中 <code>SKILL.md</code> 是中心文件，它包含两层内容：前面的 YAML frontmatter 负责描述这个 skill 是什么，后面的 Markdown instructions 负责告诉 agent 什么时候该用它、怎么用它  <div align="center">
+  <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+</li>
+</ul>
+<h2 id="22-skill-执行流程"><a class="markdownIt-Anchor" href="#22-skill-执行流程"></a> 2.2 Skill 执行流程</h2>
+<ul>
+<li>以 OpenClaw 的 Skill 执行流程为例：
+<ol>
+<li><strong>注入基础上下文与 Skill 摘要</strong>：在 OpenClaw 中，新会话开始时首先加载 <code>AGENTS.md</code>、<code>SOUL.md</code>、<code>TOOLS.md</code> 等工作区中基础文件 。如果当前环境中存在可用 Skill，系统还会额外提供一份精简的可用 Skill 列表，其中通常只包含 Skill 的名称、描述和位置，用于后续匹配与选择</li>
+<li><strong>模型根据当前任务判断是否需要进入某个 Skill</strong>：模型会结合用户输入和 Skill 摘要进行推理，判断当前任务是否适合调用某个 Skill。这里的关键不是简单关键词匹配，而是根据任务目标、上下文和可用工作流，决定是否进入某个受控执行路径</li>
+<li><strong>命中后加载 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a>，按既定流程展开执行</strong>：一旦模型判断某个 Skill 相关，就会进一步读取对应的 <code>SKILL.md</code>，模型随后按照这份工作指南展开任务执行。系统提示会明确要求模型在需要时去读取对应位置的 <code>SKILL.md</code></li>
+<li><strong>在 Skill 约束下按需调用工具，并输出结果</strong>：进入 Skill 后，模型会在既定规则和权限边界内决定是否调用外部工具；如果当前问题可以直接在上下文中完成，就不必额外调工具。任务完成后输出结果，用户的下一次输入再触发新一轮相同机制的判断与执行</li>
+</ol>
+</li>
+<li>示意图如下所示  <div align="center">
+      <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+</li>
+</ul>
+<h2 id="23-渐进披露加载"><a class="markdownIt-Anchor" href="#23-渐进披露加载"></a> 2.3 渐进披露加载</h2>
+<ul>
+<li>
+<p>渐进披露加载是 Skill 的核心特点。理想情况下 LLM 骨干会组织复用大量 Skill 开展工作，如果把所有 Skill 的完整内容都提前注入 LLM 上下文，会立刻遇到几个问题</p>
+<ol>
+<li>提示过于臃肿，占用上下文窗口</li>
+<li>与当前任务无关的 Skill 会干扰模型决策</li>
+<li>很多信息其实只有执行时才需要，在 “是否调用” 阶段，模型只需要知道这个 Skill 是干什么的；在 “真正执行” 阶段才需要看到具体流程细节</li>
+</ol>
+</li>
+<li>
+<p>渐进披露加载是一种<strong>按需注入上下文的机制</strong>：模型先看到技能的简要描述，用于判断是否相关；只有在确定需要时，才进一步加载详细流程、规则和配套资源。具体分三层加载：</p>
+<ul>
+<li><strong>层级 1：技能发现</strong> -- AI 先读取所有技能的元数据（<code>name</code> 和 <code>description</code>），判断任务是否相关，这些元数据始终在系统提示中</li>
+<li><strong>层级 2：加载核心指令</strong> -- 如果判定相关，AI 自动读取 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 的正文内容，获取详细指导</li>
+<li><strong>层级 3：加载资源文件</strong> -- 只在需要时读取额外文件（如脚本、示例），或通过工具执行脚本</li>
+</ul>
+</li>
+<li>
+<p>当用户消息触发时，上下文窗口变化如下所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/LLM_basedAgent技术演进_从PromptEngineering到Harness/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ul>
+<li>初始状态：上下文窗口含系统提示词、技能元数据、用户指令</li>
+<li>调用 Bash 工具读取目标 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a>，触发对应技能</li>
+<li>根据 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 要求按需加载附属文件（<a target="_blank" rel="noopener" href="http://xn--forms-gv5i.md">如forms.md</a>）</li>
+<li>加载完成后执行用户任务</li>
+</ul>
+</li>
+</ul>
+<h2 id="24-skillmd-编写方法"><a class="markdownIt-Anchor" href="#24-skillmd-编写方法"></a> 2.4 <a target="_blank" rel="noopener" href="http://Skill.md">Skill.md</a> 编写方法</h2>
+<h3 id="241-基本模板"><a class="markdownIt-Anchor" href="#241-基本模板"></a> 2.4.1 基本模板</h3>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="http://Skill.md">Skill.md</a> 的基本模板如下</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs bash">---<br>    name: your-skill-name<br>    description: What it does and when Claude should use it<br>---<br><br><span class="hljs-comment"># Skill Title</span><br><br><span class="hljs-comment">## Instructions</span><br>Clear, concrete, actionable rules.<br><br><span class="hljs-comment">## Examples</span><br>- Example usage 1<br>- Example usage 2<br><br><span class="hljs-comment">## Guidelines</span><br>- Guideline 1<br>- Guideline 2<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>元数据字段如下（for Claude ）:</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必填</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>name</td>
+<td>是</td>
+<td>Skill 显示名称，默认使用目录名，仅支持小写字母、数字和短横线（最长 64 字符）</td>
+</tr>
+<tr>
+<td>description</td>
+<td>是</td>
+<td>技能用途及使用场景，Claude 根据它判断是否自动应用</td>
+</tr>
+<tr>
+<td>argument-hint</td>
+<td>否</td>
+<td>自动补全时显示的参数提示，如 [issue-number]、[filename] [format]</td>
+</tr>
+<tr>
+<td>disable-model-invocation</td>
+<td>否</td>
+<td>设为 true 禁止 Claude 自动触发，仅能手动 /name 调用（默认 false）</td>
+</tr>
+<tr>
+<td>user-invocable</td>
+<td>否</td>
+<td>设为 false 从 / 菜单隐藏，作为后台增强能力使用（默认 true）</td>
+</tr>
+<tr>
+<td>allowed-tools</td>
+<td>否</td>
+<td>Skill 激活时 Claude 可无授权使用的工具</td>
+</tr>
+<tr>
+<td>model</td>
+<td>否</td>
+<td>Skill 激活时使用的模型</td>
+</tr>
+<tr>
+<td>context</td>
+<td>否</td>
+<td>设为 fork 时在子代理上下文中运行</td>
+</tr>
+<tr>
+<td>agent</td>
+<td>否</td>
+<td>子代理类型（配合 context: fork 使用）</td>
+</tr>
+<tr>
+<td>hooks</td>
+<td>否</td>
+<td>技能生命周期钩子配置</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>Skills 支持在内容中插入动态变量（for Claude ）：</p>
+<table>
+<thead>
+<tr>
+<th>变量</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>$ARGUMENTS</td>
+<td>调用 Skill 时传入的所有参数</td>
+</tr>
+<tr>
+<td>$ARGUMENTS[N]</td>
+<td>按索引访问参数，如 $ARGUMENTS[0]</td>
+</tr>
+<tr>
+<td>$N</td>
+<td>简写方式，如 $0 表示第一个参数</td>
+</tr>
+<tr>
+<td>${CLAUDE_SESSION_ID}</td>
+<td>当前会话 ID，用于日志、临时文件、关联输出</td>
+</tr>
+</tbody>
+</table>
+<p>插入动态变量示例如下</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">---<br>    name: session-logger<br>    description: 记录当前会话活动<br>---<br><br>    请将以下内容写入日志文件：<br><br>    logs/<span class="hljs-variable">$&#123;CLAUDE_SESSION_ID&#125;</span>.<span class="hljs-built_in">log</span><br><br>    <span class="hljs-variable">$ARGUMENTS</span><br></code></pre></td></tr></table></figure>
+<blockquote>
+<p>OpenClaw 与 Claude Skills 在参数传递机制上存在相似性，至少可以确认 OpenClaw 技能生态中实际使用了 $ARGUMENTS 和 argument-hint；但对于 $ARGUMENTS[N]、$0 以及 ${CLAUDE_SESSION_ID} 等变量，目前没有足够证据表明 OpenClaw 3.28 与 Claude 保持完全一致，因此不宜直接视为同等支持。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="242-长技能文件结构"><a class="markdownIt-Anchor" href="#242-长技能文件结构"></a> 2.4.2 长技能文件结构</h3>
+<ul>
+<li>当技能超过 500–800 行，或需要模板/脚本/参考资料时，推荐以下组织方式：  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs bash">~/.claude/skills/react-component-review/<br>  ├── SKILL.md                  <span class="hljs-comment"># 核心指令 + 元数据（建议控制在 400 行内）</span><br>  │<br>  ├── templates/                <span class="hljs-comment"># 常用模板（Claude 按需读取）</span><br>  │   ├── functional.tsx.md<br>  │   └── class-component.md<br>  │<br>  ├── examples/                 <span class="hljs-comment"># 优秀/反例（给 Claude 看标准）</span><br>  │   ├── good.md<br>  │   └── anti-pattern.md<br>  │<br>  ├── references/               <span class="hljs-comment"># 规范、规则、禁用词表</span><br>  │   ├── hooks-rules.md<br>  │   └── naming-convention.md<br>  │<br>  └── scripts/                  <span class="hljs-comment"># 可执行脚本（需开启 code execution）</span><br>      ├── validate-props.py<br>      └── check-cycle-deps.sh<br></code></pre></td></tr></table></figure>
+</li>
+<li>在 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a> 中引用方式示例：  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs bash">Markdown需要给出标准函数组件时，参考 templates/functional.tsx.md 的结构。<br><br>如果违反 Hooks 规则，对照 references/hooks-rules.md 第 3–5 条说明。<br><br>如需校验 propTypes，可执行 scripts/validate-props.py <span class="hljs-string">&quot;&#123;代码片段&#125;&quot;</span>。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/LLM%E4%B8%93%E9%A2%98/" class="category-chain-item">LLM专题</a>
+  
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/MyBlog/tags/Skill/" class="print-no-link">#Skill</a>
+      
+        <a href="/MyBlog/tags/AI-Engineering/" class="print-no-link">#AI Engineering</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness</div>
+      <div>https://wxc971231.github.io/MyBlog/2026/04/08/LLM_basedAgent技术演进_从PromptEngineering到Harness/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年4月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/02/10/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_SIRLSolver_InformedRL_GroundingLargeLanguageModelsforAuthenticOptimizationM/" title="论文理解【LLM-OR】——【SIRL】Solver-Informed RL-Grounding Large Language Models for Authentic Optimization M">
+                        <span class="hidden-mobile">论文理解【LLM-OR】——【SIRL】Solver-Informed RL-Grounding Large Language Models for Authentic Optimization M</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

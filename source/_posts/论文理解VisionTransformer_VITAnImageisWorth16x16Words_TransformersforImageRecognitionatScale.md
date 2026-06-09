@@ -10,6 +10,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - Vision Transformer
 description: VIT将图像切分成16x16的patch块，通过标准Transformer进行图像分类，在引入尽量少图像归纳偏置的情况下，验证了纯Transformer在图像分类任务中的有效性，为CV和NLP的模型统一奠定基础。
 ---
 

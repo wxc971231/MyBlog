@@ -8,6 +8,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-回归
 description: 尽管 LLM 在文本生成方面表现出色，但它们缺乏对数字的自然归纳偏置，导致在涉及数值的任务中表现不佳。本文提出了一种新的损失函数——Number Token Loss (NTL)，以增强语言模型在数值任务中的表现
 ---
 

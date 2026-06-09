@@ -8,6 +8,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-OR
 description: Step-opt 是一种针对 LLM 求解运筹优化任务的数据增强框架，其通过用迭代问题生成 + 分步验证机制实现更可靠的训练数据合成，并微调开源 LLM 得到 Step-Opt，在多个 OR 建模基准提升性能，尤其在复杂问题上提升更明显
 ---
 

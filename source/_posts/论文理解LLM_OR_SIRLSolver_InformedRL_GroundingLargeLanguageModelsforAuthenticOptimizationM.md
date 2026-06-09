@@ -10,6 +10,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-OR
 description: 本文提出第一种针对基于 LLM 的 OR 问题建模和求解任务的 RLVR 方法，其基于求解器得到可验证奖励，设计了 Partial KL 强化目标函数和两阶段奖励课程训练方法，达成了 SOTA 性能
 ---
 

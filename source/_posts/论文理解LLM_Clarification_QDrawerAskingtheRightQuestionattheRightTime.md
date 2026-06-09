@@ -8,6 +8,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-Clarification
 description: 本文基于 CoDraw 任务对 LLM 澄清提问的触发方式进行探索，发现模型内部不确定性与人类澄清决策相关性弱，使用不确定性阈值触发澄清提问相比模仿人类提问时机，性能和计算效率都更好
 ---
 

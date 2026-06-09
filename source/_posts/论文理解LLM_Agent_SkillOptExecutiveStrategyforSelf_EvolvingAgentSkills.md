@@ -8,6 +8,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-Agent
 description: SkillOpt 将 agent skill 从人工或一次性 prompt artifact 转化为可验证、可控、可迁移的文本空间“可训练状态”，通过有界编辑、验证门控、拒绝编辑反馈和 slow/meta update，在不更新模型权重的情况下显著提升多类 agent 任务表现
 ---
 

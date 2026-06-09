@@ -8,6 +8,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - LLM-OR
 description: 本文提出 LLM-OR 领域的双向数据合成框架 OptMATH，从已有 MF/PD 出发反向生成 NL，再使用 AutoFormulator 进行正向建模，通过最优值匹配 rejection sampling 确保语义一致性。实现了难度可控的语义一致数据合成
 ---
 

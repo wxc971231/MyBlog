@@ -10,6 +10,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - Vision Transformer
 description: Swin Transformer 是首个在通用视觉任务上全面超越 CNN 的 Transformer-Based 通用 CV 骨干网络。该模型借鉴 CNN 中的卷积和池化操作，将注意力计算约束在可重叠的图像patch内部，使计算复杂度与图像大小呈线性关系
 ---
 

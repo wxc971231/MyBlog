@@ -10,6 +10,7 @@ tags:
 categories:
   - 机器学习
   - 论文理解
+  - Vision Transformer
 description: MAE 是一种 Transformer-Based CV backbone，其核心在于使用了类似 Bert 模型的训练机制，通过高比例随机 mask 图像 patch，使用非对称 Encoder-Decoder 架构进行自监督训练重建图像，实现了高效的视觉特征学习。
 ---
 

@@ -90,3 +90,16 @@ post:
     # 层级的折叠深度，0 是全部折叠，大于 0 后如果存在下级标题则默认展开
     # 设置为 6 表示展开所有层级（因为最多只有 h1-h6）
     collapseDepth: 6
+
+  meta:
+    views:
+      enable: true
+      source: "busuanzi"
+      format: "{} 次阅读"
+
+footer:
+  statistics:
+    enable: true
+    source: "busuanzi"
+    pv_format: "总访问量 {} 次"
+    uv_format: "总访客数 {} 人"

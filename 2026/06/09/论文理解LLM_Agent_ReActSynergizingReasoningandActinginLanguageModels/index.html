@@ -1,0 +1,879 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="本文介绍LLM-agent领域的经典方法ReAct，它将LLM的自然语言推理能力和动作生成能力结合，使其同时适用于各类NLP和控制任务，并起到1+1&gt;2的效果">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2026/06/09/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="本文介绍LLM-agent领域的经典方法ReAct，它将LLM的自然语言推理能力和动作生成能力结合，使其同时适用于各类NLP和控制任务，并起到1+1&gt;2的效果">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/index.png">
+<meta property="article:published_time" content="2026-06-09T14:43:15.000Z">
+<meta property="article:modified_time" content="2026-06-14T12:47:20.852Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LLM-Agent">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/index.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-09 14:43" pubdate>
+          2026年6月9日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次阅读
+        </span>
+        
+
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141727455">论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2210.03629">ReAct: Synergizing Reasoning and Acting in Language Models</a></li>
+<li>发表：ICLR 2023</li>
+<li>领域：LLM agent</li>
+<li>一句话总结：作者将基于 LLM 的推理能力和环境交互能力结合起来，提出一种新的<strong>通用范式 ReAct，使语言模型能够解决各种语言推理和决策任务</strong>。这种新范式在 prompt 和 fine-tune 两种 learning setting 下均系统地优于仅推理（reasoning-only）和仅行动（acting-only）范式</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：尽管大型语言模型（LLMs）在语言理解和交互式决策任务中展示了令人印象深刻的能力，但它们的<strong>推理（例如思维链提示）和行动（例如行动计划生成）能力主要被作为独立主题研究</strong>。在本文中，我们探讨了使用LLMs以交错方式生成推理轨迹和特定任务行动的方法，允许两者之间更大的协同作用：<strong>推理轨迹帮助模型引导、跟踪和更新行动计划以及处理异常情况，而行动使其能够与外部来源（如知识库或环境）接口，收集额外信息</strong>。我们将这种方法命名为ReAct，并将其应用于多样化的语言和决策任务，并展示了其相对于最先进基线的有效性，以及相较于没有推理或行动组件的方法在人类可解释性和可信度方面的改进。具体来说，在问答（HotpotQA）和事实验证（Fever）任务上，ReAct通过与简单的维基百科API互动，克服了思维链推理中普遍存在的幻觉和错误传播问题，并生成了比没有推理轨迹的基线更易于解释的人类般的问题解决轨迹。在两个交互式决策基准测试（ALFWorld和WebShop）上，ReAct仅通过一到两个上下文示例提示，就分别以34%和10%的绝对成功率超越了模仿和强化学习方法</li>
+</ul>
+<p></p>
+<h1 id="1-方法"><a class="markdownIt-Anchor" href="#1-方法"></a> 1. 方法</h1>
+<ul>
+<li>
+<p>本文研究开展于 2022 年，当时 GPT3 已经发布了一段时间，研究人员注意到 LLM 在 CoT 技巧加持下展现出良好的自回归推理能力（称之为<code>仅推理reasoning-only范式</code>）；同时，一些用预训练模型作为 agent 的初步研究也验证了 LLM 在各种互动环境中进行规划和行动的能力（<code>仅行动acting-only范式</code>）。但是，当时具有良好推理能力的标准 LLM 无法和环境交互来获取外部信息；能够和环境交互的 LLM agent 都是直接将交互上下文映射到动作，缺乏对高级目标的抽象推理，也没有保持工作记忆以支持长时间跨度的交互动作，因此</p>
+<ol>
+<li><strong>对于 reasoning-only LLM</strong>：无法和外部环境交互导致其无法利用外部数据库或工具，限制了其 NLP 任务的能力</li>
+<li><strong>对于 acting-only LLM</strong>：缺乏推理步骤的情况下模型只是在利用 “直觉” 行动，它直接将内部状态映射到动作，但并不理解这种映射关系的原因，尤其在 finetune 模型时属于 IL 中的 BC 方法。这导致其只能得到一个非常窄的策略分布，策略泛化能力差</li>
+</ol>
+</li>
+<li>
+<p>为此，作者提出将两种范式结合得到 <code>ReAct</code> 范式，<strong>使 LLM 能够以交替的方式生成口头推理轨迹和文本动作</strong></p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li><strong>通过执行动作和环境交互，模型可以得到外部观测反馈</strong></li>
+<li><strong>通过生成自回归推理轨迹，模型将有用的信息整合到上下文中，进而影响其内部状态以支持未来的推理和行动</strong></li>
+</ol>
+</li>
+<li>
+<p>作者将新范式应用在 prompt 和 finetuning 两种 learning 设定下</p>
+<ol>
+<li>
+<p><strong><code>ReAct prompting</code></strong>：使用 frozen 的大规模预训练模型（<a target="_blank" rel="noopener" href="https://arxiv.org/pdf/2204.02311.pdf">PaLM-540B</a>），通过 few shot in-context learning 控制模型输出任务领域动作或开放式推理轨迹</p>
+<blockquote>
+<ul>
+<li><code>domain-specific actions</code>：如 “search” in question answering task；“go to” in room navigation task</li>
+<li><code>free-form language reasoning traces</code>：如 “Now I need to find a cup, and put it on the table”</li>
+</ul>
+</blockquote>
+<p><strong>在对于推理至关重要的任务中</strong>，作者交替产生推理轨迹和动作，使得任务解决轨迹由多个推理-动作-观察步骤组成；<strong>对于涉及大量动作的决策任务</strong>，作者通过稀疏推理 prompt 让语言模型自己决定推理轨迹和动作的异步发生时机，推理轨迹只需要稀疏地出现在轨迹中的最相关位置即可</p>
+</li>
+<li>
+<p><strong><code>ReAct finetuning</code></strong>：使用 prompting 设定构造 ReAct 形式数据，然后用来微调较小规模的语言模型 (PaLM-8/62B)，直接将 ReAct 范式注入为模型的内部知识</p>
+</li>
+</ol>
+</li>
+</ul>
+<h1 id="2-实验"><a class="markdownIt-Anchor" href="#2-实验"></a> 2. 实验</h1>
+<ul>
+<li>
+<p>作者注意到推理轨迹可以在大量任务中发挥作用，比如</p>
+<ul>
+<li>分解任务目标以创建行动计划</li>
+<li>注入与任务解决相关的常识知识</li>
+<li>从环境交互观测中提取重要部分</li>
+<li>在保持计划执行的同时跟踪任务进度</li>
+<li>通过调整行动计划来处理异常</li>
+</ul>
+</li>
+<li>
+<p>推理和行动之间的协同带来诸多好处</p>
+<ul>
+<li>
+<p>对于侧重生成动作的 Agent 类任务，<strong>ReAct 允许模型执行动态推理以创建、维护和调整行动的高级计划 (</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>reason</mtext><mo>→</mo><mtext>act</mtext></mrow><annotation encoding="application/x-tex">\text{reason} \to \text{act}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord text"><span class="mord">reason</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord text"><span class="mord">act</span></span></span></span></span><strong>)</strong></p>
+</li>
+<li>
+<p>对于侧重生成回答的 NLP 类任务，<strong>ReAct 允许模型与外部环境 (如维基百科) 交互，并将获取的附加信息合并到推理中 (</strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>act</mtext><mo>→</mo><mtext>reason</mtext></mrow><annotation encoding="application/x-tex">\text{act} \to \text{reason}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.61508em;vertical-align:0em;"></span><span class="mord text"><span class="mord">act</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord text"><span class="mord">reason</span></span></span></span></span><strong>)</strong></p>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+</div>
+</li>
+</ul>
+</li>
+<li>
+<p>作者在 “问答(HotPotQA)”、“事实验证(Fever)”、“基于文本游戏(ALFWorld)” 和 “网页导航(WebShop)” 四个基准上测试 ReAct 方法的性能，发现</p>
+<ol>
+<li>NLP 类任务 HotPotQA 和 Fever 上，作者使用 Wikipedia API 作为外部环境，发现将 ReAct 和 CoT 组合可以实现最优性能，<strong>这种设定允许模型在推理过程中同时使用内部知识和外部获得的信息</strong></li>
+</ol>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<ol start="2">
+<li>控制类任务 ALFWorld 和 WebShop 上，few-shot prompt ReAct 的性能超过了使用大量样本训练的 RL 和 IL agent。这里尤其可以把 ReAct 和 IL 对比，<strong>IL 中 Agent 只是模仿给定观测下的动作，但并不知道这样动作的原因，这种知识的环境泛化性就很差。相比而言，ReAct 在模仿动作以外还会模仿给定观测下的推理、分析、规划过程，后者的跨环境泛化能力要强很多，这赋予模型传统方法不具备的 few-shot prompt 能力</strong></li>
+</ol>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<ol start="3">
+<li>由于 LLM 的一切交互都是以自然语言作为媒介的，其天然具有很好的解释性，因此<strong>人类检查员可以通过编辑 ReAct 的推理轨迹来实现 human-in-the-loop 交互，这种的的人机协作形式可以有效纠正 LLM 的幻觉问题</strong></li>
+</ol>
+</li>
+</ul>
+<h1 id="3-总结"><a class="markdownIt-Anchor" href="#3-总结"></a> 3. 总结</h1>
+<ul>
+<li>ReAct 是一个简单但非常有效的范式，核心思想是 <strong><code>通过推理指导行动，再通过行动支持推理</code></strong>。ReAct 基于 LM 实现了对思想、动作和环境反馈的联合建模，使其成为一个高性能 multi-task agent。自从 2022 年起，出现了大量 follow 此文章的工作，包括著名的 AutoGPT 等，体现了此范式的有效性。该范式带来的好处包括
+<ol>
+<li><strong>灵活性强</strong>：ReAct 可以直接适用于广泛的推理和交互任务</li>
+<li><strong>泛化性强</strong>：无论 few-shot in context prompt 还是 fine-tune，ReAct 都表现出很强的性能。尤其是在控制决策任务上，<strong>推理过程其实代表了某种跨环境的通用知识，其引入大幅改善了标准 RL/IL 的环境泛化问题</strong>
+<blockquote>
+<p>但也要注意到，这种能力是建立在大规模的 LLM 基础上的，直接和 RL 对比可能不太公平</p>
+</blockquote>
+</li>
+<li><strong>和人类对齐</strong>：ReAct 范式下的问题解决过程，相比过去的方法更像人类</li>
+</ol>
+</li>
+<li>从两个角度理解 ReAct
+<ul>
+<li>从简单的视角看，ReAct 可以看作扩展了环境交互能力的 LM；也可以看作具有内省推理能力的 RL/IL agent</li>
+<li>从复杂的视角看，ReAct 可以看作<strong>给 RL/IL agent 扩展了工作记忆，记忆本身存储在上下文中，agent 可以从环境中获取信息，也可以从工作记忆中获取信息。但是这种记忆还是短期的，且无法编辑（append-only）</strong>。这启发了后续工作，即给 LM agent 添加更长、更可编辑的记忆</li>
+</ul>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/LLM-Agent/" class="category-chain-item">LLM-Agent</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/LLM-Agent/" class="print-no-link">#LLM-Agent</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models</div>
+      <div>https://wxc971231.github.io/MyBlog/2026/06/09/论文理解LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年6月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/06/09/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_ReflexionLanguageAgentswithVerbalReinforcementLearning/" title="论文理解【LLM-Agent】—— 【Reflexion】Language Agents with Verbal Reinforcement Learning">
+                        <span class="hidden-mobile">论文理解【LLM-Agent】—— 【Reflexion】Language Agents with Verbal Reinforcement Learning</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+
+
+
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

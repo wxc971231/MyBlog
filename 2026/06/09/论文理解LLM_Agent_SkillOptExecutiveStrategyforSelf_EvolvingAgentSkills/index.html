@@ -1,0 +1,1168 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="SkillOpt 将 agent skill 从人工或一次性 prompt artifact 转化为可验证、可控、可迁移的文本空间“可训练状态”，通过有界编辑、验证门控、拒绝编辑反馈和 slow&#x2F;meta update，在不更新模型权重的情况下显著提升多类 agent 任务表现">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2026/06/09/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="SkillOpt 将 agent skill 从人工或一次性 prompt artifact 转化为可验证、可控、可迁移的文本空间“可训练状态”，通过有界编辑、验证门控、拒绝编辑反馈和 slow&#x2F;meta update，在不更新模型权重的情况下显著提升多类 agent 任务表现">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_001.png">
+<meta property="article:published_time" content="2026-06-09T12:46:26.000Z">
+<meta property="article:modified_time" content="2026-06-14T12:47:20.852Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LLM-Agent">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_001.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+
+
+
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-06-09 12:46" pubdate>
+          2026年6月9日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          63 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次阅读
+        </span>
+        
+
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>本文初稿使用 <a target="_blank" rel="noopener" href="https://github.com/wxc971231/PaperReading-skill">PaperReading-skill</a> 生成。给定论文标题、链接、arXiv/OpenReview 页面、DOI 或本地 PDF，让 Codex 自动完成论文检索、PDF 下载、图表抽取、代码仓库分析，并生成一份适合 Typora 阅读和后续整理的中文论文解读 Markdown 和 PDF，欢迎试用！</p>
+</blockquote>
+<ul>
+<li>首发链接：<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/161805250">论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills</a></li>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2605.23904">SkillOpt: Executive Strategy for Self-Evolving Agent Skills</a></li>
+<li>作者：Yifan Yang, Ziyang Gong, Weiquan Huang, Qihao Yang, Ziwei Zhou, Zisu Huang, Yan Li, Xuemei Gao, Qi Dai, Bei Liu, Kai Qiu, Yuqing Yang, Dongdong Chen, Xue Yang, Chong Luo</li>
+<li>机构：Microsoft, Shanghai Jiao Tong University, Tongji University, Fudan University</li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/microsoft/SkillOpt">microsoft/SkillOpt</a></li>
+<li>项目页：<a target="_blank" rel="noopener" href="https://microsoft.github.io/SkillOpt/">SkillOpt</a></li>
+<li>OpenReview：未找到公开记录</li>
+<li>发表：arXiv:2605.23904v2，2026-05-25。本文使用 arXiv 当前最新公开版本 v2。</li>
+<li>领域：Agent Skill Optimization / LLM Agent</li>
+<li>一句话总结：SkillOpt 把 agent skill 文档当成冻结模型的<strong>外部可训练状态</strong>，用 rollout 轨迹、受限文本编辑、验证集 gate、拒绝编辑缓存和 epoch 级 slow/meta update，<strong>让 “写 skill” 变成一个更像深度学习优化器的可控训练过程</strong></li>
+</ul>
+<hr />
+<ul>
+<li>摘要：当前 agent skills 通常由人工编写、一次性生成，或通过松散控制的自我修订进行演化；这些方法都不像面向 skill 的深度学习优化器，也都不能在反馈下可靠地超过其初始版本。我们认为，<strong>skill 应当被视为 frozen agent 的外部状态来训练，并采用模型权重空间优化的同等规范</strong>。SkillOpt 据我们所知是第一个用于 agent skills 的系统性、可控文本空间优化器：一个独立的优化器模型将带分数的 rollouts 转化为对单个 skill document 的有界 add/delete/replace 编辑，并且只有当某个编辑严格提升 held-out validation score 时才会被接受。文本学习率预算、被拒绝编辑缓冲区，以及按 epoch 进行的 slow/meta update，使 skill training 保持稳定，同时在部署时不增加任何推理阶段模型调用。在六个 benchmarks、七个 target models 和三种 execution harnesses（direct chat、Codex、Claude Code）上，SkillOpt 在全部 52 个被评估的 model–benchmark–harness 单元中都是最佳或并列最佳，并击败了 human、one-shot LLM、Trace2Skill、TextGrad、GEPA 和 EvoSkill skills 中每个单元的所有竞争方法。在 GPT–5.5 上，它将 no-skill 平均准确率在 direct chat 中提升 +23.5 points，在 Codex agentic loop 中提升 +24.8，在 Claude Code 中提升 +19.1。迁移实验进一步表明，<strong>优化后的 skill artifacts 在跨模型规模、Codex 与 Claude Code 执行环境之间，以及迁移到相近数学 benchmark 时，无需进一步优化仍然保留价值</strong></li>
+</ul>
+<h1 id="1-背景"><a class="markdownIt-Anchor" href="#1-背景"></a> 1. 背景</h1>
+<h2 id="11-skill-及其优化"><a class="markdownIt-Anchor" href="#11-skill-及其优化"></a> 1.1 Skill 及其优化</h2>
+<ul>
+<li>Skill 本质上是教 LLM-agent 按固定流程做事的操作说明书，它把某一类任务所需的程序性知识、领域约束、参考模板、工具使用方法与输出规范封装起来，形成一个可以重复调用的工作单元，一旦写好，就能像函数一样反复调用。详见 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/159929908">LLM-based Agent 技术演进 —— 从 Prompt Engineering 到 Harness</a></li>
+<li>由于复杂、个性化任务的完整轨迹存在长尾分布特性，LLM-agent 难以直接完成。传统意义上，这种 domain adaptation 往往是在模型权重、prompt 或数据上动手，但 <strong>agent 场景里很多长尾任务强依赖于 “外部过程知识”</strong>：如何找证据、如何调用工具、如何处理表格或文档、如何格式化答案、哪些失败模式要避免，这类任务知识就非常适合收敛到一个可复用 Skill 中</li>
+<li><strong>对于这类复杂长尾任务，Skill 提供 “外部过程知识” 的质量直接决定了输出结果的质量，因此其域适应的对象就是 Skill（执行流程），实现 Skill 的自动优化便成为重要的课题</strong>
+<ul>
+<li>从最早的 “Prompt Engineering” 到现在的 “Skill”，自动优化 prompt 并不是新鲜的课题
+<blockquote>
+<ul>
+<li>2022 年，APE 说自动生成的指令「超越人类水平」</li>
+<li>2023 年，OPRO 让 LLM 自己当优化器，优化出来的最强咒语是「Take a deep breath」</li>
+<li>2024 年，TextGrad 发明了「文本梯度」这个词</li>
+<li>2025 年，GEPA 的标题直接写「反思式进化超越强化学习」</li>
+<li>skill 这一波直接寒武纪大爆发：Trace2Skill、EvoSkill、EvoSkills、SkillForge、SkillClaw、SKILLFOUNDRY、AutoSkill、SkillRL、SkillX、AutoRefine</li>
+</ul>
+</blockquote>
+</li>
+<li>随着 LLM-agent 能力的提升，<a href="%E5%A6%82%E4%BD%95%E8%AF%84%E4%BB%B7%E5%BE%AE%E8%BD%AF%E5%BC%80%E6%BA%90%E7%9A%84%E7%9B%B4%E6%8E%A5%E7%94%A8Skill%E6%8F%90%E9%AB%98%E6%A8%A1%E5%9E%8B%E8%83%BD%E5%8A%9B%E7%9A%84SkillOpt%EF%BC%9F%20-%20SimonAKing%E7%9A%84%E5%9B%9E%E7%AD%94%20-%20%E7%9F%A5%E4%B9%8E%20https://www.zhihu.com/question/2044753091476598797/answer/2046633915377509367">相关工作已经越来越多</a>，prompt、skill、memory、context、工具、workflow、agent 架构、harness、reward，一个 agent 身上每个零件都有专门的论文在「自动优化」
+<blockquote>
+<ul>
+<li>agent 和 harness 层面：meta-agent 写代码发明新 agent；AFlow用 MCTS 去搜 multi-agent workflow；AgentSquare 把 agent 拆成 planning、reasoning、tool use、memory 四个模块，然后搜模块的排列组合</li>
+<li>memory 也要自动进化：Dynamic Cheatsheet 给模型配了张自我更新的小抄；A-Mem用 Zettelkasten 卡片盒笔记法给 agent 管记忆</li>
+<li>工具也要自动造：LATM 让大模型自己造工具给另一个模型用，CREATOR、CRAFT 跟上，Voyager 在 Minecraft 里攒了一整库技能代码</li>
+<li>奖励也要自动：Self-Rewarding 让模型自己给自己打分</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="12-现有方法的问题"><a class="markdownIt-Anchor" href="#12-现有方法的问题"></a> 1.2 现有方法的问题</h2>
+<ul>
+<li>论文主要对比了几类已有路线：
+<ol>
+<li><strong>Human skill</strong>：专家手写规则，质量依赖人工经验，难以针对新 harness / benchmark 快速迭代</li>
+<li><strong>One-shot LLM skill</strong>：让 LLM 看任务描述一次性写 skill，缺少真实执行反馈</li>
+<li><strong>Trace2Skill / trajectory lesson distillation</strong>：从轨迹里抽规则，但如果没有验证 gate，容易把局部失败的修补写进最终交付 Skill 中导致过拟合</li>
+<li><strong>TextGrad / GEPA 这类文本或 prompt 优化</strong>：能用反馈修 prompt，但优化对象通常不是一个持久、可部署、可跨 harness 迁移的 skill 文档</li>
+<li><strong>EvoSkill 这类 skill evolution</strong>：能进化 skill 文件夹，但缺少类似深度学习训练里的 step size、validation、rejected update memory 这些稳定性约束。</li>
+</ol>
+</li>
+<li>作者的核心批评是：<strong>skill 的改写如果没有受控步长和质量过滤，很容易发生语义大跳跃</strong>。一次 “看起来合理” 的大改写可能删除原本有效的规则、引入冲突指令，或者过拟合某一批失败样本</li>
+</ul>
+<h1 id="2-本文方法"><a class="markdownIt-Anchor" href="#2-本文方法"></a> 2. 本文方法</h1>
+<h2 id="21-问题设定把-skill-文档当成外部状态"><a class="markdownIt-Anchor" href="#21-问题设定把-skill-文档当成外部状态"></a> 2.1 问题设定：把 skill 文档当成外部状态</h2>
+<ul>
+<li>
+<p>本文<strong>将 Skill 的文本内容作为优化对象，把优化神经网络的梯度下降优化器那一套平移过来</strong>，如下图所示</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ul>
+<li>参数 → skill 文档</li>
+<li>梯度方向 → 从轨迹中提取的编辑方向</li>
+<li>学习率 → 文本编辑预算（可以更新多少内容）</li>
+<li>验证集检查 → held-out selection gate</li>
+<li>稳定训练设置 → batch、minibatch、schedule、gate 等机制</li>
+</ul>
+</li>
+<li>
+<p>基于以上思路给出 Skill 优化任务的定义：给定由冻结的目标模型 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span> 和执行环境/harness <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>h</mi></mrow><annotation encoding="application/x-tex">h</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord mathnormal">h</span></span></span></span> 组成的 agent 系统，要求优化自然语言 skill 文档 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi></mrow><annotation encoding="application/x-tex">s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">s</span></span></span></span> 以提升 agent 系统在指定任务 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi></mrow><annotation encoding="application/x-tex">x</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal">x</span></span></span></span> 上的表现。任务执行过程会产生一条轨迹 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>τ</mi></mrow><annotation encoding="application/x-tex">\tau</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span></span></span></span> 和一个标量评分 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>r</mi></mrow><annotation encoding="application/x-tex">r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.43056em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span></span></span></span></p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mo fence="false">(</mo><mi>τ</mi><mo stretchy="false">(</mo><mi>s</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>r</mi><mo stretchy="false">(</mo><mi>s</mi><mo stretchy="false">)</mo><mo fence="false">)</mo><mo>=</mo><mi>h</mi><mo stretchy="false">(</mo><mi>M</mi><mo separator="true">,</mo><mi>x</mi><mo separator="true">,</mo><mi>s</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mspace width="1em"/><mi>r</mi><mo stretchy="false">(</mo><mi>s</mi><mo stretchy="false">)</mo><mo>∈</mo><mo stretchy="false">[</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">]</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\Big(\tau(s), r(s)\Big)=h(M, x, s), \quad r(s) \in[0,1] .
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.80002em;vertical-align:-0.65002em;"></span><span class="mord"><span class="delimsizing size2">(</span></span><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mord"><span class="delimsizing size2">)</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">h</span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">[</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mclose">]</span><span class="mord">.</span></span></span></span></span></p>
+<p>SkillOpt 的训练过程类似 RL 在线优化过程或演化学习过程，其 “训练数据” 不是静态监督样本，而是一组用于在线 rollout 的任务样本/新问题集合，只是优化对象从模型权重变成了外部 skill 文档：</p>
+<ul>
+<li>训练集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>t</mi><mi>r</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{tr}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，用来产生 rollout evidence</li>
+<li>验证集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>s</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{sel}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：用来决定候选 skill 是否接受</li>
+<li>测试集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>t</mi><mi>e</mi><mi>s</mi><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{test}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：只在最终报告中使用</li>
+</ul>
+</li>
+<li>
+<p>SkillOpt 首先使用训练集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>t</mi><mi>r</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{tr}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">r</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 生成一组候选技能 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">C</mi><mrow><mo fence="true">(</mo><msub><mi>D</mi><mtext>tr </mtext></msub><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{C}\left(D_{\text {tr }}\right)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathcal" style="margin-right:0.05834em;">C</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">tr </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span></span></span></span>，然后利用验证集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>s</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{sel}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 找到性能最优的 skill 示例，并汇报在测试集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>t</mi><mi>e</mi><mi>s</mi><mi>t</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{test}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 上的最终性能</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mtable rowspacing="0.15999999999999992em" columnalign="left" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><msubsup><mi>s</mi><mtext>sel </mtext><mo lspace="0em" rspace="0em">⋆</mo></msubsup><mo>=</mo><mi>arg</mi><mo>⁡</mo><msub><mo><mi>max</mi><mo>⁡</mo></mo><mrow><mi>s</mi><mo>∈</mo><mi mathvariant="script">C</mi><mrow><mo fence="true">(</mo><msub><mi>D</mi><mtext>tr </mtext></msub><mo fence="true">)</mo></mrow></mrow></msub><mfrac><mn>1</mn><mrow><mo fence="true">∣</mo><msub><mi>D</mi><mtext>sel </mtext></msub><mo fence="true">∣</mo></mrow></mfrac><msub><mo>∑</mo><mrow><mi>x</mi><mo>∈</mo><msub><mi>D</mi><mtext>sel </mtext></msub></mrow></msub><mi>r</mi><mo stretchy="false">(</mo><mi>s</mi><mo stretchy="false">)</mo><mo separator="true">,</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mtext> </mtext></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mi mathvariant="normal">Test</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><msubsup><mi>s</mi><mtext>sel </mtext><mo lspace="0em" rspace="0em">⋆</mo></msubsup><mo fence="true">)</mo></mrow><mo>=</mo><mfrac><mn>1</mn><mrow><mo fence="true">∣</mo><msub><mi>D</mi><mtext>test </mtext></msub><mo fence="true">∣</mo></mrow></mfrac><msub><mo>∑</mo><mrow><mi>x</mi><mo>∈</mo><msub><mi>D</mi><mtext>test </mtext></msub></mrow></msub><mi>r</mi><mrow><mo fence="true">(</mo><msubsup><mi>s</mi><mtext>sel </mtext><mo lspace="0em" rspace="0em">⋆</mo></msubsup><mo fence="true">)</mo></mrow><mi mathvariant="normal">.</mi></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{array}{l}
+s_{\text {sel }}^{\star}=\arg \max _{s \in \mathcal{C}\left(D_{\text {tr }}\right)} \frac{1}{\left|D_{\text {sel }}\right|} \sum_{x \in D_{\text {sel }}} r(s), \\ \space\\
+\operatorname{Test}\left(s_{\text {sel }}^{\star}\right)=\frac{1}{\left|D_{\text {test }}\right|} \sum_{x \in D_{\text {test }}} r\left(s_{\text {sel }}^{\star}\right) .
+\end{array}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.9302160000000006em;vertical-align:-1.7151080000000007em;"></span><span class="mord"><span class="mtable"><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.215108em;"><span style="top:-4.369999999999999em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.688696em;"><span style="top:-2.4168920000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">sel </span></span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">⋆</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831079999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mop">ar<span style="margin-right:0.01389em;">g</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mop">max</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.34480000000000005em;"><span style="top:-2.5198em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mrel mtight">∈</span><span class="mord mtight"><span class="mord mathcal mtight" style="margin-right:0.05834em;">C</span></span><span class="minner mtight"><span class="mopen mtight delimcenter" style="top:0em;"><span class="mtight">(</span></span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.29634285714285713em;"><span style="top:-2.357em;margin-left:-0.02778em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">tr </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mclose mtight delimcenter" style="top:0em;"><span class="mtight">)</span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3551999999999999em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="minner mtight"><span class="mopen mtight delimcenter" style="top:0em;"><span class="mtight">∣</span></span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.02778em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">sel </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span><span class="mclose mtight delimcenter" style="top:0em;"><span class="mtight">∣</span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.52em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.17862099999999992em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="mrel mtight">∈</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3448em;"><span style="top:-2.3487714285714287em;margin-left:-0.02778em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">sel </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15122857142857138em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.40557em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mopen">(</span><span class="mord mathnormal">s</span><span class="mclose">)</span><span class="mpunct">,</span></span></span><span style="top:-3.0099999999999993em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mspace"> </span></span></span><span style="top:-1.8048919999999993em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mord mathrm">T</span><span class="mord mathrm">e</span><span class="mord mathrm">s</span><span class="mord mathrm">t</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.688696em;"><span style="top:-2.4168920000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">sel </span></span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">⋆</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831079999999999em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.845108em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="minner mtight"><span class="mopen mtight delimcenter" style="top:0em;"><span class="mtight">∣</span></span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.29634285714285713em;"><span style="top:-2.357em;margin-left:-0.02778em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">test </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span><span class="mclose mtight delimcenter" style="top:0em;"><span class="mtight">∣</span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.52em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.17862099999999992em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="mrel mtight">∈</span><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.29634285714285713em;"><span style="top:-2.357em;margin-left:-0.02778em;margin-right:0.07142857142857144em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">test </span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.143em;"><span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.39981em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">r</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;">(</span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.688696em;"><span style="top:-2.4168920000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord text mtight"><span class="mord mtight">sel </span></span></span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">⋆</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2831079999999999em;"><span></span></span></span></span></span></span><span class="mclose delimcenter" style="top:0em;">)</span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">.</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.7151080000000007em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span></span></span></span></span></span></span></p>
+<p>这里最重要的是：<strong>训练阶段可以不断试错，但最终选择必须由 selection split 决定</strong>。SkillOpt 不是 “LLM 反思后直接相信自己”，而是 “LLM 提案，验证集裁决”</p>
+</li>
+</ul>
+<h2 id="22-整体流程rollout-反思-编辑-验证"><a class="markdownIt-Anchor" href="#22-整体流程rollout-反思-编辑-验证"></a> 2.2 整体流程：rollout、反思、编辑、验证</h2>
+<ul>
+<li>
+<p>SkillOpt 每一步大致做六件事：agent rollout、失败/成功 minibatch 反思、patch 合并、按文本学习率裁剪、skill 更新、门控验证。如下图所示，冻结的目标模型使用当前技能执行批量训练；优化器模型对成功与失败案例进行小批量反思，提出有界范围内的增删替换修改方案，在预定编辑预算内对这些方案进行合并排序，并仅通过预留的验证门筛选出候选技能。在多个训练周期中，慢速元模型更新机制可在不改变目标模型的前提下保留更长期限的学习经验</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<p>可以把这个流程理解成一种文本版训练循环：</p>
+<ol>
+<li><strong>Forward pass</strong>：冻结目标模型 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi></mrow><annotation encoding="application/x-tex">M</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span></span></span></span> 带着当前 skill <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>s</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">s_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">s</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 在训练 mini batch 上执行任务，产生轨迹和分数
+<blockquote>
+<ul>
+<li>rollout batch 不是只记录最终答案，而是尽量保留 agent 做了什么，包括 task metadata、messages、tool calls、observations / command outputs、final answer、verifier feedback 和对 spreadsheet、document、embodied task 的环境特定摘要 等</li>
+<li>这一步对应深度学习里的 forward pass，但产生的不是 logits 和 loss，而是<strong>可读的 execution trace</strong>。后续 optimizer model 需要从这些 trace 中判断：失败是否来自检索源错误、格式不对、工具调用不足、表格字段绑定错误，还是长期搜索策略不稳定</li>
+</ul>
+</blockquote>
+</li>
+<li><strong>Backward pass</strong>：针对每个 minibatch，优化器模型 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi></mrow><annotation encoding="application/x-tex">O</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span></span></span></span> 读失败和成功轨迹，把经验转成 add/delete/replace 候选编辑
+<blockquote>
+<ul>
+<li>论文特别强调 minibatch reflection 而不是单条 trajectory reflection，因为<strong>单条失败很容易诱导出特例规则，minibatch 才更容易看到可泛化模式</strong></li>
+<li>优化器模型将 rollout batch 中的轨迹按任务达成情况换分为成功与失败 reflection minibatches，每个 reflection minibatch 会让 optimizer model 生成一组候选 skill edits</li>
+<li><strong>失败 minibatch 提出纠正性规则</strong>，例如搜索任务里不要只看第一个检索结果、表格任务里先检查 workbook 结构和公式、ALFWorld 里记录已访问位置避免循环等</li>
+<li><strong>成功 minibatch 提出应保留的有效行为</strong>：哪些已经有效的行为要保留，哪些规则不应该被后续编辑覆盖</li>
+</ul>
+</blockquote>
+</li>
+<li><strong>Gradient aggregation</strong>：失败编辑和成功编辑分开合并，最终合并时失败修复优先
+<blockquote>
+<ul>
+<li>Backward pass 过程得到了一组局部 skill edits，真正更新之前需要进行会融合、去重、消冲突：首先分别整合基于失败和成功情况的修改建议，最后整合时失败修复优先级更高，即 failure 和 success 覆盖同一点时保留 failure 版本，除非和 “强支持” 的 success pattern 直接冲突</li>
+<li>这种设计很像优化器里<strong>对 noisy gradient 做聚合</strong>，不过这里聚合对象是自然语言 patch</li>
+</ul>
+</blockquote>
+</li>
+<li><strong>Learning rate clipping</strong>：只保留最多 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>L</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">L_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 个编辑，避免一次改太多，得到候选 skill <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>s</mi><mo>~</mo></mover></mrow><annotation encoding="application/x-tex">\tilde{s}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6678599999999999em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6678599999999999em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">s</span></span></span><span style="top:-3.35em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;"><span class="mord">~</span></span></span></span></span></span></span></span></span></span>
+<blockquote>
+<ul>
+<li>SkillOpt 的学习率不是一个浮点数，而是一个整数编辑预算 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>L</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">L_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：每一步最多允许多少条 skill edit 被应用。编辑预算和学习率一样可以动态调度，默认的余弦调度方案从较多的修改步骤开始，逐渐
+递减至较少的整合步骤</li>
+<li>这一步的直觉是：自然语言 skill 的 “参数空间” 很离散，不能指望一次大改写后仍然保留优化历史。<strong>让相邻 skill 版本足够接近，skill edit 才有可学习意义。</strong></li>
+</ul>
+</blockquote>
+</li>
+<li><strong>Validation gate</strong>：只有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>s</mi><mo>~</mo></mover></mrow><annotation encoding="application/x-tex">\tilde{s}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6678599999999999em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6678599999999999em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">s</span></span></span><span style="top:-3.35em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;"><span class="mord">~</span></span></span></span></span></span></span></span></span></span> 在 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>s</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{sel}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 上严格优于当前 skill，才接受更新
+<blockquote>
+<ul>
+<li>在验证集 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>D</mi><mrow><mi>s</mi><mi>e</mi><mi>l</mi></mrow></msub></mrow><annotation encoding="application/x-tex">D_{sel}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight" style="margin-right:0.01968em;">l</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 上重新执行得到的候选 skill <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mover accent="true"><mi>s</mi><mo>~</mo></mover></mrow><annotation encoding="application/x-tex">\tilde{s}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6678599999999999em;vertical-align:0em;"></span><span class="mord accent"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.6678599999999999em;"><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">s</span></span></span><span style="top:-3.35em;"><span class="pstrut" style="height:3em;"></span><span class="accent-body" style="left:-0.19444em;"><span class="mord">~</span></span></span></span></span></span></span></span></span></span>，如果分数高于当前 skill 则更新 current skill，如果还高于历史最好分数则更新 <code>best_skill.md</code>。这个 gate 是严格的，候选 skill 只要没有明确提升，就不会让系统漂移</li>
+<li>未能提升分数被拒绝的 skill edit 作为负反馈进入当前 epoch 的 rejected-edit buffer，每个负样本记录的信息为：<strong>观测到的失败模式 + 尝试的 skill edit 及其导致的得分下降值</strong>。后续在同一训练周期内的推理调用均可获取该缓冲区数据，从而使优化模型能够避免重复执行失败的修改操作，并专注于处理尚未解决的故障问题。里我觉得是本文最像真实优化器的地方：<strong>负反馈不部署，但会影响后续搜索方向</strong></li>
+</ul>
+</blockquote>
+</li>
+<li><strong>Epoch-wise slow/meta update</strong>：每个 epoch 末比较前一版 skill 与当前 skill 在相同训练样本上的表现，optimizer model 据此写一个受保护的 slow-update guidance block，用于给目标 skill 文档加入长期指导，其只用于训练过程，不随最终 skill 部署
+<blockquote>
+<ul>
+<li>
+<p>前面 1-5 的 fast update 只看当前 batch 的证据；slow/meta update 则在 epoch 边界比较同一批样本在前一 epoch skill 和当前 epoch skill 下的表现，默认每个 task 采样 20 个训练样本进行评估</p>
+</li>
+<li>
+<p>所有评估问题根据性能差异分成四组，</p>
+</li>
+<li>
+<p><code>improvements改好了</code>：当前修改带来了有效改进，应保留相关 edit 策略</p>
+</li>
+<li>
+<p><code>regressions改差了</code>：新 skill 破坏了原有能力，应避免类似修改</p>
+</li>
+<li>
+<p><code>persistent failures都错</code>：仍然存在长期盲点，需要后续重点修</p>
+</li>
+<li>
+<p><code>stable successes都对</code>：这些行为模式是稳定有效的，不要被后续编辑破坏</p>
+</li>
+<li>
+<p>优化器 LLM 接收旧 epoch skill、当前 epoch skill、所有采样任务在两个 skill 下的纵向比较，以及上一轮 slow guidance；然后要求它保留有效指导、修改或移除无效指导，并增加针对新 regression 和 persistent failure 的指令，写出一段新的<strong>战略性 guidance block，它起到类似动量的作用，用来约束后续 skill 编辑方向，防止局部 patch 反复漂移或破坏已有能力</strong></p>
+</li>
+</ul>
+</blockquote>
+</li>
+</ol>
+</li>
+<li>
+<p>注意，以上流程都是文中默认的 patch mode，作者还另外提出来一种 rewrite mode，通过调整优化器超参数进行全局设置。区别如下</p>
+<ol>
+<li><code>Patch mode局部补丁式修改</code>：论文实验里的默认模式，optimizer model 输出结构化的局部 skill edit（append、insert_after、replace、delete 等），其优点是变化幅度小、可追踪、稳定，也更符合论文强调的 bounded text update 概念</li>
+<li><code>Rewrite mode重写模式</code>：该模式下 optimizer model 操作的对象不是 skill 本体，而是 rewrite suggestions，然后在用这些 suggestions 条件化地生成完整的新版 skill。其自由度更大，适合当前 skill 结构很乱、需要整体重组的时候；但风险也更高，因为可能不小心删掉已有有效规则、引入不兼容指令，或者对局部失败过拟合。论文也明确批评 unbounded rewrites 可能擦除有用规则、引入冲突或过拟合局部失败</li>
+</ol>
+</li>
+</ul>
+<h1 id="3-实验"><a class="markdownIt-Anchor" href="#3-实验"></a> 3. 实验</h1>
+<h2 id="31-实验设定"><a class="markdownIt-Anchor" href="#31-实验设定"></a> 3.1 实验设定</h2>
+<ul>
+<li>Benchmark 覆盖六类任务：
+<ul>
+<li><strong>SearchQA</strong>：检索式问答。</li>
+<li><strong>SpreadsheetBench</strong>：需要 spreadsheet 代码和工具操作，默认 multi-round codegen，最多 30 turns，并使用 openpyxl/pandas runtime。</li>
+<li><strong>OfficeQA</strong>：本地文档工具、多轮工具调用，最多 24 tool calls。</li>
+<li><strong>DocVQA</strong>：多模态文档理解。</li>
+<li><strong>LiveMathematicianBench / LiveMath</strong>：数学选择题推理。</li>
+<li><strong>ALFWorld</strong>：具身环境交互，最多 50 steps。</li>
+</ul>
+</li>
+<li>目标模型覆盖 7 个模型：从 GPT-5.5 到 GPT-5.4、GPT-5.4-mini、GPT-5.4-nano、GPT-5.2，以及 Qwen3.5-4B 和 Qwen3.6-35B-A3B。</li>
+<li>三种执行模式：
+<ul>
+<li><strong>direct chat</strong>：单次 chat completion，skill 放在 system prompt 前面。</li>
+<li><strong>Codex harness</strong>：用 Codex CLI 在 workspace-write sandbox 中执行任务，SkillOpt 把当前 skill 写成每个任务旁边的 <code>SKILL.md</code>，再读取 <code>codex_trace_summary.txt</code> 作为反思上下文。</li>
+<li><strong>Claude Code harness</strong>：用 Claude Code CLI 镜像同样的 workspace contract。</li>
+</ul>
+</li>
+<li>Baselines 包括：
+<ul>
+<li>no skill；</li>
+<li>human skill；</li>
+<li>one-shot LLM skill；</li>
+<li>Trace2Skill；</li>
+<li>TextGrad；</li>
+<li>GEPA；</li>
+<li>EvoSkill。</li>
+</ul>
+</li>
+<li>评价协议上，使用确定性的 train/selection/test 数据划分。验证集只用来接受或拒绝 candidate skill，所有汇报分数都在不相交的测试集上计算</li>
+</ul>
+<h2 id="32-实验结果"><a class="markdownIt-Anchor" href="#32-实验结果"></a> 3.2 实验结果</h2>
+<h3 id="321-主结果5252-个单元最佳或并列最佳"><a class="markdownIt-Anchor" href="#321-主结果5252-个单元最佳或并列最佳"></a> 3.2.1 主结果：52/52 个单元最佳或并列最佳</h3>
+<ul>
+<li>
+<p>实验设定：在 direct chat、Codex harness 和 Claude Code harness 下，对多个模型、多个 benchmark、多个 skill source 进行 held-out test 比较，分数是百分比；蓝色行是 SkillOpt，小绿/红数字是相对 no-skill 的增减</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>SkillOpt 在所有 52 个被评估的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mtext>model, benchmark, harness</mtext><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">(\text{model, benchmark, harness})</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord text"><span class="mord">model, benchmark, harness</span></span><span class="mclose">)</span></span></span></span> 单元上达到 best-or-tied-best</li>
+<li>GPT-5.5 direct chat 六个 benchmark 平均从 58.8 提升到 82.3，即 +23.5 points</li>
+<li>最大增益出现在更依赖程序化流程和格式纪律的任务上：SpreadsheetBench 从 41.8 到 80.7，OfficeQA 从 33.1 到 72.1，LiveMath 从 37.6 到 66.9</li>
+<li>小模型收益更明显，例如 GPT-5.4-nano 在 DocVQA 近乎翻倍，在 ALFWorld 近乎三倍，这说明 <strong>skill artifact 可能在补小模型权重里缺失的过程知识</strong></li>
+</ol>
+</li>
+<li>
+<p>主实验把 “强模型 + 弱模型 + 工具 harness + 非工具 direct chat” 都覆盖了，如果 SkillOpt 只是 prompt trick，通常很难同时在 Codex/Claude Code 这种执行环境迁移里也稳定占优，说服力强</p>
+</li>
+</ul>
+<h3 id="322-超参和组件消融稳定性主要来自-gate-bounded-edit-和-slowmeta"><a class="markdownIt-Anchor" href="#322-超参和组件消融稳定性主要来自-gate-bounded-edit-和-slowmeta"></a> 3.2.2 超参和组件消融：稳定性主要来自 gate、bounded edit 和 slow/meta</h3>
+<ul>
+<li>
+<p>实验设定：使用 GPT-5.5 骨干驱动 agent 和 optimizer，改训练集大小、reflection minibatch size、rollout batch size、learning rate、scheduler 和 slow-update samples 等超参数</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li><strong>训练数据越多，程序型任务收益越明显</strong>：SpreadsheetBench 从 1 example 的 47.5 提升到 100% train 的 78.0，LiveMath 从 59.1 到 70.5。
+2. <strong>reflection minibatch size 和 rollout batch size 鲁棒性强</strong>：SearchQA 和 SpreadsheetBench 在多个设置下波动较小。</li>
+</ol>
+</li>
+<li>
+<p>使用 GPT-5.5 骨干驱动 agent 和 optimizer，移除学习率形式、rejected buffer、meta skill / slow update 等组件进行消融</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li><strong>学习率控制/编辑约束提升了性能</strong>：没有 learning-rate control 时，SearchQA / SpreadsheetBench / LiveMath 性能低于默认</li>
+<li><strong>rejected buffer 有稳定增益</strong>：去掉后 SpreadsheetBench 从 77.5 掉到 72.9。</li>
+<li><strong>优化器的 slow/meta update 是核心</strong>：去掉后 SpreadsheetBench 从 77.5 掉到 55.0，是整张消融里最明显的退化</li>
+</ol>
+</li>
+<li>
+<p>这组实验说明 SkillOpt 不是靠某个神奇 batch size 调出来的，而是依赖一套组合约束：<strong>步长要小、候选要验证、失败编辑要记住、跨 epoch 经验要单独沉淀</strong></p>
+</li>
+</ul>
+<h3 id="323-训练趋势selection-gate-能较好追踪-unseen-test但不一定"><a class="markdownIt-Anchor" href="#323-训练趋势selection-gate-能较好追踪-unseen-test但不一定"></a> 3.2.3 训练趋势：selection gate 能较好追踪 unseen test，但不一定</h3>
+<ul>
+<li>
+<p>下图 SpreadsheetBench、SearchQA、LiveMath 在 epoch checkpoint 上的 train rollout、selection best 和 unseen test 曲线</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>SpreadsheetBench 的 selection best 很快从低分区间跳到 0.8 左右，unseen test 也同步上升，说明 gate 没有只挑 selection overfit 的 skill。</li>
+<li>SearchQA 的曲线空间较小，因为 no-skill 已经接近高分区间，优化更多是在小幅稳定提升。</li>
+<li>LiveMath 中 selection best 后期继续升高，但 unseen test 没有同幅上升，<strong>说明即使有 gate，数学选择题的泛化仍然存在更大波动</strong></li>
+</ol>
+</li>
+<li>
+<p>这张图也提醒一个限制：SkillOpt 的 gate 只能约束 selection split 上的可观测性能，<strong>不能完全消除 domain shift 或 benchmark 小样本噪声</strong></p>
+</li>
+</ul>
+<h3 id="324-迁移实验skill-更像可复用-artifact而不是一次性-prompt"><a class="markdownIt-Anchor" href="#324-迁移实验skill-更像可复用-artifact而不是一次性-prompt"></a> 3.2.4 迁移实验：skill 更像可复用 artifact，而不是一次性 prompt</h3>
+<ul>
+<li>
+<p>作者考察了使用一种骨干模型/agent系统优化的 skill 迁移到其他模型/agent系统后的表现</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>GPT-5.4 上训练的 SpreadsheetBench skill 转到 GPT-5.4-mini 有 +9.4，转到 GPT-5.4-nano 有 +3.0</li>
+<li>LiveMath skill 跨模型也都是正迁移，其中 GPT-5.4-nano 上 transferred 28.8 甚至超过 direct in-domain 27.2</li>
+<li>跨 harness 最强的是 SpreadsheetBench：Codex 到 Claude Code 从 22.1 提到 81.8，即 +59.7；Claude Code 到 Codex 从 27.5 提到 71.1，即 +43.6</li>
+<li>OlympiadBench 到 Omni-MATH 的跨 benchmark 迁移较小但全部为正，分别是 +3.7、+1.8、+1.3</li>
+</ol>
+</li>
+<li>
+<p>我理解这里的重点是：如果 learned skill 只是 Codex 的命令模板，它不应该在 Claude Code 里也大幅有效；如果只是 benchmark-specific answer formatting，它也不该跨模型和近邻数学 benchmark 正迁移。迁移结果支持作者的说法：<strong>最终 skill 学到的是较抽象的程序知识</strong></p>
+</li>
+</ul>
+<h1 id="4-代码分析"><a class="markdownIt-Anchor" href="#4-代码分析"></a> 4. 代码分析</h1>
+<h2 id="41-伪代码"><a class="markdownIt-Anchor" href="#41-伪代码"></a> 4.1 伪代码</h2>
+<ul>
+<li>下面是我根据官方仓库 <code>skillopt/engine/trainer.py</code>、<code>skillopt/gradient/aggregate.py</code>、<code>skillopt/optimizer/clip.py</code>、<code>skillopt/evaluation/gate.py</code> 和 <code>skillopt/optimizer/slow_update.py</code> 重构的简化伪代码，保留工程实现中的主要状态、缓存和 gate 逻辑<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">train_skillopt</span>(<span class="hljs-params">cfg, adapter</span>):<br>    <span class="hljs-comment"># adapter 把不同 benchmark / harness 接到统一接口：</span><br>    <span class="hljs-comment"># rollout 负责执行目标模型，reflect 负责把轨迹转成候选编辑。</span><br>    adapter.setup(cfg)<br>    dataloader = adapter.get_dataloader()<br><br>    current_skill = load_initial_skill(cfg.skill_init)<br>    best_skill = current_skill<br><br>    <span class="hljs-comment"># selection 分数缓存按 skill hash 存，避免同一个候选 skill 重复评估。</span><br>    selection_cache = &#123;&#125;<br>    current_score = evaluate_on_selection(current_skill, adapter, selection_cache)<br>    best_score = current_score<br><br>    <span class="hljs-comment"># 文本学习率调度器：这里输出的不是浮点学习率，而是每步最多编辑数 L_t。</span><br>    scheduler = build_scheduler(<br>        mode=cfg.lr_scheduler,<br>        max_lr=cfg.edit_budget,<br>        min_lr=cfg.min_edit_budget,<br>        total_steps=cfg.total_steps,<br>    )<br><br>    <span class="hljs-keyword">for</span> epoch <span class="hljs-keyword">in</span> <span class="hljs-built_in">range</span>(cfg.num_epochs):<br>        step_buffer = []  <span class="hljs-comment"># 记录本 epoch 的失败模式和被拒绝编辑，作为负反馈</span><br>        meta_skill = load_optimizer_meta_skill(epoch - <span class="hljs-number">1</span>)<br><br>        <span class="hljs-keyword">for</span> batch <span class="hljs-keyword">in</span> dataloader.train_batches(epoch):<br>            <span class="hljs-comment"># 1. 冻结目标模型带着当前 skill 执行任务，收集 scored trajectories。</span><br>            rollout_results = adapter.rollout(batch, current_skill)<br><br>            <span class="hljs-comment"># 2. optimizer model 分析失败和成功轨迹，提出 add/delete/replace patch。</span><br>            failure_patches, success_patches = adapter.reflect(<br>                rollout_results,<br>                current_skill,<br>                step_buffer_context=step_buffer,<br>                meta_skill_context=meta_skill,<br>            )<br><br>            <span class="hljs-comment"># 3. 先合并失败编辑，再合并成功编辑，最终 failure-prioritized merge。</span><br>            merged_patch = merge_patches(<br>                current_skill,<br>                failure_patches,<br>                success_patches,<br>                meta_skill_context=meta_skill,<br>            )<br><br>            <span class="hljs-comment"># 4. 按 L_t 对编辑池排序和裁剪，避免一次文本更新跨度过大。</span><br>            edit_budget = scheduler.step()<br>            ranked_patch = rank_and_select(<br>                current_skill,<br>                merged_patch,<br>                max_edits=edit_budget,<br>                meta_skill_context=meta_skill,<br>            )<br><br>            <span class="hljs-comment"># 5. 把 patch 应用到 skill；实现会记录每条 edit 是否成功应用。</span><br>            candidate_skill, apply_report = apply_patch_with_report(<br>                current_skill,<br>                ranked_patch,<br>            )<br><br>            <span class="hljs-comment"># 6. held-out gate：只有 selection 分数严格提升才接受。</span><br>            cand_score = evaluate_on_selection(<br>                candidate_skill,<br>                adapter,<br>                selection_cache,<br>            )<br>            <span class="hljs-keyword">if</span> cand_score &gt; current_score:<br>                current_skill = candidate_skill<br>                current_score = cand_score<br>                <span class="hljs-keyword">if</span> cand_score &gt; best_score:<br>                    best_skill = candidate_skill<br>                    best_score = cand_score<br>            <span class="hljs-keyword">else</span>:<br>                <span class="hljs-comment"># 拒绝编辑不会部署，但会进入后续 optimizer context，减少重复踩坑。</span><br>                step_buffer.append(&#123;<br>                    <span class="hljs-string">&quot;failure_patterns&quot;</span>: extract_failure_patterns(rollout_results),<br>                    <span class="hljs-string">&quot;rejected_edits&quot;</span>: summarize(ranked_patch),<br>                    <span class="hljs-string">&quot;score_before&quot;</span>: current_score,<br>                    <span class="hljs-string">&quot;score_after&quot;</span>: cand_score,<br>                &#125;)<br><br>        <span class="hljs-comment"># 7. epoch 边界比较同一批样本的前后 skill 表现，形成长期 slow guidance。</span><br>        <span class="hljs-keyword">if</span> cfg.use_slow_update <span class="hljs-keyword">and</span> epoch &gt;= <span class="hljs-number">1</span>:<br>            slow_guidance = run_slow_update(<br>                prev_epoch_skill,<br>                current_skill,<br>                same_sample_rollouts=<span class="hljs-literal">True</span>,<br>            )<br>            current_skill = replace_protected_slow_update_field(<br>                current_skill,<br>                slow_guidance,<br>            )<br><br>    <span class="hljs-keyword">return</span> best_skill, best_score<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h2 id="42-工程技巧"><a class="markdownIt-Anchor" href="#42-工程技巧"></a> 4.2 工程技巧</h2>
+<ul>
+<li>
+<p><strong>用 adapter 抽象 benchmark / harness，训练循环不关心任务细节。</strong> 这让 SearchQA、SpreadsheetBench、OfficeQA、DocVQA、LiveMath、ALFWorld 可以共用同一个 <code>ReflACTTrainer</code>，只需要各自实现 <code>rollout</code> 和 <code>reflect</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/envs/base.py</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">EnvAdapter</span>(<span class="hljs-title class_ inherited__">ABC</span>):<br><span class="hljs-meta">    @abstractmethod</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">rollout</span>(<span class="hljs-params">self, env_manager, skill_content, out_dir, **kw</span>):<br>        <span class="hljs-comment"># 中文注释：执行目标模型并返回统一格式结果，</span><br>        <span class="hljs-comment"># 例如 hard/soft 分数、预测答案、失败原因、轨迹摘要。</span><br>        ...<br><br><span class="hljs-meta">    @abstractmethod</span><br>    <span class="hljs-keyword">def</span> <span class="hljs-title function_">reflect</span>(<span class="hljs-params">self, results, skill_content, out_dir, **kw</span>):<br>        <span class="hljs-comment"># 中文注释：把环境特定轨迹转成通用 patch，</span><br>        <span class="hljs-comment"># 训练主循环只需要看到 add/delete/replace 编辑。</span><br>        ...<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>配置里把 optimizer model 和 target model 分开。</strong> 论文强调 optimizer 只在训练时调用，部署时只用静态 skill；代码也把 <code>optimizer_backend</code> 和 <code>target_backend</code> 分成两个角色。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-comment"># configs/_base_/default.yaml</span><br><span class="hljs-attr">model:</span><br>  <span class="hljs-attr">optimizer:</span> <span class="hljs-string">gpt-5.5</span><br>  <span class="hljs-attr">target:</span> <span class="hljs-string">gpt-5.5</span><br>  <span class="hljs-attr">optimizer_backend:</span> <span class="hljs-string">openai_chat</span><br>  <span class="hljs-attr">target_backend:</span> <span class="hljs-string">openai_chat</span><br>  <span class="hljs-attr">codex_trace_to_optimizer:</span> <span class="hljs-literal">true</span>  <span class="hljs-comment"># 中文注释：Codex 轨迹会进入 optimizer 反思上下文</span><br><br><span class="hljs-attr">optimizer:</span><br>  <span class="hljs-attr">learning_rate:</span> <span class="hljs-number">4</span>        <span class="hljs-comment"># 中文注释：文本学习率，即每步最多应用 4 条编辑</span><br>  <span class="hljs-attr">min_learning_rate:</span> <span class="hljs-number">2</span><br>  <span class="hljs-attr">lr_scheduler:</span> <span class="hljs-string">cosine</span><br>  <span class="hljs-attr">use_slow_update:</span> <span class="hljs-literal">true</span><br>  <span class="hljs-attr">use_meta_skill:</span> <span class="hljs-literal">true</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>训练主循环显式分成 rollout、reflect、aggregate、select、update、evaluate 六个阶段。</strong> 这让每一步都有独立日志和中间文件，方便复现和排查哪个环节引入了坏编辑。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/engine/trainer.py</span><br>rollout_results = adapter.rollout(<br>    train_env, current_skill, rollout_dir,<br>    use_eval_feedback=<span class="hljs-literal">True</span>,<br>)<br><br>raw_patches = adapter.reflect(<br>    rollout_results, current_skill, batch_dir,<br>    step_buffer_context=step_buffer_context,  <span class="hljs-comment"># 中文注释：把本 epoch 拒绝编辑作为负反馈</span><br>    meta_skill_context=active_meta_skill,     <span class="hljs-comment"># 中文注释：给 optimizer 的长期写作指导</span><br>)<br><br>merged_patch = merge_patches(current_skill, all_failure_patches, all_success_patches)<br>ranked_patch = rank_and_select(current_skill, merged_patch, max_edits=edit_budget)<br>candidate_skill, apply_report = apply_patch_with_report(current_skill, ranked_patch)<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>编辑选择模块有 LLM ranking，也有 deterministic fallback。</strong> 如果 optimizer ranking 调用失败，代码不会让训练崩掉，而是退回到前 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>L</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">L_t</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2805559999999999em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">t</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 个编辑，这对长实验很重要。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/optimizer/clip.py</span><br><span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(edits) &lt;= max_edits:<br>    <span class="hljs-keyword">return</span> patch  <span class="hljs-comment"># 中文注释：编辑数没有超过文本学习率，直接保留。</span><br><br>response, _ = chat_optimizer(<br>    system=load_prompt(prompt_name),<br>    user=user,<br>    max_completion_tokens=<span class="hljs-number">2048</span>,<br>    retries=<span class="hljs-number">3</span>,<br>    stage=<span class="hljs-string">&quot;ranking&quot;</span>,<br>)<br>...<br><span class="hljs-comment"># 中文注释：如果 LLM ranking 失败，就简单截断，保证训练循环可继续。</span><br><span class="hljs-keyword">return</span> &#123;<br>    <span class="hljs-string">&quot;reasoning&quot;</span>: patch.get(<span class="hljs-string">&quot;reasoning&quot;</span>, <span class="hljs-string">&quot;&quot;</span>)<br>    + <span class="hljs-string">f&quot; [fallback truncated <span class="hljs-subst">&#123;<span class="hljs-built_in">len</span>(edits)&#125;</span>-&gt;<span class="hljs-subst">&#123;max_edits&#125;</span> edits]&quot;</span>,<br>      <span class="hljs-string">&quot;edits&quot;</span>: edits[:max_edits],<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>validation gate 是纯决策函数，便于测试和替换指标。</strong> <code>evaluate_gate</code> 不做文件写入和状态副作用，只根据 hard/soft/mixed score 返回 accept/reject。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/evaluation/gate.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">evaluate_gate</span>(<span class="hljs-params">candidate_skill, cand_hard, current_skill, current_score,</span><br><span class="hljs-params">                  best_skill, best_score, best_step, global_step,</span><br><span class="hljs-params">                  cand_soft=<span class="hljs-number">0.0</span>, metric=<span class="hljs-string">&quot;hard&quot;</span>, mixed_weight=<span class="hljs-number">0.5</span></span>):<br>    cand_score = select_gate_score(cand_hard, cand_soft, metric, mixed_weight)<br><br>    <span class="hljs-keyword">if</span> cand_score &gt; current_score:<br>        <span class="hljs-comment"># 中文注释：必须严格超过当前分数；平分不会接受，避免 skill 静默漂移。</span><br>        <span class="hljs-keyword">if</span> cand_score &gt; best_score:<br>            <span class="hljs-keyword">return</span> GateResult(<span class="hljs-string">&quot;accept_new_best&quot;</span>, candidate_skill, cand_score,<br>                              candidate_skill, cand_score, global_step)<br>        <span class="hljs-keyword">return</span> GateResult(<span class="hljs-string">&quot;accept&quot;</span>, candidate_skill, cand_score,<br>                          best_skill, best_score, best_step)<br><br>    <span class="hljs-keyword">return</span> GateResult(<span class="hljs-string">&quot;reject&quot;</span>, current_skill, current_score,<br>                      best_skill, best_score, best_step)<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>patch application 会生成逐条编辑报告。</strong> 这点很实用：自然语言编辑可能找不到 target、误碰 protected section 或格式不合法，<code>edit_apply_report.json</code> 可以解释某次 skill 变化到底发生了什么。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/optimizer/skill.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">apply_patch_with_report</span>(<span class="hljs-params">skill, patch</span>):<br>    edits = patch.edits <span class="hljs-keyword">if</span> <span class="hljs-built_in">hasattr</span>(patch, <span class="hljs-string">&quot;edits&quot;</span>) <span class="hljs-keyword">else</span> patch.get(<span class="hljs-string">&quot;edits&quot;</span>, [])<br>    reports = []<br>    <span class="hljs-keyword">for</span> idx, edit <span class="hljs-keyword">in</span> <span class="hljs-built_in">enumerate</span>(edits, <span class="hljs-number">1</span>):<br>        <span class="hljs-keyword">try</span>:<br>            skill, report = _apply_edit_with_report(skill, edit)<br>            report[<span class="hljs-string">&quot;index&quot;</span>] = idx  <span class="hljs-comment"># 中文注释：保留原始编辑序号，方便回溯。</span><br>        <span class="hljs-keyword">except</span> Exception <span class="hljs-keyword">as</span> exc:<br>            report = &#123;<br>                <span class="hljs-string">&quot;index&quot;</span>: idx,<br>                <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;error&quot;</span>,  <span class="hljs-comment"># 中文注释：失败不吞掉，而是写入报告。</span><br>                <span class="hljs-string">&quot;error&quot;</span>: <span class="hljs-built_in">str</span>(exc),<br>            &#125;<br>        reports.append(report)<br>    <span class="hljs-keyword">return</span> skill, reports<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>slow update 输入的是同一批样本的前后 epoch 对比。</strong> 这比只看当前失败更强，因为它能看到 regressions、persistent failures 和 stable successes。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># skillopt/optimizer/slow_update.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">run_slow_update</span>(<span class="hljs-params">skill_content, results_prev, results_curr, items, ...</span>):<br>    pairs = build_comparison_pairs(<br>        results_prev, results_curr, items,<br>        prev_rollout_dir=prev_rollout_dir,<br>        curr_rollout_dir=curr_rollout_dir,<br>    )<br>    comparison_text = format_comparison_text(pairs)<br><br>    user = (<br>        <span class="hljs-string">f&quot;## Previous Epoch&#x27;s Skill\n<span class="hljs-subst">&#123;prev_skill&#125;</span>\n\n&quot;</span><br>        <span class="hljs-string">f&quot;## Current Epoch&#x27;s Skill\n<span class="hljs-subst">&#123;skill_content&#125;</span>\n\n&quot;</span><br>        <span class="hljs-comment"># 中文注释：optimizer 看到的是纵向变化，而不是单次 batch 失败。</span><br>        <span class="hljs-string">f&quot;## Longitudinal Comparison (same 20 tasks, two skill versions)\n&quot;</span><br>        <span class="hljs-string">f&quot;<span class="hljs-subst">&#123;comparison_text&#125;</span>&quot;</span><br>    )<br>    response, _ = chat_optimizer(system=load_prompt(<span class="hljs-string">&quot;slow_update&quot;</span>), user=user, ...)<br>    <span class="hljs-keyword">return</span> extract_json(response)<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h1 id="5-总结"><a class="markdownIt-Anchor" href="#5-总结"></a> 5. 总结</h1>
+<ul>
+<li>SkillOpt 的主要贡献不是“又写了一个自动 prompt 优化器”，而是<strong>把 skill optimization 组织成了更接近训练系统的形式</strong>：有 train/selection/test，有 batch，有 learning-rate-like edit budget，有 gate，有 rejected update memory，有跨 epoch 的慢变量。</li>
+<li>我认为这篇文章最有价值的点在于它把 agent skill 从 “经验型文档” 推向 “可训练 artifact”。最终部署物仍然只是 300-2000 tokens 的 <code>best_skill.md</code>，这对实际工程很重要：<strong>成本在离线训练时支付，线上不增加 optimizer 调用</strong></li>
+</ul>
+<h2 id="51-创新思想来源"><a class="markdownIt-Anchor" href="#51-创新思想来源"></a> 5.1 创新思想来源</h2>
+<ul>
+<li>从论文叙述看，SkillOpt 的核心思想大概率来自三条线的结合：
+<ol>
+<li><strong>深度学习优化器类比</strong>：参数、梯度、学习率、验证集、动量分别映射到 skill 文档、轨迹编辑方向、edit budget、selection gate、slow/meta update。</li>
+<li><strong>trajectory reflection / prompt evolution</strong>：利用执行轨迹发现失败模式，但把反思结果约束为结构化 patch。</li>
+<li><strong>agent skill 作为外部程序记忆</strong>：skill 不是一次性 prompt，而是可以跨模型、跨 harness 复用的程序化知识载体。</li>
+</ol>
+</li>
+<li>巧妙的一点是，作者没有试图把自然语言 skill 变成连续向量再优化，而是承认它是文本 artifact，然后构造了<strong>文本空间控制优化器，这种稳定性设计是 SkillOpt 相对传统文本优化的重要进步</strong>。这里最重要的是 Epoch-wise Slow/Meta Update 机制，它让优化不只依赖当前 batch 的局部反馈，而能在 epoch 层面对长期有效经验进行沉淀，消融实验强调了其重要作用，说明<strong>复杂工具链任务非常依赖跨周期的全局经验沉淀</strong></li>
+</ul>
+<h2 id="52-未来展望"><a class="markdownIt-Anchor" href="#52-未来展望"></a> 5.2 未来展望</h2>
+<ul>
+<li><strong>多 skill / skill library 场景</strong>：本文主要训练一个 compact domain skill。真实 agent 可能有多个 skill，需要研究 skill routing、skill composition、版本管理和冲突消解</li>
+<li><strong>从文本 Skill 到多模态 / 异构执行知识</strong>：本文只考虑了文本 skill，但 skill 不一定只是文本，还可能包括 API 模板、配置脚本、流程图、ontology、决策规则等。未来 Harness 需要把这些都纳入 “可训练外状态空间”</li>
+<li><strong>从 Offline 优化到 Online 持续进化</strong>：SkillOpt 当前更像离线优化，未来可以结合生产环境的非活跃窗口、灰度发布、持续评估，让 skill 在真实业务中持续更新，但要受控、安全、可回滚</li>
+<li><strong>成本可控性</strong>：SearchQA 和 DocVQA 的 token per point 很高，说明长轨迹、多模态或检索任务的优化成本可能不便宜。未来需要更好的 trajectory compression 和 active sampling</li>
+<li><strong>安全与审计</strong>：skill 是自然语言策略，容易携带隐式偏见、工具权限策略或不安全操作习惯。SkillOpt 的 edit report 和 compact artifact 是审计基础，但还需要专门的安全 gate</li>
+</ul>
+<h2 id="53-反面的声音"><a class="markdownIt-Anchor" href="#53-反面的声音"></a> 5.3 反面的声音</h2>
+<ul>
+<li><a href="%E5%A6%82%E4%BD%95%E8%AF%84%E4%BB%B7%E5%BE%AE%E8%BD%AF%E5%BC%80%E6%BA%90%E7%9A%84%E7%9B%B4%E6%8E%A5%E7%94%A8Skill%E6%8F%90%E9%AB%98%E6%A8%A1%E5%9E%8B%E8%83%BD%E5%8A%9B%E7%9A%84SkillOpt%EF%BC%9F%20-%20SimonAKing%E7%9A%84%E5%9B%9E%E7%AD%94%20-%20%E7%9F%A5%E4%B9%8E%20https://www.zhihu.com/question/2044753091476598797/answer/2046633915377509367">知乎答主 SimonAKing​ 对本文进行了批判</a>，指出了 SkillOpt 类方法的四个真实风险：
+<ol>
+<li>prompt sensitivity / spurious prompt search：自动编辑可能学到脆弱措辞</li>
+<li>selection overfitting：反复用验证集 gate，本质上也是在搜索验证集</li>
+<li>evaluator 稀疏与噪声：agent 任务没有程序搜索那种强 evaluator</li>
+<li>收益随模型能力增强可能下降：尤其是格式、CoT、简单流程类 skill。</li>
+</ol>
+</li>
+<li>但它也有一些过度批判：
+<ol>
+<li>把 SkillOpt 简化成“搜神奇措辞”，忽略了论文中 skill 的 procedure / tool policy / failure mode 属性</li>
+<li>忽略了论文确实做了 cross-model、cross-harness、cross-benchmark transfer，不能直接说“一换模型就归零”</li>
+<li>把 multi-agent debate 的问题混入 SkillOpt 批判，相关性不强</li>
+<li>将所有 evaluator 都说成“几十题 0/1 + LLM 裁判”，与论文中部分 benchmark 的 native hard score / exact-match / runtime scorer 不完全一致</li>
+<li>对 “说明书提升模型表现” 持贬义，但在 agent 工程中，自动生成和验证说明书本身就是有应用价值的</li>
+</ol>
+</li>
+</ul>
+<h2 id="54-qa"><a class="markdownIt-Anchor" href="#54-qa"></a> 5.4 Q&amp;A</h2>
+<ol>
+<li><strong>SkillOpt 和 prompt optimization 的区别是什么？</strong>
+两者都在文本空间优化，但 SkillOpt 的优化对象是可部署、可复用的 skill 文档，并且明确使用 rollout batch、bounded edit budget、held-out gate、rejected buffer 和 slow/meta update。prompt optimization 往往更像改写入口 prompt，不一定保留一个稳定的 procedural artifact</li>
+<li><strong>为什么一定要有 held-out gate？</strong>
+因为 LLM 反思出来的编辑只是“看起来合理”，不等于对目标模型真的有效。gate 把自我修订变成 propose-and-test：候选 skill 必须在 selection split 上严格提升，否则不进入 current skill</li>
+<li><strong>为什么 rejected edits 还要保存？</strong>
+被拒绝的编辑提供负反馈。它告诉 optimizer：这类诊断或这类改写虽然听起来合理，但实际降低了分数。后续 reflection 可以避开同类失败，而部署 artifact 不会被污染</li>
+<li><strong>slow/meta update 和普通 patch 有什么区别？</strong>
+普通 patch 处理当前 batch 的局部失败；slow/meta update 在 epoch 边界比较同一批样本的前后 skill 行为，关注 regressions、persistent failures 和 stable successes。它更像长期方向或动量，避免每个 step 都只追逐当前 batch</li>
+<li><strong>这篇论文最可能失败在哪里？</strong>
+一是 selection split 不足以代表真实测试分布时，gate 会失效；二是复杂 harness 的轨迹很长，optimizer 看到的信息可能被压缩损失；三是如果任务需要新的工具能力或模型知识，而不是 procedural discipline，那么只改 skill 文档可能不够</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/LLM-Agent/" class="category-chain-item">LLM-Agent</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/LLM-Agent/" class="print-no-link">#LLM-Agent</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【LLM-Agent】——【SkillOpt】Executive Strategy for Self-Evolving Agent Skills</div>
+      <div>https://wxc971231.github.io/MyBlog/2026/06/09/论文理解LLM_Agent_SkillOptExecutiveStrategyforSelf_EvolvingAgentSkills/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年6月9日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/06/09/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_OptMATHAScalableBidirectionalDataSynthesisFrameworkforOptimizationModeling/" title="论文理解【LLM-OR】——【OptMATH】A Scalable Bidirectional Data Synthesis Framework for Optimization Modeling">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">论文理解【LLM-OR】——【OptMATH】A Scalable Bidirectional Data Synthesis Framework for Optimization Modeling</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/05/14/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_LLMOPTLearningtoDefineandSolveGeneralOptimizationProblemsfromScratch/" title="论文理解【LLM-OR】——【LLMOPT】Learning to Define and Solve General Optimization Problems from Scratch">
+                        <span class="hidden-mobile">论文理解【LLM-OR】——【LLMOPT】Learning to Define and Solve General Optimization Problems from Scratch</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+
+
+
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

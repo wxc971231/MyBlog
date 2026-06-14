@@ -15,13 +15,14 @@ hexo.extend.filter.register('theme_inject', function(injects) {
       line-height: 1.6;
       text-shadow: 0 1px 3px rgba(0, 0, 0, .35);
     }
-    .banner-site-statistics span {
-      white-space: nowrap;
+    .banner-site-statistics .typing-cursor {
+      display: inline-block;
+      width: .5em;
+      animation: banner-site-statistics-cursor 1s steps(1, end) infinite;
     }
-    .banner-site-statistics strong {
-      margin: 0 .25rem;
-      color: #fff;
-      font-weight: 600;
+    @keyframes banner-site-statistics-cursor {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
     }
   </style>
 <% } %>
@@ -40,26 +41,52 @@ hexo.extend.filter.register('theme_inject', function(injects) {
         var stats = document.createElement('div');
         stats.className = 'banner-site-statistics';
         stats.setAttribute('aria-label', '&#20840;&#31449;&#32479;&#35745;');
-        stats.innerHTML = [
-          '<span>&#24635;&#35775;&#38382;&#37327;<strong id="banner-site-pv">--</strong>&#27425;</span>',
-          '<span>&#24635;&#35775;&#23458;&#25968;<strong id="banner-site-uv">--</strong>&#20154;</span>'
-        ].join('');
+        stats.innerHTML = '<span id="banner-site-statistics-text"></span><span class="typing-cursor">_</span>';
         bannerText.appendChild(stats);
 
         var pvSource = document.getElementById('busuanzi_value_site_pv');
         var uvSource = document.getElementById('busuanzi_value_site_uv');
-        var pvTarget = document.getElementById('banner-site-pv');
-        var uvTarget = document.getElementById('banner-site-uv');
+        var target = document.getElementById('banner-site-statistics-text');
+        var cursor = stats.querySelector('.typing-cursor');
+        var lastText = '';
+        var typingTimer = null;
 
-        function syncValue(source, target) {
-          if (source && target && source.textContent.trim()) {
-            target.textContent = source.textContent.trim();
+        function typeText(text) {
+          if (!target || text === lastText) {
+            return;
           }
+
+          lastText = text;
+          target.textContent = '';
+
+          if (typingTimer) {
+            window.clearInterval(typingTimer);
+          }
+
+          var index = 0;
+          typingTimer = window.setInterval(function() {
+            target.textContent = text.slice(0, index + 1);
+            index += 1;
+
+            if (index >= text.length) {
+              window.clearInterval(typingTimer);
+              typingTimer = null;
+              if (cursor) {
+                cursor.style.display = 'none';
+              }
+            } else if (cursor) {
+              cursor.style.display = 'inline-block';
+            }
+          }, 45);
         }
 
         function syncAll() {
-          syncValue(pvSource, pvTarget);
-          syncValue(uvSource, uvTarget);
+          var pv = pvSource && pvSource.textContent.trim();
+          var uv = uvSource && uvSource.textContent.trim();
+
+          if (pv && uv) {
+            typeText('总访问量 ' + pv + ' 次，总访客人数 ' + uv + ' 人');
+          }
         }
 
         syncAll();
@@ -81,7 +108,7 @@ hexo.extend.filter.register('theme_inject', function(injects) {
         var timer = window.setInterval(function() {
           syncAll();
           retry += 1;
-          if (retry >= 20 || (pvTarget.textContent !== '--' && uvTarget.textContent !== '--')) {
+          if (retry >= 20 || lastText) {
             window.clearInterval(timer);
           }
         }, 500);

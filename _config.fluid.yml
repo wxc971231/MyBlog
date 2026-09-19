@@ -67,6 +67,11 @@ about:
 # 自定义 CSS
 custom_css: /css/iconfont/iconfont.css
 
+# Long code blocks are collapsed after this many lines.
+code_collapse:
+  enable: true
+  max_lines: 20
+
 # 数学公式渲染
 math:
   # 开启数学公式渲染

@@ -516,8 +516,8 @@ description:
 
 def main():
     # 配置文件路径和URL
-    markdown_file = r"D:\Programmer\Hexo\_convert\raw\论文理解\论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models.md"
-    article_url = "https://blog.csdn.net/wxc971231/article/details/141727455"
+    markdown_file = r"D:\Programmer\Hexo\_convert\raw\论文理解\论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien.md"
+    article_url = "https://blog.csdn.net/wxc971231/article/details/165127356"
     
     # 创建转换器
     converter = CSDNConverter()

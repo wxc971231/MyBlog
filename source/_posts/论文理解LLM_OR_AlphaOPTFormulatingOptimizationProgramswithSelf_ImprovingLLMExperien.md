@@ -9,7 +9,7 @@ categories:
   - 机器学习
   - 论文理解
   - LLM-OR
-description: 
+description: 针对 LLM-OR 问题建模任务，AlphaOPT 让 LLM从建模失败中总结经验，先在原问题上验证经验能否帮助纠错，再根据它在其他问题上的使用效果修正适用条件，并将这些经验存入可检索的经验库，帮助模型在不重新训练的情况下更准确地把自然语言问题转化为优化程序。
 ---
 
 > 本文初稿使用 [PaperReading-skill](https://github.com/wxc971231/PaperReading-skill) 生成。给定论文标题、链接、arXiv/OpenReview 页面、DOI 或本地 PDF，让 Codex 自动完成论文检索、PDF 下载、图表抽取、代码仓库分析，并生成一份适合 Typora 阅读和后续整理的中文论文解读 Markdown 和 PDF，欢迎试用！

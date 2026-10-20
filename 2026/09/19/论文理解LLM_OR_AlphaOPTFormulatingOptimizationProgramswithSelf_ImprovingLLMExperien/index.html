@@ -1,0 +1,1934 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/MyBlog/img/fluid.png">
+  <link rel="icon" href="/MyBlog/img/fluid.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#2f4154">
+  <meta name="author" content="云端fff">
+  <meta name="keywords" content="技术,编程,生活,博客">
+  
+    <meta name="description" content="针对 LLM-OR 问题建模任务，AlphaOPT 让 LLM从建模失败中总结经验，先在原问题上验证经验能否帮助纠错，再根据它在其他问题上的使用效果修正适用条件，并将这些经验存入可检索的经验库，帮助模型在不重新训练的情况下更准确地把自然语言问题转化为优化程序。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien">
+<meta property="og:url" content="https://wxc971231.github.io/MyBlog/2026/09/19/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/index.html">
+<meta property="og:site_name" content="云端fff的博客">
+<meta property="og:description" content="针对 LLM-OR 问题建模任务，AlphaOPT 让 LLM从建模失败中总结经验，先在原问题上验证经验能否帮助纠错，再根据它在其他问题上的使用效果修正适用条件，并将这些经验存入可检索的经验库，帮助模型在不重新训练的情况下更准确地把自然语言问题转化为优化程序。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/index.png">
+<meta property="article:published_time" content="2026-09-19T17:32:07.000Z">
+<meta property="article:modified_time" content="2026-10-20T03:14:30.614Z">
+<meta property="article:author" content="云端fff">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LLM-Clarification">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://wxc971231.github.io/MyBlog/img/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/index.png">
+  
+  
+    <meta name="referrer" content="no-referrer-when-downgrade">
+  
+  
+  <title>论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien - 云端fff的博客</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/MyBlog/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/MyBlog/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/MyBlog/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/MyBlog/css/iconfont/iconfont.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"wxc971231.github.io","root":"/MyBlog/","version":"1.9.8","typing":{"enable":true,"typeSpeed":50,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#29d","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":6},"lazyload":{"enable":true,"loading_img":"/img/loading.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/MyBlog/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/MyBlog/js/utils.js" ></script>
+  <script  src="/MyBlog/js/color-schema.js" ></script>
+  
+
+
+  
+
+
+
+
+  <style>
+    .code-collapse {
+      position: relative;
+      margin: 1rem 0;
+      border-radius: 4px;
+    }
+    .code-collapse-content {
+      position: relative;
+      transition: max-height .28s ease;
+    }
+    .code-collapse.is-collapsed .code-collapse-content {
+      max-height: var(--code-collapse-height);
+      overflow: hidden;
+    }
+    .code-collapse.is-collapsed .code-collapse-content::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 3rem;
+      pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--highlight-bg-color));
+    }
+    .code-collapse > .code-collapse-content > figure.highlight,
+    .code-collapse > .code-collapse-content > .code-wrapper,
+    .code-collapse > .code-collapse-content > pre {
+      margin: 0;
+    }
+    .code-collapse-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: .35rem;
+      width: 100%;
+      min-height: 2.25rem;
+      padding: .35rem .75rem;
+      border: 0;
+      border-top: 1px solid rgba(127, 127, 127, .22);
+      border-radius: 0 0 4px 4px;
+      color: var(--sec-text-color);
+      background: var(--highlight-bg-color);
+      font-size: .875rem;
+      cursor: pointer;
+      transition: color .2s ease, background-color .2s ease;
+    }
+    .code-collapse-toggle:hover,
+    .code-collapse-toggle:focus-visible {
+      color: var(--link-hover-color);
+      background-color: rgba(127, 127, 127, .12);
+      outline: none;
+    }
+    .code-collapse-toggle-icon {
+      display: inline-block;
+      transition: transform .28s ease;
+    }
+    .code-collapse.is-expanded .code-collapse-toggle-icon {
+      transform: rotate(180deg);
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .code-collapse-content,
+      .code-collapse-toggle-icon {
+        transition: none;
+      }
+    }
+  </style>
+
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/MyBlog/">
+      <strong>云端FFF的博客</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/MyBlog/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('/MyBlog/img/default.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-19 17:32" pubdate>
+          2026年9月19日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          22k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          181 分钟
+        
+      </span>
+    
+
+    
+    
+      
+        <span id="busuanzi_container_page_pv" style="display: none">
+          <i class="iconfont icon-eye" aria-hidden="true"></i>
+          <span id="busuanzi_value_page_pv"></span> 次阅读
+        </span>
+        
+
+      
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <blockquote>
+<p>本文初稿使用 <a target="_blank" rel="noopener" href="https://github.com/wxc971231/PaperReading-skill">PaperReading-skill</a> 生成。给定论文标题、链接、arXiv/OpenReview 页面、DOI 或本地 PDF，让 Codex 自动完成论文检索、PDF 下载、图表抽取、代码仓库分析，并生成一份适合 Typora 阅读和后续整理的中文论文解读 Markdown 和 PDF，欢迎试用！</p>
+</blockquote>
+<ul>
+<li>文章链接：<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2510.18428v4">AlphaOPT: Formulating Optimization Programs with Self-Improving LLM Experience Library</a></li>
+<li>作者：Minwei Kong、Ao Qu（共同一作），Xiaotong Guo、Wenbin Ouyang、Chonghe Jiang、Han Zheng、Yining Ma、Dingyi Zhuang、Yuhan Tang、Junyi Li、Shenhao Wang、Haris Koutsopoulos、Hai Wang、Cathy Wu、Jinhua Zhao</li>
+<li>机构：Singapore-MIT Alliance for Research and Technology（SMART）、MIT、University of Florida、Northeastern University、Singapore Management University；</li>
+<li>代码：<a target="_blank" rel="noopener" href="https://github.com/Minw913/AlphaOPT">Minw913/AlphaOPT</a></li>
+<li>项目页：未找到独立项目页。</li>
+<li>OpenReview：<a target="_blank" rel="noopener" href="https://openreview.net/forum?id=aWzHdUUaT8">ICLR 2026 投稿记录</a></li>
+<li>发表：KDD 2026</li>
+<li>领域：LLM-OR</li>
+<li>一句话总结：针对 LLM-OR 问题建模任务，AlphaOPT 让 LLM <strong>从建模失败中总结经验</strong>，先在原问题上验证经验能否帮助纠错，再根据它在其他问题上的使用效果修正适用条件，并将这些经验存入可检索的经验库，帮助模型在不重新训练的情况下更准确地把自然语言问题转化为优化程序。</li>
+</ul>
+<hr />
+<ul>
+<li>摘要：优化建模是各行业关键决策制定的基础，但其自动化实施仍具挑战性：自然语言问题描述必须转化为精确的数学形式化表达和可执行的求解器代码。现有基于 LLM 的方法通常依赖脆弱的提示或成本高昂的重新训练，两者的泛化能力都有限。近期研究表明，大模型可以通过复用经验获得改进，<strong>但如何在结构约束严格的场景下系统地获取、精炼和复用这些经验</strong>仍不清楚。我们提出 AlphaOPT，一个能够让 LLM 从有限监督中学习优化建模知识的自我改进经验库，包括在没有标准程序、标注推理轨迹或参数更新的情况下，仅利用答案反馈进行学习。AlphaOPT 通过两个阶段持续循环运行：<strong>Library Learning 阶段从失败尝试中提取经求解器验证的结构化经验；Library Evolution 阶段根据跨任务聚合的证据，精炼已存经验的适用性</strong>。这种设计使模型能够积累可复用的建模原则，改善跨问题实例的迁移，并使经验库的增长随时间保持有界。在多个优化基准上的评估表明，随着更多训练数据可用，AlphaOPT 持续改善表现（训练样本从 100 条增加到 300 条时，准确率从 65% 提高到 72%），并在两个分布外数据集上分别超过最强基线 9.1% 和 8.2%。这些结果表明，<strong>以求解器反馈为依据的结构化经验学习</strong>，为需要精确形式化表达与执行的复杂推理任务提供了重新训练之外的一种实用选择。</li>
+</ul>
+<h1 id="1-背景与动机"><a class="markdownIt-Anchor" href="#1-背景与动机"></a> 1. 背景与动机</h1>
+<h2 id="11-研究背景"><a class="markdownIt-Anchor" href="#11-研究背景"></a> 1.1 研究背景</h2>
+<ul>
+<li>本文研究<strong>优化问题</strong>的\自动建模与编程，以减轻对人类专家的严重依赖。具体而言，这类问题要求<strong>输入一段自然语言描述的问题</strong>（如配送货、生产规划等问题），要求模型或系统完成<strong>运筹学建模</strong>，并<strong>生成问题求解代码</strong>，中间常需要显式写出数学公式</li>
+<li>针对该任务，当前主要存在基于提示和基于微调的两类方法：
+<ol>
+<li><strong>基于提示的建模prompt-based modeling</strong>：通过为 GPT-4o 等大规模预训练 LLM 精心设计建模 Prompt 来工作，相关方法包括 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/156361583">OptiTree</a>、<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157328214">PaMOP</a>、<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/158264442">OptiMUS</a> 等。这类方法的<strong>重点在于通过引入树、图、多智能体等设计，将 “复杂问题描述上下文 -&gt; 严格式要求代码” 的端到端生成过程拆分为多个子过程</strong>，从而降低各环节难度，并使各环节的 prompt 更具针对性和指向性
+<blockquote>
+<p>这类方法的优势是不改模型参数，工程上容易迭代；弱点是很依赖基础模型本身的优化建模知识，复杂长题中容易漏约束或变量类型，且对细微的措辞变化和领域偏移敏感</p>
+</blockquote>
+</li>
+<li><strong>基于微调的建模fine-tuned LLM modeling agents</strong>：通过构造大规模运筹学及建模知识对 LLM 进行微调，形成专用的建模语言模型，如 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141610882">ORLM</a>、<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157399452">Step-Opt</a> 等。这类方法的<strong>重点在于设计数据构方法和错误过滤方法</strong>，实现多样、正确、难度可控的高质量数据集。此外，从 2025 年开始也逐步出现了基于 RL post-training 的方法，如 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/157909440">SIRL</a> 将 OR 建模求解视作 RLVR 任务解决、<a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/158356988">LLMOPT</a>  使用在 sft 后使用 KTO 后训练减弱模型幻觉等
+<blockquote>
+<p>通过进行针对性训练，基于微调的方法往往可以用更小参数量的模型达成和通用大模型相似的性能，但问题在于真实高质量优化建模样本少，人工标注贵，简单数据又无法覆盖长上下文、复杂约束和跨领域表达，且当前学术界中的大多数数据集仅提供解决方案，而非指导建模决策的中间推理过程，这限制了微调方法的泛化能力</p>
+</blockquote>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="12-动机"><a class="markdownIt-Anchor" href="#12-动机"></a> 1.2 动机</h2>
+<ul>
+<li>作者注意到：在信息检索和网页浏览等任务中，大型模型可通过复用经验（即存储反思记录、推理依据或代码编辑，并将其应用于新任务）提升性能。作者将优化建模与通用经验学习两条线连接起来
+<table>
+<thead>
+<tr>
+<th>路线</th>
+<th>典型工作</th>
+<th>流程</th>
+<th>AlphaOPT 关注的不足</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>提示与智能体编排</td>
+<td>OptiMUS、ORThought、Chain-of-Experts</td>
+<td>通过分步推理、角色分工和工具反馈生成模型</td>
+<td>固定流程本身不会自动积累新的适用规则</td>
+</tr>
+<tr>
+<td>领域后训练</td>
+<td>ORLM、LLMOPT</td>
+<td>把建模数据中的模式学入模型参数</td>
+<td>需要训练与标注，新增知识不易直接检查和修改</td>
+</tr>
+<tr>
+<td>结构化知识检索</td>
+<td>CIR、LEAN-LLM-OPT、OptiTree</td>
+<td>用领域模板、案例或中间表示辅助当前任务</td>
+<td>还需要解释知识如何从错误中获得、如何修正适用边界</td>
+</tr>
+<tr>
+<td>反思与经验复用</td>
+<td>Reflexion、ExpeL</td>
+<td>保存失败后的反思，从轨迹中提炼可迁移经验</td>
+<td>经验多为 “检查变量类型”、“考察边界情况” 等高层提醒，<strong>缺少具体结构、触发条件和可执行例子</strong></td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>把 <a target="_blank" rel="noopener" href="https://blog.csdn.net/wxc971231/article/details/141812277">Reflexion</a> 等通用经验学习方法直接平移到 LLM-OR 任务上存在三方面困难
+<ol>
+<li><strong>经验适用性差</strong>：经验大多以自由格式的文本或代码形式存在，并依赖基于 embedding 的相似性索引或粗略的 meta data 来索引，缺乏明确且可验证的前置条件（如适用场合、不适用场合、需满足的前提等），这可能在分布偏移时增加经验索引失效风险，并误导建模方向</li>
+<li><strong>验证机制不完善</strong>：模型生成的经验缺乏验证机制，或验证范围仅限于任务级结果（如任务达成），不能保证底层知识在结构上是有效或可迁移的</li>
+<li><strong>经验组织低效</strong>：经验往往被组织成一个扁平的项目列表，而运筹学则涉及不同建模阶段和问题类型中多样化的见解，因此本质上需要对所获取的知识进行更高效的组织</li>
+</ol>
+</li>
+<li><strong>规则内容有用，并不意味着它对所有看起来类似的问题都适用</strong>，下图给出一个案例：模型曾经漏写了 “卡车必须回仓库” 的约束，于是学到一条纠错经验；后来又发现，并非所有运输问题都要求回仓库，所以要给这条经验加上适用条件
+<blockquote>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_001.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 95%;">
+</div>
+<ol>
+<li>左侧在一个配送任务中发现错误：任务要求卡车给多个客户配送，并求最短总行驶距离，LLM 生成的代码只约束卡车从仓库出发，却没有约束它回到仓库，因此和参考答案不匹配</li>
+<li>中间把具体错误提炼成可复用经验：LLM 整理得到错误经验 <em>“如果任务要求车辆从仓库出发并返回仓库，建模时就不能只约束出发，还要显式约束返回”</em> 。AlphaOPT 使用分类树组织不同粒度建模知识，这个教训放入 “领域建模 → 路径规划 → 流量守恒” 的分类下，并保存：
+<ul>
+<li>适用条件：什么问题需要这条经验。</li>
+<li>解释：为什么需要补充这些约束。</li>
+<li>示例：错误代码和修改后的代码。</li>
+</ul>
+</li>
+<li>右边用其他任务检查这条经验是否用得合适：这里给了两个例子，第二种情况（允许车辆在客户处过夜，路线跨越多天）不能直接照搬 “当日必须回仓库” 的约束，机械套用经验会添加题目没有要求的限制，排除本来合法的路线。因此经验的适用条件被修正为：
+<em>当任务明确要求闭合路线、返回同一仓库时，检查并补全相应约束；对于开放路线或允许跨日停留的任务，先确认其终点和返回要求。</em></li>
+</ol>
+</blockquote>
+</li>
+</ul>
+<h1 id="2-本文方法"><a class="markdownIt-Anchor" href="#2-本文方法"></a> 2. 本文方法</h1>
+<div align="center">
+    <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_002.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 98%;">
+</div>
+<ul>
+<li>从头训练时，AlphaOPT 在训练集上进行<strong>指定轮数</strong>的迭代，无早停设计
+<ul>
+<li><strong>第 1 轮只进行经验学习（左侧框黑线）</strong>：逐一求解训练任务，从失败与修正中提取经验，建立初始经验库及分类树</li>
+<li><strong>从第 2 轮开始，先诊断（左侧框红线），再精炼（右侧框）</strong>：使用已有经验库重新求解任务，记录经验误用、漏检索等证据，必要时补充新经验；本轮诊断阶段全部完成后，再按经验汇总关联任务证据，统一进入精炼阶段，更新经验条件</li>
+</ul>
+</li>
+</ul>
+<h2 id="21-经验的表示-组织与索引"><a class="markdownIt-Anchor" href="#21-经验的表示-组织与索引"></a> 2.1 经验的表示、组织与索引</h2>
+<h3 id="211-经验表示"><a class="markdownIt-Anchor" href="#211-经验表示"></a> 2.1.1 经验表示</h3>
+<ul>
+<li>
+<p>作者将经验定义为结构化的四元组形式</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>I</mi><mi>i</mi></msub><mo>=</mo><mo stretchy="false">(</mo><msub><mi>τ</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi>c</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi>e</mi><mi>i</mi></msub><mo separator="true">,</mo><msub><mi>x</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">I_i=(\tau_i,c_i,e_i,x_i).
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.07847em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></p>
+<ul>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>τ</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">\tau_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.1132em;">τ</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.1132em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ：分类（Taxonomy），用于分类和粗检索；</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">c_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">c</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> ：条件（condition），描述前提、触发信号和排除条件；</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>e</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">e_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">e</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：解释（explanation），解释正确原则、常见错误及原因；</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>x</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">x_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.58056em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>：示例（example） ，用数学表达或代码对照错误与正确写法。</li>
+</ul>
+</li>
+<li>
+<p><strong>Condition 决定是否调用，Explanation 和 Example 决定如何使用</strong>。</p>
+<blockquote>
+<ul>
+<li>
+<p>例如要求<strong>一个仓库只有启用后才能发货，每天最多发 100 件。</strong> 用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi><mo>∈</mo><mo stretchy="false">{</mo><mn>0</mn><mo separator="true">,</mo><mn>1</mn><mo stretchy="false">}</mo></mrow><annotation encoding="application/x-tex">y\in\{0,1\}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7335400000000001em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∈</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">{</span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord">1</span><span class="mclose">}</span></span></span></span> 表示是否启用仓库，用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>≥</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">f\ge0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span> 表示当天发货量。如果模型只写 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>≤</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">f\le100</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">0</span></span></span></span>，就可能允许导致未启用仓库发货，正确写法应为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>≤</mo><mi>f</mi><mo>≤</mo><mn>100</mn><mi>y</mi><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">0\le f\le100y.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.78041em;vertical-align:-0.13597em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8388800000000001em;vertical-align:-0.19444em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">0</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mord">.</span></span></span></span></p>
+</li>
+<li>
+<p>这次纠错可以整理为一条经验 &quot;业务量应当与启用状态关联起来&quot;，对应的四元组为：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>这个例子中保存的内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>分类</td>
+<td>通用建模 → 约束建模 → 启用状态与业务量的关联约束</td>
+</tr>
+<tr>
+<td>条件</td>
+<td>题目明确要求 “只有启用后才能开展业务”，且业务量有已知的有效上界</td>
+</tr>
+<tr>
+<td>解释</td>
+<td>只限制业务量上限还不够，必须把业务量与启用状态关联起来，避免未启用时仍有业务量</td>
+</tr>
+<tr>
+<td>示例</td>
+<td>错误：只写 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>≤</mo><mn>100</mn></mrow><annotation encoding="application/x-tex">f\le100</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">0</span></span></span></span>；修正：结合 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>≥</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">f\ge0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≥</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">0</span></span></span></span> 和二元变量 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>y</mi></mrow><annotation encoding="application/x-tex">y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span>，写成 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>≤</mo><mn>100</mn><mi>y</mi></mrow><annotation encoding="application/x-tex">f\le100y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8888799999999999em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8388800000000001em;vertical-align:-0.19444em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">0</span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span></td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="212-经验组织"><a class="markdownIt-Anchor" href="#212-经验组织"></a> 2.1.2 经验组织</h3>
+<ul>
+<li>
+<p>AlphaOPT 用<strong>可扩展的分类树</strong>组织经验，其使用 <strong>“预设框架＋模型动态扩展”</strong> 设计，包含预定义的三条主线和三层结构，具体标签可随经验积累而扩展。如下表所示</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">结构</th>
+<th style="text-align:left">是否固定</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">三条主线：Domain Modeling（领域建模）、General Formulation（通用数学建模）、Code Implementation（代码实现）</td>
+<td style="text-align:left">预先设定</td>
+</tr>
+<tr>
+<td style="text-align:left">每条主线下采用 Level-1 → Level-2 两级标签</td>
+<td style="text-align:left">预先设定</td>
+</tr>
+<tr>
+<td style="text-align:left">具体标签的名称和数量</td>
+<td style="text-align:left">从少量初始标签出发，LLM 按需扩展</td>
+</tr>
+<tr>
+<td style="text-align:left">标签的适用条件（condition）</td>
+<td style="text-align:left">由 LLM 编写</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>AlphaOPT 在训练任务上逐步积累经验后形成了 14 个一级标签和 38 个二级标签</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_003.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 75%;">
+  </div>
+</li>
+<li>
+<p><strong>分类树是整个库的公共目录，四元组的 taxonomy 表示一条经验在目录中的分类路径</strong>。构造新经验时，prompt 给出任务和纠错材料 + 当前阶段的分类树分支</p>
+<ul>
+<li>数学建模阶段：传入 <code>Domain Modeling</code> 和 <code>General Formulation</code> 两条主线下的完整分类字典</li>
+<li>代码生成阶段：传入 <code>Code Implementation</code> 下的完整分类字典</li>
+</ul>
+</li>
+<li>
+<p>生成经验 taxonomy  时要求选择一个主线、一个 Level-1 和一个 Level-2 标签。输出时<strong>允许扩展新增 Level-1 和 Level-2 标签，但不能加层数或主线</strong>。有以下三种情况</p>
+<table>
+<thead>
+<tr>
+<th>情况</th>
+<th>模型输出与程序处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>已有完整路径适用</td>
+<td>复用 Level-1 和 Level-2；生成格式中的叶节点值为 <code>null</code></td>
+</tr>
+<tr>
+<td>一级类别合适，但缺少具体标签</td>
+<td>在已有 Level-1 下新增 Level-2 叶节点</td>
+</tr>
+<tr>
+<td>已有一级类别都不合适</td>
+<td>新增 Level-1，并在其下创建 Level-2</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-comment">// 选择已存在的主线 Domain Modeling，level-1 标签 Routing 和 level-2 标签 Flow Conservation</span><br><span class="hljs-comment">// 此时 level-2 只需给出选型 key 即可</span><br><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;taxonomy&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;Domain Modeling&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;Routing&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>         <span class="hljs-attr">&quot;Flow Conservation&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">null</span></span><br>      <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br>  <br><span class="hljs-comment">// 选择已存在的主线 Domain Modeling 和 level-1 标签 Routing</span><br><span class="hljs-comment">// 生成新的 level -2 标签 Flow Conservation 时需携带 definition 和 condition 构成的说明</span><br><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;taxonomy&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;Domain Modeling&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;Routing&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>         <span class="hljs-attr">&quot;Flow Conservation&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>              <span class="hljs-attr">&quot;definition&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;描述网络节点流入与流出之间的平衡关系。&quot;</span><span class="hljs-punctuation">,</span><br>              <span class="hljs-attr">&quot;condition&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;问题涉及需要满足节点流量平衡的网络流或路径建模。&quot;</span><br>          <span class="hljs-punctuation">&#125;</span><br>      <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br><br><span class="hljs-comment">// 选择已存在的主线 Domain Modeling</span><br><span class="hljs-comment">// 生成新的 level-1 标签 Routing 时，必须同时生成至少一个 level-2 标签及其说明</span><br><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;taxonomy&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;Domain Modeling&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;Routing&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>         <span class="hljs-attr">&quot;Flow Conservation&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>              <span class="hljs-attr">&quot;definition&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;描述网络节点流入与流出之间的平衡关系。&quot;</span><span class="hljs-punctuation">,</span><br>              <span class="hljs-attr">&quot;condition&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;问题涉及需要满足节点流量平衡的网络流或路径建模。&quot;</span><br>          <span class="hljs-punctuation">&#125;</span><br>      <span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><strong>注意标签条件与经验条件作用不同</strong>：新标签的 <code>condition</code> 随分类信息保存在公共分类字典中，用于描述该类知识何时相关；四元组中独立的 <code>condition</code> 属于具体经验，用于后续逐条检查。两者都叫 condition，但不能混为同一个字段</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="213-经验检索"><a class="markdownIt-Anchor" href="#213-经验检索"></a> 2.1.3 经验检索</h3>
+<ul>
+<li>求解新任务时，AlphaOPT 采用 “<strong>标签粗筛 → 条件精筛</strong>” 的方法管理和调用经验：
+<ol>
+<li>
+<p><strong>标签粗筛（Quick Label Matching）</strong>：面对新任务，prompt 给出当前阶段（建模/编码）的分类树分支＋当前任务描述，LLM 给出<strong>一组</strong>相关分类路径，锁定若干 level-2 类别。Prompt 示意（<code>PROMPT_QUICK_MATCH_MODEL</code> / <code>PROMPT_QUICK_MATCH_CODE</code>）如下：</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为当前任务选择相关知识类别。<br>        <br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br>        <br>【输入 2：当前阶段的分类字典】<br>数学建模阶段：&#123;domain_taxo&#125; 和 &#123;formu_taxo&#125;，分别对应<br>Domain Modeling、General Formulation 下的全部现有类别。<br>代码阶段：&#123;taxo&#125;，对应 Code Implementation 下的全部现有类别。<br>字典包含一级、二级标签以及已有的 definition 和 condition。<br>        <br>【输入 3：当前数学模型，仅代码阶段提供】<br>&#123;mathematical_model&#125;<br>        <br>【任务】<br>1. 阅读题目，识别问题领域、建模技术和可能出现的建模错误。<br>    代码阶段同时阅读数学模型，识别需要的实现知识。<br>2. 检查分类字典，选择可能适用的一级标签及其二级标签。<br>3. 允许选择多条分类路径；所有标签必须与字典中的名称完全一致。<br>    不创建新标签，也不直接选择具体经验 ID。<br>        <br>【输出】<br>只返回 JSON 对象，结构为：<br>&#123;主线名称: &#123;一级标签名称: [二级标签名称, ...]&#125;&#125;<br>数学建模输出使用两条建模主线，代码输出使用 Code Implementation。<br>没有适用类别时返回 &#123;&#125;，不附加解释。<br></code></pre></td></tr></table></figure>
+<p>模型输出路径后，由程序匹配候选经验</p>
+</li>
+<li>
+<p><strong>条件精筛（Full Applicability Check）</strong>：LLM 逐条检查候选经验的 condition 是否在当前任务中成立，把通过筛选的经验交给模型，辅助数学建模或代码生成。这里只靠 LLM 判断适用性，不适用 embedding 向量近邻检索。Prompt 示意（<code>PROMPT_FULL_CHECK_MODEL</code> / <code>PROMPT_FULL_CHECK_CODE</code>）如下：</p>
+ <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，审查初步选出的经验是否真正适用。<br>    <br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br>    <br>【输入 2：候选经验集合】<br>&#123;candidate_insights&#125;<br>每项包含 insight_id、taxonomy 和 condition；condition 描述<br>适用情形及不适用情形。这里不提供完整分类树。<br>    <br>【输入 3：当前数学模型，仅代码阶段提供】<br>&#123;mathematical_model&#125;<br>    <br>【任务】<br>1. 理解任务涉及的领域和模型结构。<br>2. 逐条检查经验是否直接适用于当前任务，特别检查排除条件；<br>    命中不适用情形的经验不得保留。<br>3. 代码阶段重点判断是否有助于避免该数学模型的实现错误。<br>4. 若经验内容重叠，只保留最相关的一条或几条。<br>    <br>【输出】<br>只返回 JSON 数组，例如：<br>[&#123;&quot;insight_id&quot;: 1, &quot;reason&quot;: &quot;说明适用依据&quot;&#125;]<br>ID 必须来自候选集合，不编造 ID；无适用经验时返回 []。<br></code></pre></td></tr></table></figure>
+<p>精筛不再输入完整分类树，只读取候选经验各自的分类路径和条件。</p>
+</li>
+</ol>
+</li>
+</ul>
+<h2 id="22-经验学习library-learning"><a class="markdownIt-Anchor" href="#22-经验学习library-learning"></a> 2.2 经验学习（Library Learning）</h2>
+<ul>
+<li>经验学习对应下图中黑色线，用于初始建库：先尝试求解，再从失败的修正中提取结构化经验，经过验证与合并后供其他任务使用  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_004.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+      </div>
+</li>
+</ul>
+<h3 id="221-尝试求解并记录失败"><a class="markdownIt-Anchor" href="#221-尝试求解并记录失败"></a> 2.2.1 尝试求解并记录失败</h3>
+<ul>
+<li>给定优化任务，LLM 从当前经验库 RAG 生成数学模型，再生成求解代码并执行，将目标值与参考答案比较；仅对求解错误任务如下进行经验提取。数学模型与程序分别通过一次生成调用完成，prompt 示意如下：
+<ul>
+<li>数学模型生成（PROMPT_GENERATE_FORMU）  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为自然语言任务构造数学模型。<br>    <br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br>    <br>【输入 2：用于建模的经验】<br>&#123;insights&#125;<br>经验可能为空。阅读经验中的指导，判断是否适用以及如何落实。<br>    <br>【任务】<br>1. 定义 Parameters：固定数据、符号、单位、集合和索引。<br>2. 定义 Variables：决策变量的含义、符号及数学类型。<br>3. 定义 Objective：用决策变量写出与题意一致的优化目标。<br>4. 定义 Constraints：将题目要求转成等式或不等式，编号为 C1、C2 等，<br>    并说明采用的逻辑隐含约束。<br>5. 在实际使用经验的位置简要标注经验 ID 及作用。<br>    没有适用经验时正常建模，不编造经验或 ID。<br>6. 保持目标单位一致，遵守题目明确给出的舍入规则。<br>    <br>【输出】<br>只返回一个代码框中的数学模型文本，使用 LaTeX 表达公式，<br>依次包含 Parameters、Variables、Objective、Constraints 四部分。<br>不在代码框外追加解释。<br></code></pre></td></tr></table></figure>
+</li>
+<li>生成前经验适配（PROMPT_INS_REWRITE，可选）：    若启用 <code>abl_params.rewrite</code> 且召回经验非空，数学建模前还会调用任务化改写提示（<code>PROMPT_INS_REWRITE</code>）：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，将通用经验转为当前任务的建模指导。<br>    <br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br>    <br>【输入 2：已召回经验】<br>&#123;retrieved_insights&#125;<br>每项包括 insight_id、condition、explanation 和 example。<br>    <br>【任务】<br>对每条经验判断其与当前任务的关系：<br>1. 结构和场景直接匹配：直接应用。<br>2. 原理相关但情境不同：改写为当前场景下的具体指导。<br>3. 无法直接使用但包含可迁移原则：抽取高层建模策略。<br>4. 缺少数学或结构关联：标为不使用。<br>    保留原经验 ID，不创建新的经验身份。<br>    <br>【输出】<br>返回 JSON 数组，每项包含：<br>insight_id：原经验 ID；decision：应用方式或不使用标记；<br>explanation：面向当前任务的具体指导；example：相应的正确示例。<br>这里转述 decision 的语义，原模板的拼写和空值不一致见正文说明。<br></code></pre></td></tr></table></figure>
+</li>
+<li>程序生成（PROMPT_GENERATE_PROGRAM）：程序是否可运行、目标值是否与参考答案一致，由外部执行与比较判定。  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是熟悉 Gurobi 的运筹优化专家，将数学模型转换为程序。<br>    <br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br>    <br>【输入 2：待实现的数学模型】<br>&#123;mathematical_model&#125;<br>    <br>【输入 3：编码经验】<br>&#123;insights&#125;<br>经验包含指导实现的内容；集合可以为空。<br>    <br>【任务】<br>1. 检查各经验是否适用，以及如何用于当前代码。<br>2. 编写完整、可执行的 gurobipy 程序，严格遵守给定数学模型。<br>3. 在实际使用经验的代码位置简要标注经验 ID 和作用。<br>4. 保留可供外部读取的 model 对象；让 model.optimize() 在顶层执行，<br>    或在封装函数时返回 model；不使用 __main__ 条件入口。<br>5. 不在 model.optimize() 后添加或修改结果处理代码；<br>    保持目标单位与题目要求一致。<br><br>【输出】<br>只返回一个 Python 代码框，包含导入、模型构建和 model.optimize()。<br>不在代码框外添加自然语言解释，不编造经验 ID。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="222-出现执行错误先调试再提取编码经验"><a class="markdownIt-Anchor" href="#222-出现执行错误先调试再提取编码经验"></a> 2.2.2 出现执行错误，先调试再提取编码经验</h3>
+<ul>
+<li>输出的求解程序出现 <code>run_error</code> 时，调用 <code>debug_program()</code>；修复后达到 <code>runnable</code> 即可进入编码经验提取，无法修复则跳过此次提取。<strong>这一步的目的是提取编码经验，因此不要求目标值正确</strong>。经验提取模型结合当前数学模型，比较块内的错误与修正，归纳实现教训。这里调试与提取是两次调用，prompt 示意如下：
+<ul>
+<li>执行错误调试 <code>PROMPT_PROGRAM_DIAG</code>  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，修复导致 Gurobi 程序无法执行的错误。<br>    <br>【输入 1：失败程序】<br>&#123;failed_program&#125;<br>    <br>【输入 2：执行错误信息】<br>&#123;feedback&#125;<br>    <br>【任务】<br>1. 根据错误信息定位程序中导致执行失败的位置。<br>2. 对每个问题写简短说明，把原错误代码注释掉，在后面给出修正。<br>3. 每个修改点必须按以下格式保留，供后续经验提取读取：<br>   #===<br>   # 错误原因<br>   # 原错误代码<br>   修正代码<br>   #===<br>4. 保持其余代码不变，不修改 model.optimize() 后的代码。<br>5. 保留外部可读取的 model 对象，不使用 __main__ 条件入口。<br>    <br>【输出】<br>只返回一个 Python 代码框中的完整修正程序。<br>此调用不输出经验四元组；修正是否可运行由外部执行检查。<br></code></pre></td></tr></table></figure>
+</li>
+<li>编码经验提取提示 <code>PROMPT_INS_FROM_PROGRAM</code>  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，从代码修正中总结避免编码错误的经验。<br>    <br>【输入 1：当前数学模型】<br>&#123;candidate_formulation&#125;<br>    <br>【输入 2：修正后的程序】<br>&#123;corrected_program&#125;<br>其中每个修正位置按以下格式保留修改前后的对照：<br>#===<br># 错误原因简述<br># 原错误代码（注释掉）<br>修正后的代码<br>#===<br>    <br>【输入 3：当前代码实现分类字典】<br>&#123;code_taxo&#125;<br>    <br>【任务】<br>从每个 #=== 修正块中提取一条或多条独立、简洁的编码经验。<br>每条经验包含四个字段：<br>1. taxonomy：主线必须为 Code Implementation；选择一个 Level-1<br>    和其下一个 Level-2。已有叶标签的值为 null；新叶标签必须<br>    提供 definition 和 condition；新增 Level-1 必须带有 Level-2。<br>2. condition：根据数学模型描述何时适用，先概括场景，再举当前<br>    模型中的例子；只描述触发条件，不在这里给出解决方法。<br>3. explanation：解释正确做法、常见错误及原因，并适当归纳。<br>4. example：用 # Wrong 和 # Correct 对照错误与正确写法。<br>    <br>【输出】<br>只返回经验对象组成的 JSON 数组，不附加其他文字。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="223-若需提取建模经验先获得参考程序"><a class="markdownIt-Anchor" href="#223-若需提取建模经验先获得参考程序"></a> 2.2.3 若需提取建模经验，先获得参考程序</h3>
+<ul>
+<li>若编码问题修正后仍不能解得标签最优值，进一步从错误中提建模经验。<code>参考程序</code>是可正确运行并得到标签最优值的代码，若训练集已提供 <code>task.correct_program</code> 就直接使用；否则如下进行 Self-exploration 自探索  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，依据题目和失败反馈修正求解程序。<br><br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br><br>【输入 2：历史失败尝试及其执行反馈】<br>&#123;failed_attempts&#125;<br><br>【输入 3：参考最优目标值】<br>&#123;ground_truth&#125;<br><br>【任务】<br>1. 阅读原题和反馈，分析失败程序中的问题。<br>2. 修正程序，使其可运行并求得正确目标值。<br>3. 始终忠实于题目及其数据，不得编造数据、添加未说明的假设，<br>    或为了匹配参考目标值破坏正确的数学建模。<br>4. 若参考值疑似错误或与题意冲突，应保留正确建模，不强行匹配。<br>5. 保留可由外部读取的 model 对象和 model.optimize() 调用，<br>    不在 optimize() 后追加结果处理代码，不使用 __main__ 条件入口。<br><br>【输出】<br>只返回一个 Python 代码框中的完整修正程序，不添加框外解释。<br>此提示不归纳经验；生成程序还需由外部执行并与参考值比较。<br></code></pre></td></tr></table></figure>
+每次生成后由程序执行并检查答案，成功才可成为本次自探索的参考程序。若在预算内自探索失败则跳过这次建模经验提取</li>
+</ul>
+<h3 id="224-对照失败数学模型与参考程序提取建模经验"><a class="markdownIt-Anchor" href="#224-对照失败数学模型与参考程序提取建模经验"></a> 2.2.4 对照失败数学模型与参考程序，提取建模经验</h3>
+<ul>
+<li>经验提取模型结合原题，比较失败的数学模型与参考程序体现的数学关系，识别遗漏或误写的约束、变量或目标，并归纳可复用的修正原则。<strong>它不要求另有一份 “修正数学模型” 文本，程序本身提供对照依据</strong>。Prompt 示例如下  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，从失败模型的纠正中总结可迁移经验。<br><br>【输入 1：原题】<br>&#123;problem_description&#125;<br><br>【输入 2：失败的数学模型】<br>&#123;failed_formulation&#125;<br><br>【输入 3：参考程序】<br>&#123;correct_program&#125;<br>用其中体现的数学关系作为对照，不要求另有修正模型文本。<br><br>【输入 4：当前建模分类字典】<br>&#123;domain_taxo&#125;：Domain Modeling 下的分类。<br>&#123;formulation_taxo&#125;：General Formulation 下的分类。<br><br>【任务】<br>先按题意对齐变量含义，比较失败模型与参考程序，识别建模错误。<br>从具体错误中提取一条或多条独立、简洁的经验，每条包含：<br>1. taxonomy：选择一条建模主线、一个 Level-1 和一个 Level-2。<br>    已有叶标签使用 null；新叶标签需有 definition 和 condition；<br>    新增 Level-1 时必须同时提供 Level-2 及其说明。<br>2. condition：先概括适用场景，再用当前问题举例；只写触发条件。<br>3. explanation：解释正确原则、常见错误及原因，从本题适当推广。<br>4. example：用 # Wrong 和 # Correct 对照错误与正确形式。<br><br>【输出】<br>只返回经验对象组成的 JSON 数组，不附加其他文字。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<h3 id="225-经验入库验证与合并"><a class="markdownIt-Anchor" href="#225-经验入库验证与合并"></a> 2.2.5 经验入库验证与合并</h3>
+<ul>
+<li>前文 2.2.2 节提取编码经验，2.2.4 节提取建模经验，两类经验都是从错误中提取的，都通过 <code>InsightExtractor.generate_insights()</code> 调用模型，提供相关主线下的当前分类字典，输出 taxonomy、condition、explanation、example 四元组
+<table>
+<thead>
+<tr>
+<th>经验类型</th>
+<th>提取入口</th>
+<th>主要对照材料</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>编码经验</td>
+<td>执行错误修复到可运行</td>
+<td>修正块中的原错误代码与修正代码，结合当前数学模型</td>
+</tr>
+<tr>
+<td>建模经验</td>
+<td>已有参考程序，或自探索成功获得参考程序</td>
+<td>失败数学模型与参考程序体现的数学模型，结合原题</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>提取的经验需要进行两步验证，检查经验质量
+<ol>
+<li><strong>执行验证：主动提供候选经验，检查它能否帮助源任务解对</strong>。复用前文 2.2.2 的建模和代码生成 prompt 模板，把刚刚合成的新编码经验、建模经验直接加入对应提示，再求解一次源任务 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，使用给定经验重新求解原任务。<br>    <br>【调用 1：PROMPT_GENERATE_FORMU】<br>输入 1：源任务描述 &#123;problem_description&#125;。<br>输入 2：此前相关建模经验＋新建模经验 &#123;insights&#125;。<br>任务：判断经验如何适用，生成参数、变量、目标和约束；<br>在落实经验的位置标注经验 ID，不编造经验。<br>输出：一个代码框中的完整数学模型。<br>    <br>【调用 2：PROMPT_GENERATE_PROGRAM】<br>输入 1：同一源任务描述 &#123;problem_description&#125;。<br>输入 2：刚生成的数学模型 &#123;mathematical_model&#125;。<br>输入 3：此前相关编码经验＋新编码经验 &#123;insights&#125;。<br>任务：忠实实现数学模型，使用适用的编码经验，保留 model 对象。<br>输出：一个 Python 代码框中的完整求解程序。<br>    <br>【调用后的程序检查，不属于 prompt】<br>执行代码，用 check_optimality() 检查运行状态、超时和目标值。<br>不以 LLM 自称“修复成功”作为通过依据。<br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>检索验证：将候选经验放入临时库，检查源任务能否找到它。</strong> 执行验证成功后，复用前文  2.1.3 节的粗筛和精筛调用，检查新经验是否出现在检索结果中，并区分分类路径未匹配与经验条件未通过。 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为源任务选择相关类别和适用经验。<br>    <br>【调用 1：PROMPT_QUICK_MATCH_MODEL / PROMPT_QUICK_MATCH_CODE】<br>输入：源任务描述、临时库中相关主线的分类字典；<br>代码阶段另提供数学模型。<br>任务：选择可能相关的已有一级、二级标签，不编造路径。<br>输出：&#123;主线: &#123;一级标签: [二级标签, ...]&#125;&#125;。<br>    <br>【中间程序操作】<br>按输出路径匹配候选经验，记录新经验是否在路径匹配阶段被找到。<br>    <br>【调用 2：PROMPT_FULL_CHECK_MODEL / PROMPT_FULL_CHECK_CODE】<br>输入：源任务描述、候选经验的 ID、taxonomy、condition；<br>代码阶段另提供数学模型。<br>任务：逐条检查适用与排除条件，保留确实适用的经验。<br>输出：含 insight_id、reason 的 JSON 数组。<br>    <br>【调用后的程序检查，不属于 prompt】<br>对比新经验 ID 与返回 ID，记录全部、部分或完全未检索到。<br>提示不要求模型为通过验证而强制选中新经验。<br></code></pre></td></tr></table></figure>
+</li>
+</ol>
+</li>
+<li><strong>若新生成的经验未通过验证，进行失败处理，重写检索信息，或重新提取候选经验</strong>。这里可能存在几种验证失败情况
+<ol>
+<li>未通过执行验证，说明仍存在编码错误或建模错误问题，重复以上 2.2.2 和 2.2.4 节再次提取经验并尝试验证，直到迭代次数达到预算上限</li>
+<li>通过执行验证但检索有遗漏，则根据 taxonomy 或 condition 的失败位置修改未召回的经验，并继续验证；若预算耗尽前出现过部分检索成功，保留记录到的最佳已验证子集，不必整组通过
+<ul>
+<li><strong>分类匹配失败：重写 taxonomy</strong>  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，修正经验的分类信息，使相关任务能找到它。<br>        <br>【输入 1：任务描述或数学模型】<br>&#123;problem_desc_or_math_model&#125;<br>建模经验使用问题描述，编码经验使用当前数学模型。<br>        <br>【输入 2：原经验】<br>&#123;modified_insight_str&#125;<br>        <br>【输入 3：当前分类字典】<br>&#123;taxonomy_dict&#125;<br>        <br>【任务】<br>优先使用现有分类，按需要选择一种修正方式：<br>1. 保留原路径，提出二级标签 definition、condition 的补充或修正。<br>2. 换用更合适的已有一级、二级标签，必要时补充标签说明。<br>3. 确实没有合适类别时，提出新二级标签，必要时新增一级标签。<br>    标签应可复用，不能只记住源任务。两条建模主线之间可以调整，<br>    但不允许将编码经验改到建模主线，或反向改动。<br>        <br>【输出】<br>只返回 &#123;&quot;taxonomy&quot;: 嵌套分类信息&#125;。<br>新叶标签携带 definition 和 condition；具体写回由程序控制。<br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>分类已匹配但条件未通过：重写 condition</strong>  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，改进经验的触发条件，避免相关任务漏检索。<br>        <br>【输入 1：任务描述或数学模型】<br>&#123;problem_desc_or_math_model&#125;<br>        <br>【输入 2：待修正经验】<br>&#123;modified_insight_str&#125;<br>        <br>【任务】<br>1. 理解经验的原则和需要匹配的任务特征。<br>2. 将 condition 写成有明确依据的触发条件，先概括一般情形，<br>    再用当前任务或模型中的具体特征举例。<br>3. 建模经验使用题意或领域特征；编码经验使用数学模型中的特征。<br>4. 使用 “This insight applies when ... For example, ...” 的结构。<br>5. 只说明何时适用，不把解题建议或具体修正写进 condition。<br>        <br>【输出】<br>只返回一个 JSON 对象：&#123;&quot;condition&quot;: &quot;改写后的条件&quot;&#125;。<br>该次调用不要求输出完整分类树，也不输出新的经验四元组。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><strong>为控制冗余，通过验证或成功修复经验优先考虑和现有经验合并</strong>。合并分为两层
+<table>
+<thead>
+<tr>
+<th style="text-align:left">方式</th>
+<th>比较对象</th>
+<th>使用时机</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>组内合并</strong><code>PROMPT_CONDUCT_MERGE</code></td>
+<td>一组新提取的经验彼此比较</td>
+<td>同一任务或同一批次产生多条新经验后</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>在线合并</strong>  <code>PROMPT_ONLINE_MERGE</code></td>
+<td>一条新经验与已有库中的同分类经验比较</td>
+<td>将新经验整合进已有库时</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>
+<p><strong>组内合并时，输入从一个或一批多个优化问题提取的一组经验，输出合并经验数组</strong>，无需合并时为 <code>[]</code>。相关 prompt <code>PROMPT_CONDUCT_MERGE</code> 示例如下：</p>
+  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，识别一组经验中的重复知识并提出合并方案。<br>    <br>【输入：待比较的经验集合】<br>&#123;candidate_insights&#125;<br>每条经验包含 insight_id、taxonomy、condition、explanation、example。<br>调用方提供当前任务或当前批次新提取的经验集合。<br>    <br>【任务】<br>1. 阅读每条经验的分类、条件、解释与示例，理解其建模原则和错误类型。<br>2. 找出原则或方法在逻辑上等价的经验；措辞或来源场景不同，<br>    不一定意味着知识不同。<br>3. 对可以合并的组，整合适用条件、统一解释、保留代表性示例；<br>    不合并针对本质不同错误的经验。<br>4. 若组内 taxonomy 完全一致，保留原分类；否则选择最适合<br>    合并结果的原有分类，保持所选分类的内容和格式。<br>5. 每个合并组必须包含至少两条输入经验。无需合并的单条经验<br>    不出现在输出中，由调用方保留；不得编造经验 ID。<br>    <br>【输出】<br>返回一个 JSON 数组，用 json 代码框包裹，不在框外解释。<br>没有任何合并组时返回 []；否则每个数组元素包含：<br>merged_ids：该组参与合并的输入经验 ID 列表；<br>reason：为什么合并可以减少重复；<br>taxonomy：合并后的分类；<br>condition：共享的适用条件，先概括场景再举例，不写解决建议；<br>explanation：统一的正确原则、常见错误及原因；<br>example：来自原经验的代表性错误／正确对照。<br><br>输出结构示意：<br>[&#123;&quot;merged_ids&quot;: [1, 2], &quot;reason&quot;: &quot;合并依据&quot;,<br>&quot;taxonomy&quot;: &#123;&quot;某主线&quot;: &#123;&quot;某一级标签&quot;: &#123;&quot;某二级标签&quot;: null&#125;&#125;&#125;,<br>&quot;condition&quot;: &quot;适用条件&quot;, &quot;explanation&quot;: &quot;统一解释&quot;,<br>&quot;example&quot;: &quot;代表性对照示例&quot;&#125;]<br></code></pre></td></tr></table></figure>
+<p>组内合并的经验可能来自一个或一批多个优化问题，合并后的经验需要重新在所有来源问题上进行<strong>执行验证</strong>，对于每一条合并后经验，只有在<strong>其所有相关源问题</strong>上都通过验证才保留</p>
+</li>
+<li>
+<p><strong>在线合并时，对 “组内验证通过的合并经验＋未被成功合并替代的原经验”，依次执行在线合并尝试并入经验库</strong>。具体地，提取经验库中具有相同分类路径 taxonomy 的经验集合，比较新旧经验的原则和错误类型；可合并时整合条件、解释和示例，避免丢失必要前提。相关 prompt 示例 <code>PROMPT_ONLINE_MERGE</code> 如下</p>
+  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，判断新经验与库中经验是否可合并。<br>    <br>【输入 1：新经验】<br>&#123;new_insight&#125;<br>    <br>【输入 2：候选已有经验】<br>&#123;existing_insights&#125;<br>各已有经验带 insight_id；新旧经验都有 taxonomy、condition、explanation 和 example。<br>    <br>【任务】<br>1. 比较经验针对的数学原则、方法和错误类型。<br>2. 即使措辞或场景不同，只要原理等价，也可提出合并。<br>3. 不合并本质不同的错误，不因文字相似就强行合并。<br>4. 合并时整合适用条件、统一解释，保留有代表性的示例；<br>    分类相同则保留，否则选最合适的分类。<br>    <br>【输出】<br>不合并时返回 &#123;&#125;；合并时返回 JSON 对象<br>&#123;&quot;merged_ids&quot;: [1, 2], &quot;reason&quot;: &quot;合并依据&quot;,<br>&quot;taxonomy&quot;: &#123;&quot;某主线&quot;: &#123;&quot;某一级标签&quot;: &#123;&quot;某二级标签&quot;: null&#125;&#125;&#125;,<br>&quot;condition&quot;: &quot;适用条件&quot;, &quot;explanation&quot;: &quot;统一解释&quot;,<br>&quot;example&quot;: &quot;代表性对照示例&quot;&#125;<br></code></pre></td></tr></table></figure>
+<p>在线合并后也需要对关联优化问题进行执行验证，每个经验生成/合并时都会记录其关联问题 <code>task_id</code>，因此可以反向索引验证范围</p>
+</li>
+</ul>
+</li>
+<li>最终，通过入库经验的有两种去向
+<ol>
+<li>合并成功且验证通过：用合并后的经验替换参与合并的已有经验。</li>
+<li>不合并，或合并验证失败：保留已有经验，新经验单独加入库。</li>
+</ol>
+</li>
+</ul>
+<h2 id="23-经验诊断library-diagnosis"><a class="markdownIt-Anchor" href="#23-经验诊断library-diagnosis"></a> 2.3 经验诊断（Library Diagnosis）</h2>
+<ul>
+<li>经验诊断对应下图红色线。从第 2 轮开始，使用当前经验库重新求解本轮所选训练任务，检查已有经验是否误用、是否漏检索；必要时补充新经验。<strong>诊断先调整本次求解使用的经验集合，记录经验与任务的关系，condition 的集中修改留给后续精炼。</strong>  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_005.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+      </div>
+</li>
+</ul>
+<h3 id="231-重新求解按失败类型进入诊断"><a class="markdownIt-Anchor" href="#231-重新求解按失败类型进入诊断"></a> 2.3.1 重新求解，按失败类型进入诊断</h3>
+<ul>
+<li>复用 2.2.1 的求解流程：检索建模经验 → 生成数学模型 → 检索编码经验 → 生成并执行程序。输入仍是当前任务和当前库，不直接把参考程序当作本次求解输出。生成 prompt 与 2.2.1 相同
+<table>
+<thead>
+<tr>
+<th>求解结果</th>
+<th>后续处理</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>目标值通过参考答案验证</td>
+<td>更新经验使用统计，跳过失败诊断，按 2.3.5 汇总关系与统计</td>
+</tr>
+<tr>
+<td><code>run_error</code></td>
+<td>按 2.3.1 诊断编码经验、调整集合并重新生成程序</td>
+</tr>
+<tr>
+<td>程序可运行但结果不正确</td>
+<td>进入 2.3.2 定位建模问题、检查已召回经验；未解决再进入 2.3.3 检查漏检索</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>对 <code>run_error</code>，编码经验诊断使用 <code>PROMPT_PROGRAM_INS_POS_NEG</code> 找出造成误导的编码经验：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，判断编码经验是否可能导致当前运行错误。<br><br>【输入 1：问题描述与数学模型】<br>&#123;problem_description&#125;<br>&#123;mathematical_model&#125;<br><br>【输入 2：失败程序】<br>&#123;failed_program&#125;<br><br>【输入 3：执行错误反馈】<br>&#123;feedback&#125;<br><br>【输入 4：已召回编码经验】<br>&#123;retrieved_insights&#125;<br><br>【任务】<br>1. 结合模型、代码和执行反馈，逐条检查经验是否适用。<br>2. positive：经验正确、适用，即使它不能独自修复全部错误。<br>3. negative：经验错误、不适用或具有误导性，遵循它可能导致运行失败。<br>4. 不遗漏给出的任何经验 ID。<br><br>【输出】<br>只返回 JSON 数组，每项含 insight_id 和 state（positive / negative）。<br>不直接改写程序，也不在该输出中更新经验 condition。<br></code></pre></td></tr></table></figure>
+</li>
+<li>找出当前任务上造成误导的编码经验后，保持当前数学模型，排除误导经验后重新生成代码并执行
+<ul>
+<li>程序解对了：结束该任务的失败诊断，记录经验—任务关系，供后续精炼使用。</li>
+<li>能运行，但答案仍错：继续 2.3.2 的建模诊断。</li>
+<li>仍然运行报错：进入代码调试，修复后尝试提取新的编码经验，并进行验证。</li>
+</ul>
+</li>
+</ul>
+<h3 id="232-定位建模问题检查已召回经验"><a class="markdownIt-Anchor" href="#232-定位建模问题检查已召回经验"></a> 2.3.2 定位建模问题，检查已召回经验</h3>
+<ul>
+<li><strong>先定位具体错误。</strong> 将问题描述、失败数学模型、反馈和 <code>task.correct_program</code> 交给诊断模型。参考程序可复用初始学习阶段已经得到的结果，不自动重跑 Self-exploration。对应 <code>PROMPT_DIAGNOSE_ISSUES</code>：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，定位失败数学模型中需要修正的问题。<br><br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br><br>【输入 2：失败数学模型】<br>&#123;failed_formulation&#125;<br><br>【输入 3：执行反馈】<br>&#123;feedback&#125;<br><br>【输入 4：已有参考程序】<br>&#123;correct_program&#125;<br><br>【任务】<br>1. 根据题意对齐失败模型与参考程序中的变量名称和含义。<br>2. 在变量、约束或目标表达层面定位具体错误。<br>3. 每个问题给出错误模型片段（#wrong）及参考程序片段（#correct）。<br>4. 报告独立根因；多个缺陷若对应同一修正点或策略，应合并说明。<br>5. 不报告与能否获得正确优化结果无关的问题。<br><br>【输出】<br>只返回 JSON 数组，每项为：<br>&#123;&quot;id&quot;: 问题ID, &quot;issue&quot;: &quot;错误描述&quot;, &quot;evidence&quot;: &quot;错误与正确片段对照&quot;&#125;。<br>不在数组外添加解释。<br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>再判断哪些已召回经验有帮助、哪些可能误导。</strong> 输入上一步的诊断报告和已召回经验，分析经验与具体错误的关系。此调用通过报告读取对照证据，不再单独输入参考程序。对应 <code>PROMPT_INS_POS_NEG</code>：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，分析已召回经验对当前模型的实际影响。<br><br>【输入 1：问题描述】<br>&#123;problem_description&#125;<br><br>【输入 2：失败数学模型及经验使用标注】<br>&#123;failed_formulation&#125;<br><br>【输入 3：已定位的问题及证据】<br>&#123;diagnosed_issues&#125;<br><br>【输入 4：已召回经验】<br>&#123;retrieved_insights&#125;，包含 ID、condition、explanation 和 example。<br><br>【任务】<br>逐条判断原则是否正确、是否被采用、是否与诊断问题有关：<br>1. positive：经验正确且被采用，对正确建模有帮助。<br>2. invalid：经验正确但未被采用，采用它本可帮助解决问题。<br>3. negative：经验错误或不适用，已导致错误或有误导风险。<br>4. irrelevant：与该任务建模无关，没有影响当前模型。<br>    为每项给出经验与具体问题的对应依据，不遗漏已提供的经验 ID。<br><br>【输出】<br>[&#123;&quot;insight_id&quot;: 1, &quot;state&quot;: &quot;positive&quot;, &quot;evidence&quot;: &quot;与具体问题的对应依据&quot;&#125;]。<br>state 可为 positive / invalid / negative / irrelevant；格式差异见下文。<br></code></pre></td></tr></table></figure>
+上述四种状态来自模板的任务说明；其输出格式说明却只列正负两类，存在源码文本不一致。<code>invalid</code> 表示已召回但未有效采用，不能当作从未召回的 <code>unretrieved</code></li>
+<li>保留正向经验、排除误导项后，重新生成数学模型，并调用 LLM 对照重新生成的数学模型，判断此前定位出的建模问题是否都已修复；数学建模修复后，再生成程序、比较目标值，以上都复用 2.2.1 的 prompt 模板。若已有经验足以修复，就不再为该任务强行提取新经验；否则按 2.3.3 继续查找漏检索经验</li>
+</ul>
+<h3 id="233-围绕尚未解决的问题查找并补入漏检索经验"><a class="markdownIt-Anchor" href="#233-围绕尚未解决的问题查找并补入漏检索经验"></a> 2.3.3 围绕尚未解决的问题，查找并补入漏检索经验</h3>
+<ul>
+<li>普通检索围绕 “这道题需要哪些知识” 展开，这里则围绕 “这个已定位的错误需要哪些知识” 展开。先选择相关分类，再从相应候选经验中筛选；使用已有标签和经验 ID，不在检索输出中创造新经验。
+<ul>
+<li><strong>按错误选择分类（PROMPT_RETRI_LABEL）</strong><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，寻找可帮助修复指定建模问题的知识类别。<br><br>【输入 1：原题与失败数学模型】<br>&#123;problem_description&#125;<br>&#123;failed_formulation&#125;<br><br>【输入 2：当前要解决的诊断问题】<br>&#123;one_diagnosed_issue&#125;<br><br>【输入 3：两条建模主线的当前分类字典】<br>&#123;domain_taxo&#125;<br>&#123;formu_taxo&#125;<br><br>【任务】<br>1. 理解当前错误涉及的数学关系及其修正方向。<br>2. 阅读两级标签及其定义、条件，选择可能提供修正知识的类别。<br>3. 只选择字典中实际存在的标签，名称必须完全一致。<br>4. 可以选择多条路径；此调用只选类别，不新增经验。<br><br>【输出】<br>只返回 &#123;主线: &#123;一级标签: [二级标签, ...]&#125;&#125; 结构的 JSON 对象。<br>无相关类别时返回 &#123;&#125;。程序随后按这些路径取出候选经验。<br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>按错误筛选候选经验（PROMPT_RETRI_INS）</strong><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，从候选经验中找出可修复指定问题的项。<br><br>【输入 1：原题与失败数学模型】<br>&#123;problem_description&#125;<br>&#123;failed_formulation&#125;<br><br>【输入 2：当前诊断问题】<br>&#123;one_diagnosed_issue&#125;<br><br>【输入 3：按分类路径得到的候选经验】<br>&#123;candidate_insights&#125;<br><br>【任务】<br>1. 结合题意和失败模型，理解当前问题需要哪类修正。<br>2. 逐条检查候选经验是否直接有助于解决该问题。<br>3. 为保留项引用题目与诊断报告中的具体依据，说明为何有帮助。<br>4. 使用候选中的原 ID，不编造新 ID。<br><br>【输出】<br>只返回 JSON 数组，每项含 insight_id 和 reason。<br>无可用经验时返回 []；选出的经验还需用于后续修复尝试。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+<li><strong>将选中的候选与保留的正向经验组合，重新生成数学模型</strong>。源码会去重并尝试有限个经验组合，当前 <code>max_combo_size = 8</code>；不是把库中所有经验一次性全部补入。之后调用 <code>PROMPT_VALIDATE_ISSUES</code> 核查原问题：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，对照新旧数学模型检查问题是否解决。<br><br>【输入 1：原题】<br>&#123;problem_description&#125;<br><br>【输入 2：原失败数学模型】<br>&#123;failed_formulation&#125;<br><br>【输入 3：待核查问题及其诊断报告】<br>&#123;diagnosed_issues&#125;<br><br>【输入 4：重新生成的数学模型】<br>&#123;new_formulation&#125;<br><br>【任务】<br>1. 阅读原题与问题报告，逐项确定原错误所在。<br>2. 对照新模型，判断该问题是否解决。<br>3. 给出原模型和新模型的相关片段作为证据。<br>4. 不遗漏问题 ID，也不把整道题的判断代替逐项检查。<br><br>【输出】<br>只返回 JSON 数组，每项含 id、status（solved / unsolved）、evidence。<br>这是对模型文本的诊断核查，程序执行和目标值验证另行进行。<br></code></pre></td></tr></table></figure>
+</li>
+<li>若模型文本检查认为问题已解决，还要生成程序并与参考目标值比较，只有答案检查也通过时才能走 “不需要新经验” 的成功分支；否则仍可能进入 2.3.4 新经验提取</li>
+</ul>
+<h3 id="234-已有经验仍不足时提取并验证新经验"><a class="markdownIt-Anchor" href="#234-已有经验仍不足时提取并验证新经验"></a> 2.3.4 已有经验仍不足时，提取并验证新经验</h3>
+<ul>
+<li>建模诊断通过 <code>is_generate_new</code> 控制后续分支：
+<ol>
+<li><strong>不需要新经验：</strong> 保留本次诊断得到的关系证据，结束该分支；已有经验条件是否修改，由 2.4 集中处理。</li>
+<li><strong>仍需要新经验：</strong> 使用已有参考程序和诊断后仍有问题的数学模型，复用 2.2.4 的建模经验提取 prompt，输出 taxonomy、condition、explanation、example；随后复用 2.2.5 的验证合并流程</li>
+</ol>
+</li>
+</ul>
+<h3 id="235-汇总经验任务关系交给精炼阶段"><a class="markdownIt-Anchor" href="#235-汇总经验任务关系交给精炼阶段"></a> 2.3.5 汇总经验—任务关系，交给精炼阶段</h3>
+<ul>
+<li>对每条经验 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>I</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">I_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07847em;">I</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.07847em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，将诊断证据按关联任务汇总：<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi mathvariant="normal">Π</mi><mo stretchy="false">(</mo><mi>i</mi><mo stretchy="false">)</mo><mo>=</mo><mo stretchy="false">{</mo><msubsup><mi>S</mi><mi>i</mi><mo>+</mo></msubsup><mo separator="true">,</mo><msubsup><mi>S</mi><mi>i</mi><mo>−</mo></msubsup><mo separator="true">,</mo><msubsup><mi>S</mi><mi>i</mi><mi>u</mi></msubsup><mo stretchy="false">}</mo><mo separator="true">,</mo><mspace width="2em"/><msub><mi>R</mi><mi>i</mi></msub><mo>=</mo><msubsup><mi>S</mi><mi>i</mi><mo>+</mo></msubsup><mo>∪</mo><msubsup><mi>S</mi><mi>i</mi><mo>−</mo></msubsup><mo>∪</mo><msubsup><mi>S</mi><mi>i</mi><mi>u</mi></msubsup><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\Pi(i)=\{S_i^+,S_i^-,S_i^u\},\qquad R_i=S_i^+\cup S_i^-\cup S_i^u.
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">Π</span><span class="mopen">(</span><span class="mord mathnormal">i</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.088326em;vertical-align:-0.266995em;"></span><span class="mopen">{</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8213309999999999em;"><span style="top:-2.433005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.266995em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8213309999999999em;"><span style="top:-2.433005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.266995em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-2.4530000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mclose">}</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.00773em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1.088326em;vertical-align:-0.266995em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8213309999999999em;"><span style="top:-2.433005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.266995em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∪</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1.088326em;vertical-align:-0.266995em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8213309999999999em;"><span style="top:-2.433005em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.266995em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">∪</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.9613919999999999em;vertical-align:-0.247em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.7143919999999999em;"><span style="top:-2.4530000000000003em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.247em;"><span></span></span></span></span></span></span><span class="mord">.</span></span></span></span></span></p>
+<table>
+<thead>
+<tr>
+<th>关系</th>
+<th>保存的含义</th>
+<th>后续精炼目标</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>positive：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>S</mi><mi>i</mi><mo>+</mo></msubsup></mrow><annotation encoding="application/x-tex">S_i^+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.088326em;vertical-align:-0.276864em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.811462em;"><span style="top:-2.4231360000000004em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.1031310000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">+</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.276864em;"><span></span></span></span></span></span></span></span></span></span></td>
+<td>在这些任务上适用、提供正向帮助</td>
+<td>保持召回</td>
+</tr>
+<tr>
+<td>negative：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>S</mi><mi>i</mi><mo>−</mo></msubsup></mrow><annotation encoding="application/x-tex">S_i^-</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.088326em;vertical-align:-0.276864em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.811462em;"><span style="top:-2.4231360000000004em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.1031310000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mbin mtight">−</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.276864em;"><span></span></span></span></span></span></span></span></span></span></td>
+<td>在这些任务上不适用或有误导性</td>
+<td>排除误召回</td>
+</tr>
+<tr>
+<td>unretrieved：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msubsup><mi>S</mi><mi>i</mi><mi>u</mi></msubsup></mrow><annotation encoding="application/x-tex">S_i^u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.941994em;vertical-align:-0.258664em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05764em;">S</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.664392em;"><span style="top:-2.441336em;margin-left:-0.05764em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">u</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.258664em;"><span></span></span></span></span></span></span></span></span></span></td>
+<td>对这些任务有用，却在原检索中遗漏</td>
+<td>补回召回</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><strong>关系针对 “某条经验—某个任务”，不是给经验永久贴上好坏标签</strong>。对整个训练集的任务诊断完成后，才统一启动 2.4 的精炼</li>
+</ul>
+<h2 id="24-经验精炼library-refinement"><a class="markdownIt-Anchor" href="#24-经验精炼library-refinement"></a> 2.4 经验精炼（Library Refinement）</h2>
+<ul>
+<li>
+<p>经验精炼在本轮诊断完成后执行，它<strong>逐一检查经验，会先找关联的失败问题，然后一次性提出若干修订 condition 候选，最后在关联问题上重新检索，找到最优修订条件</strong>，经验四元组中除 condition 以外的部分保持不变</p>
+</li>
+<li>
+<p>如下图所示，一条经验可能有三种索引情况，关联任务索引到正确经验（positive）、关联任务索引到错误经验（negative）和正确经验未被关联任务召回（unretrieved）</p>
+  <div align="center">
+  <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_006.png" srcset="/MyBlog/img/loading.gif" lazyload alt="图片" style="width: 40%;">
+  </div>
+<ul>
+<li>positive → keep：原来用对的任务，修改后仍应召回这条经验。</li>
+<li>negative → remove：原来误用的任务，修改后应排除这条经验。</li>
+<li>unretrieved → add：原来漏掉、但其实需要它的任务，修改后应召回。</li>
+</ul>
+<p><strong>模型据此生成几个新版条件，再在关联任务上重新跑检索，比较哪个版本更符合上述要求，选出更好的版本写回经验库</strong></p>
+<blockquote>
+<p>下图示意了经验精炼如何将一条经验的 condition 从 “只覆盖最初的任务” 改成 “能覆盖更多适用任务，同时排除不适用任务”
+<div align="center">
+<img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_007.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+</div></p>
+</blockquote>
+<blockquote>
+<ul>
+<li>绿色点：这条经验适用、能提供帮助的任务；</li>
+<li>蓝色点：这条经验本来也有用，但原条件没有让它被召回的任务</li>
+<li>红色点：不适合使用这条经验、使用后可能被误导的任务</li>
+<li>灰色虚线小圈是初始条件。 它只圈住绿色任务，表示条件写得太局限：原任务能用，其他同样需要这条经验的蓝色任务却被漏掉</li>
+<li>黑色曲线是精炼后的边界，右侧绿色区域表示适用范围。 新条件既保留绿色任务，也覆盖两个蓝色任务，同时把红色任务留在适用范围外</li>
+<li>箭头表示重写 condition 得到新条件，让 LLM 更准确地判断哪些任务需要这条经验</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h3 id="241-选择待精炼经验整理关联任务"><a class="markdownIt-Anchor" href="#241-选择待精炼经验整理关联任务"></a> 2.4.1 选择待精炼经验，整理关联任务</h3>
+<ul>
+<li>逐条读取经验的 <code>distribution</code>（2.3.5 得到的 “经验—任务关系”）：若没有当前 negative 和 unretrieved 任务，跳过该经验；否则收集和该经验相关的所有正向、误用和漏检索任务，准备按 2.4.2 生成候选条件</li>
+<li>注意整个 2.3 经验诊断和 2.4 经验精炼是连在一起迭代执行多次的，<strong>一条经验可能经过多次精炼，本轮之前的历史检查精炼结果（找回的漏检索任务、此前排除的误用任务，以及曾经是正向但后来丢失的任务）会被记录，共同参与 2.4.4 节的条件质量评分</strong></li>
+</ul>
+<h3 id="242-逐任务生成适用或排除条件"><a class="markdownIt-Anchor" href="#242-逐任务生成适用或排除条件"></a> 2.4.2 逐任务生成适用或排除条件</h3>
+<ul>
+<li>对于需要精炼的一条经验，逐一考察和它相关的 negative 和 unretrieved 任务，收集条件修改建议：
+<ul>
+<li><strong>对误用任务，复核并总结排除条件。</strong> 输入经验的 condition、explanation，以及该任务和可读取的诊断理由。若复核发现经验其实适用，应返回空对象，不能机械地把诊断标签写成排除规则。对应 <code>PROMPT_INS_NEG</code>：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，复核经验误用并补充不适用条件。<br><br>【输入 1：待精炼经验的内容】<br>&#123;target_insight&#125;，实际传入 condition 和 explanation。<br><br>【输入 2：被诊断为误用该经验的任务】<br>&#123;desc&#125;<br><br>【输入 3：可选的诊断理由】<br>&#123;diag_evidence&#125;<br><br>【任务】<br>1. 理解经验原有适用场景和建模原则。<br>2. 阅读负向任务，复核“该经验不适用”的判断是否合理。<br>3. 若确实不适用，概括与该原则冲突的场景，并用本题触发特征举例。<br>4. 若经验其实适用，则不为它添加错误的排除条件。<br><br>【输出】<br>确实不适用时返回 JSON 对象：<br>&#123;&quot;condition&quot;: &quot;This insight does NOT apply when ... For example, ...&quot;,<br>&quot;reason&quot;: &quot;复核理由&quot;&#125;<br>否则返回 &#123;&#125;。这一步产生局部条件建议，不直接决定最终精炼版本。<br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>对漏检索任务，复核并补充适用条件。</strong> 概括题目中能够触发该经验的特征，而不是只记住任务编号或当前数值。对应 <code>PROMPT_INS_UNR</code>：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为漏检索的有用经验补充触发条件。<br><br>【输入 1：待精炼经验的内容】<br>&#123;target_insight&#125;，实际传入 condition 和 explanation。<br><br>【输入 2：漏掉该经验的任务】<br>&#123;desc&#125;<br><br>【输入 3：可选的适用性诊断理由】<br>&#123;diag_evidence&#125;<br><br>【任务】<br>1. 理解经验原有条件及其指导原则。<br>2. 复核该经验是否确实有助于当前任务，不机械接受漏检索标签。<br>3. 若有用，写出更容易识别该场景的适用条件，<br>    先说明一般情形，再列举本题中有依据的触发特征。<br>4. 若并不适用，则不生成扩展条件。<br><br>【输出】<br>适用时返回 JSON 对象：<br>&#123;&quot;condition&quot;: &quot;This insight applies when ... For example, ...&quot;,<br>&quot;reason&quot;: &quot;复核理由&quot;&#125;<br>不适用时返回 &#123;&#125;。<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="243-综合各任务建议生成多个候选修订版条件"><a class="markdownIt-Anchor" href="#243-综合各任务建议生成多个候选修订版条件"></a> 2.4.3 综合各任务建议，生成多个候选修订版条件</h3>
+<ul>
+<li>将原条件、误用任务的排除建议和漏检索任务的适用建议交给模型，按 <code>variant_num</code> 生成多个候选，对应 <code>PROMPT_INS_REFINEMENT</code>：  <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为同一经验设计多种适用条件精炼方案。<br><br>【输入 1：原适用条件】<br>&#123;original_condition&#125;<br><br>【输入 2：负向任务提炼出的排除条件】<br>&#123;neg_conditions&#125;<br><br>【输入 3：漏检索任务提炼出的适用条件】<br>&#123;unr_conditions&#125;<br><br>【输入 4：需生成的候选数】<br>&#123;path_k&#125;<br><br>【任务】<br>1. 整合负向条件，概括应排除的场景。<br>2. 整合漏检索条件，并与原适用条件结合，尽量保留原有覆盖。<br>3. 每个候选分为适用段和不适用段，分别使用<br>    “This insight applies when ...” 与 “This insight does NOT apply when ...”。<br>4. 生成语义不同的候选策略，例如更一般的规则、简短 OR 条件、<br>    同时满足多个线索、要求明确给出信息或限定更窄的适用范围。<br>5. 只修改 condition，不简单拼接所有例子或触发词。<br><br>【输出】<br>只返回 JSON 数组，例如：<br>[&#123;&quot;path_id&quot;: 1, &quot;strategy&quot;: &quot;概括触发特征并增加排除条件&quot;,<br>&quot;new_condition&quot;: &quot;This insight applies when ... This insight does NOT apply when ...&quot;&#125;]。<br>后续由检索重放和程序计分选择版本，不由本调用宣布最佳候选。<br></code></pre></td></tr></table></figure>
+</li>
+<li>程序为每个候选复制一份经验库，只替换目标经验的 condition；taxonomy、explanation、example 保持原值。模型负责提出不同条件，不能在这次输出中自行宣布哪一个已经验证通过。</li>
+</ul>
+<h3 id="244-重放检索按关联任务结果选择条件"><a class="markdownIt-Anchor" href="#244-重放检索按关联任务结果选择条件"></a> 2.4.4 重放检索，按关联任务结果选择条件</h3>
+<ul>
+<li>
+<p>对每个库副本，在同<strong>一组</strong>关联任务上调用 <code>verify_retrieval()</code>。<strong>实际复用完整的 “标签粗筛 → 条件精筛” 检索入口</strong>，建模经验走 Formulation 阶段；编码经验走 Program 阶段，并尝试读取当前轮保存的数学模型作为上下文。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><code class="hljs text">角色：你是运筹优化专家，为当前关联任务检索适用经验。<br><br>【调用 1：标签粗筛】<br>PROMPT_QUICK_MATCH_MODEL / PROMPT_QUICK_MATCH_CODE<br>输入：任务描述、当前阶段的分类字典；编码阶段另提供数学模型。<br>任务：选择相关的已有分类路径，不新增标签。<br>输出：&#123;&quot;某主线&quot;: &#123;&quot;某一级标签&quot;: [&quot;某二级标签&quot;, &quot;另一二级标签&quot;]&#125;&#125;。<br><br>【中间程序操作】<br>按完整分类路径匹配候选经验。<br>当前库副本中，目标经验使用本次待验证的 candidate_condition。<br><br>【调用 2：条件精筛】<br>PROMPT_FULL_CHECK_MODEL / PROMPT_FULL_CHECK_CODE<br>输入：任务描述、候选经验的 ID、taxonomy、condition；<br>      编码阶段另提供数学模型。<br>任务：检查适用前提、触发信号和排除条件，只保留适用项。<br>输出：[&#123;&quot;insight_id&quot;: 1, &quot;reason&quot;: &quot;该经验适用于当前任务的依据&quot;&#125;]。<br>没有适用经验则返回 []，不得为了验证而强制返回目标经验。<br><br>【调用后的程序检查，不属于 prompt】<br>检查目标经验 ID 是否出现在最终召回结果中。<br>分别统计正向任务的保留、负向任务的排除、漏检索任务的找回。<br>不在这一步重新生成完整求解程序，也不让 LLM 给候选条件打总分。<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>按以下标准对当前修订经验条件质量评分：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>p</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo><mo>=</mo><mfrac><mrow><msub><mi>K</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo><mo>+</mo><msub><mi>N</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo><mo>+</mo><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><mrow><mi mathvariant="normal">∣</mi><msub><mi>R</mi><mi>i</mi></msub><mi mathvariant="normal">∣</mi></mrow></mfrac><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">p_i(c)=\frac{K_i(c)+N_i(c)+U_i(c)}{|R_i|}.
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.363em;vertical-align:-0.936em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.00773em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord">∣</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.07153em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">U</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.936em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">.</span></span></span></span></span></p>
+<ul>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>K</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">K_i(c)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.07153em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span>：仍能召回该经验的正向任务数。</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>N</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">N_i(c)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span>：不再误召回该经验的负向任务数。</li>
+<li><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>U</mi><mi>i</mi></msub><mo stretchy="false">(</mo><mi>c</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">U_i(c)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">U</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.10903em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord mathnormal">c</span><span class="mclose">)</span></span></span></span>：成功找回该经验的漏检索任务数。</li>
+</ul>
+</li>
+<li>
+<p>程序比较候选得分，只在严格高于当前最好分数时更新选择；没有候选超过基线则保留原条件，候选评估还纳入前述历史检查集合。</p>
+<blockquote>
+<p>例如，某条经验已经经历过此前轮次的精炼，本轮再次精炼时，当前记录与历史记录如下。数字均为任务 ID，历史集合中的任务可能与当前任务重复：</p>
+<table>
+<thead>
+<tr>
+<th>记录</th>
+<th>任务 ID</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前正向 <code>positive</code></td>
+<td><code>[1, 2, 3, 4, 5, 6]</code></td>
+</tr>
+<tr>
+<td>当前负向 <code>negative</code></td>
+<td><code>[7, 8, 9]</code></td>
+</tr>
+<tr>
+<td>当前漏检索 <code>unretrieved</code></td>
+<td><code>[10, 11]</code></td>
+</tr>
+<tr>
+<td>历史已找回 <code>guard_unretrieved</code></td>
+<td><code>[6, 12, 13]</code></td>
+</tr>
+<tr>
+<td>历史已排除 <code>guard_negative</code></td>
+<td><code>[9, 14]</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>先合并同类评估集合，再按任务 ID 去重：</strong></p>
+<ol>
+<li>应召回的正向集合：当前正向＋历史已找回，得到 <code>[1, 2, 3, 4, 5, 6, 12, 13]</code> 共 8 个。本例没有历史丢失的正向任务，若有也加入这一集合去重</li>
+<li>应排除的负向集合：当前负向＋历史已排除，得到 <code>[7, 8, 9, 14]</code> 共 4 个</li>
+<li>待找回的漏检索集合：<code>[10, 11]</code> 共 2 个</li>
+</ol>
+<p>因此分母为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>8</mn><mo>+</mo><mn>4</mn><mo>+</mo><mn>2</mn><mo>=</mo><mn>14</mn></mrow><annotation encoding="application/x-tex">8+4+2=14</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">8</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.72777em;vertical-align:-0.08333em;"></span><span class="mord">4</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span><span class="mord">4</span></span></span></span>，相比只看当前 11 个任务，历史记录实际增加了任务 12、13、14 这 3 个检查项。每满足一个任务的预期检索行为，计 1 分：</p>
+<table>
+<thead>
+<tr>
+<th>评分项</th>
+<th>候选 A</th>
+<th>候选 B</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>当前 6 个正向任务中，仍能召回</td>
+<td>5</td>
+<td>6</td>
+</tr>
+<tr>
+<td>当前 3 个负向任务中，成功排除</td>
+<td>3</td>
+<td>2</td>
+</tr>
+<tr>
+<td>当前 2 个漏检索任务中，成功找回</td>
+<td>2</td>
+<td>1</td>
+</tr>
+<tr>
+<td>历史额外补入的任务 12、13 中，仍能召回（任务 6 已在当前正向中计分）</td>
+<td>0</td>
+<td>2</td>
+</tr>
+<tr>
+<td>历史额外补入的任务 14 中，仍能排除（任务 9 已在当前负向中计分）</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>只看当前任务的得分</td>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">/</mi><mn>11</mn></mrow><annotation encoding="application/x-tex">10/11</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">/</span><span class="mord">1</span><span class="mord">1</span></span></span></span></td>
+<td><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>9</mn><mi mathvariant="normal">/</mi><mn>11</mn></mrow><annotation encoding="application/x-tex">9/11</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">9</span><span class="mord">/</span><span class="mord">1</span><span class="mord">1</span></span></span></span></td>
+</tr>
+<tr>
+<td><strong>加入历史检查后的实际得分</strong></td>
+<td><strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>10</mn><mi mathvariant="normal">/</mi><mn>14</mn></mrow><annotation encoding="application/x-tex">10/14</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord">0</span><span class="mord">/</span><span class="mord">1</span><span class="mord">4</span></span></span></span></strong></td>
+<td><strong><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>12</mn><mi mathvariant="normal">/</mi><mn>14</mn></mrow><annotation encoding="application/x-tex">12/14</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mord">2</span><span class="mord">/</span><span class="mord">1</span><span class="mord">4</span></span></span></span></strong></td>
+</tr>
+</tbody>
+</table>
+<p>只看当前任务，A 更好；但 A 让历史额外补入的任务 12、13、14 全部回退，加入历史检查后就变成 B 更好</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="245-写回条件进入下一轮或结束建库"><a class="markdownIt-Anchor" href="#245-写回条件进入下一轮或结束建库"></a> 2.4.5 写回条件，进入下一轮或结束建库</h3>
+<ul>
+<li>汇总各经验的选择结果，将选中的 condition 写回经验库，并更新关系记录；未被更好候选替代的经验继续使用原条件。写回和保存由程序完成，没有单独的生成 prompt。达到配置的迭代轮数之前，更新后的库进入下一轮诊断和精炼</li>
+<li><strong>精炼优化的是检索结果</strong>，不直接验证每个候选条件下的最终求解正确率。诊断标签是否可靠、召回后模型能否正确落实经验，都会影响最终收益。</li>
+</ul>
+<h3 id="246-优化视角与收敛论证的适用范围"><a class="markdownIt-Anchor" href="#246-优化视角与收敛论证的适用范围"></a> 2.4.6 优化视角与收敛论证的适用范围</h3>
+<ul>
+<li>原文 §3.3 用一个带库复杂度惩罚的目标解释整个过程：<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><munder><mo><mi>max</mi><mo>⁡</mo></mo><mrow><mi mathvariant="normal">ℓ</mi><mo>∈</mo><mi mathvariant="script">L</mi></mrow></munder><msub><mi mathvariant="double-struck">E</mi><mrow><mi>t</mi><mo>∼</mo><mi mathvariant="script">T</mi></mrow></msub><mo stretchy="false">[</mo><mi mathvariant="normal">Success</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi>t</mi><mo>∣</mo><mi mathvariant="normal">ℓ</mi><mo stretchy="false">)</mo><mo stretchy="false">]</mo><mo>−</mo><mi>λ</mi><mi mathvariant="normal">Ω</mi><mo stretchy="false">(</mo><mi mathvariant="normal">ℓ</mi><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\max_{\ell\in\mathcal L} \mathbb E_{t\sim\mathcal T}[\operatorname{Success}(t\mid\ell)] -\lambda\Omega(\ell).
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.529478em;vertical-align:-0.7794779999999999em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.43055999999999994em;"><span style="top:-2.347892em;margin-left:0em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">ℓ</span><span class="mrel mtight">∈</span><span class="mord mathcal mtight">L</span></span></span></span><span style="top:-3em;"><span class="pstrut" style="height:3em;"></span><span><span class="mop">max</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.7794779999999999em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord"><span class="mord mathbb">E</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.32833099999999993em;"><span style="top:-2.5500000000000003em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">t</span><span class="mrel mtight">∼</span><span class="mord mathcal mtight" style="margin-right:0.25417em;">T</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mopen">[</span><span class="mop"><span class="mord mathrm">S</span><span class="mord mathrm">u</span><span class="mord mathrm">c</span><span class="mord mathrm">c</span><span class="mord mathrm">e</span><span class="mord mathrm">s</span><span class="mord mathrm">s</span></span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">∣</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">ℓ</span><span class="mclose">)</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">λ</span><span class="mord">Ω</span><span class="mopen">(</span><span class="mord">ℓ</span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></p>
+其中 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">ℓ</mi></mrow><annotation encoding="application/x-tex">\ell</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.69444em;vertical-align:0em;"></span><span class="mord">ℓ</span></span></span></span> 是一个候选经验库，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="script">L</mi></mrow><annotation encoding="application/x-tex">\mathcal L</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord mathcal">L</span></span></span></span> 是库空间；Success 表示能否得到参考最优目标值；<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">Ω</mi></mrow><annotation encoding="application/x-tex">\Omega</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord">Ω</span></span></span></span> 衡量经验条数或冗余等复杂度。<strong>直觉是增加可复用的成功经验、压缩重复知识，而不是无限追加上下文</strong></li>
+<li>附录 A 的有限空间论证假设说明：<strong>在理想假设下，经验库不能无限改进，并且最终找不到允许范围内的更好修改。</strong> 这里把整个经验库的一个版本视为一个状态，用上面的目标 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo stretchy="false">(</mo><mi mathvariant="normal">ℓ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">F(\ell)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mopen">(</span><span class="mord">ℓ</span><span class="mclose">)</span></span></span></span> 评价它：既考虑任务收益，也扣除库复杂度。有限空间论证可以分成三步理解：
+<ol>
+<li><strong>为什么不能无限改进？</strong> 假设可能的经验库版本只有有限种，每次接受修改都让 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mo stretchy="false">(</mo><mi mathvariant="normal">ℓ</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">F(\ell)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mopen">(</span><span class="mord">ℓ</span><span class="mclose">)</span></span></span></span> 严格提高。这样就不可能回到旧版本，因为旧版本的分数更低；有限种版本只能支持有限次严格改进。这里的“有限”指可能的库版本数量有限，仅仅一份库中的经验条数有限还不够。</li>
+<li><strong>为什么能称为局部最优？</strong> 还需要假设：只要允许的修改中存在更好的版本，系统最终就能找到并采用它。因此，改进结束时，在这些允许的修改范围内已没有更好的版本，这才叫局部最优。它不意味着找到了所有可能经验库中的全局最优。</li>
+<li><strong>为什么论文还要求训练、测试分布相同？</strong> 这个假设用于让训练目标与测试目标一致，从而把训练目标上的局部最优结论用于测试目标；它不是“有限版本无法无限改进”这一步的必要理由。附录还讨论了无限库空间，在目标有界的基础上加入空间紧致、目标连续等假设，给出目标值收敛及极限点性质的论证。</li>
+</ol>
+</li>
+<li><strong>这是一套带前提的理论解释，不能直接当作实际代码的性能保证。</strong> 真实系统每轮只生成有限个候选，可能漏掉更好的修改；精炼提高的是检索评分，也不保证整个库的任务收益减复杂度这一目标同步提高。代码按指定轮数结束，并未检查是否已经达到局部最优。因此，这段论证有助于理解“持续接受更好的修改”为什么可能趋于稳定，但不能证明当前实现一定达到局部最优，也不能证明训练与测试分布不同的 OOD 任务上仍有同样结论；主文将其定位为概念性论证（conceptual sketch）</li>
+</ul>
+<h1 id="3-实验"><a class="markdownIt-Anchor" href="#3-实验"></a> 3. 实验</h1>
+<h2 id="31-实验设定"><a class="markdownIt-Anchor" href="#31-实验设定"></a> 3.1 实验设定</h2>
+<ul>
+<li>
+<p><strong>数据集</strong>：使用 NLP4LP、NL4OPT、IndustryOR、MAMO (ComplexLP) 构建库与同来源测试集；LogiOR、OptiBench 为未参与建库的 OOD 数据集。采用清洗版本避免错误答案把自探索和经验验证引向错误方向</p>
+  <div align="center">
+<img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_008.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+</div>
+<ol>
+<li>数据既包括 LP，也包括整数、混合整数与非线性问题；代码并不只需记住一种线性规划模板。</li>
+<li>部分数据有程序，其他数据只提供解；AlphaOPT 主结果强调仅答案监督下也能建库。</li>
+<li><strong>表中 Size 与最终训练/测试文件不能直接一一对应。</strong> 以下以论文列数和仓库文件计数分别记录，保留不一致。</li>
+</ol>
+</li>
+<li>
+<p><strong>基线</strong>：骨干默认 GPT-4o、temperature 0。提示类与经验类基线包括 Standard、OptiMUS、ORThought、Reflexion、ExpeL；微调基线 ORLM 基于 LLaMA3-8B，LLMOPT 基于 Qwen2.5-14B。作者称在 AlphaOPT 训练划分上重新训练 LLMOPT，以降低训练测试重叠疑虑</p>
+</li>
+<li>
+<p><strong>指标</strong>：程序输出最优目标值与参考值足够接近的比例。不同数据集的加权方式为：</p>
+<p class='katex-block'><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mo><mi mathvariant="normal">Acc</mi><mo>⁡</mo></mo><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">o</mi></mrow></msub><mo>=</mo><mfrac><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></munderover><mo stretchy="false">∣</mo><msub><mi>D</mi><mi>k</mi></msub><mo stretchy="false">∣</mo><mi mathvariant="normal">Acc</mi><mo>⁡</mo><mo stretchy="false">(</mo><msub><mi>D</mi><mi>k</mi></msub><mo stretchy="false">)</mo></mrow><mrow><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></munderover><mo stretchy="false">∣</mo><msub><mi>D</mi><mi>k</mi></msub><mo stretchy="false">∣</mo></mrow></mfrac><mi mathvariant="normal">.</mi><mspace linebreak="newline"></mspace><mtext> </mtext><mspace linebreak="newline"></mspace><msub><mo><mi mathvariant="normal">Acc</mi><mo>⁡</mo></mo><mrow><mi mathvariant="normal">m</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">c</mi><mi mathvariant="normal">r</mi><mi mathvariant="normal">o</mi></mrow></msub><mo>=</mo><mfrac><mn>1</mn><mi>K</mi></mfrac><munderover><mo>∑</mo><mrow><mi>k</mi><mo>=</mo><mn>1</mn></mrow><mi>K</mi></munderover><mi mathvariant="normal">Acc</mi><mo>⁡</mo><mo stretchy="false">(</mo><msub><mi>D</mi><mi>k</mi></msub><mo stretchy="false">)</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">\operatorname{Acc}_{\mathrm{micro}}=\frac{\sum_{k=1}^{K}\lvert D_k\rvert\operatorname{Acc}(D_k)}{\sum_{k=1}^{K}\lvert D_k\rvert}. \\ \space \\
+\operatorname{Acc}_{\mathrm{macro}}=\frac{1}{K}\sum_{k=1}^{K}\operatorname{Acc}(D_k).
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mop"><span class="mop"><span class="mord mathrm">A</span><span class="mord mathrm">c</span><span class="mord mathrm">c</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31750199999999995em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">m</span><span class="mord mathrm mtight">i</span><span class="mord mathrm mtight">c</span><span class="mord mathrm mtight">r</span><span class="mord mathrm mtight">o</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:2.841882em;vertical-align:-1.170941em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.670941em;"><span style="top:-2.128769em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mopen">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">∣</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.6897100000000003em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:-0.0000050000000000050004em;">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.981231em;"><span style="top:-2.40029em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.2029em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.29971000000000003em;"><span></span></span></span></span></span></span><span class="mopen">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">∣</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mord mathrm">A</span><span class="mord mathrm">c</span><span class="mord mathrm">c</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.170941em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mord">.</span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0em;vertical-align:0em;"></span><span class="mspace"> </span></span><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mop"><span class="mop"><span class="mord mathrm">A</span><span class="mord mathrm">c</span><span class="mord mathrm">c</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.151392em;"><span style="top:-2.5500000000000003em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">m</span><span class="mord mathrm mtight">a</span><span class="mord mathrm mtight">c</span><span class="mord mathrm mtight">r</span><span class="mord mathrm mtight">o</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:3.1304490000000005em;vertical-align:-1.302113em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.32144em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">K</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.8283360000000002em;"><span style="top:-1.8478869999999998em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mrel mtight">=</span><span class="mord mtight">1</span></span></span></span><span style="top:-3.0500049999999996em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span><span style="top:-4.300005em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.07153em;">K</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.302113em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mop"><span class="mord mathrm">A</span><span class="mord mathrm">c</span><span class="mord mathrm">c</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.02778em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span><span class="mord">.</span></span></span></span></span></p>
+<p>Micro 更容易受规模较大的 OptiBench 影响；Macro 对每个数据集等权，能更明显暴露 LogiOR 等困难任务的不足</p>
+</li>
+<li>
+<p><strong>预算</strong>：论文报告学习一轮、诊断与精炼通常 3–5 轮，Figure 4 展示更长的迭代轨迹</p>
+</li>
+</ul>
+<h2 id="32-实验结果与分析"><a class="markdownIt-Anchor" href="#32-实验结果与分析"></a> 3.2 实验结果与分析</h2>
+<h3 id="321-q1跨数据集的泛化收益有多大"><a class="markdownIt-Anchor" href="#321-q1跨数据集的泛化收益有多大"></a> 3.2.1 Q1：跨数据集的泛化收益有多大</h3>
+<ul>
+<li>
+<p>实验设定：在四个 Test Split 与两个 OOD 集合上，比较三类基线与 AlphaOPT 的目标值匹配准确率，主结果及消融结果如下</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_009.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>Test Split 的 Micro/Macro 为 <strong>80.1%/76.4%</strong>，分别高于最强非消融基线 ORLM 的 75.0%/66.4%。MAMO 上 76.5% 相对 ExpeL 的 70.4% 提高 6.1 个百分点。</li>
+<li>不是每个单列都独胜：NL4OPT 上 ORLM 为 87.5%，高于 AlphaOPT 的 81.2%；IndustryOR 上 AlphaOPT 与 ORThought 均为 60.0%。</li>
+<li>OOD 的 LogiOR 为 <strong>56.0%</strong>，比 ExpeL 的 47.8% 高 8.2 个百分点；OptiBench 为 <strong>93.5%</strong>，比 ORThought 的 84.4% 高 9.1 个百分点</li>
+<li>OOD Micro/Macro 为 86.5%/74.8%。两者差距说明容易且较大的 OptiBench 拉高了加权成绩；LogiOR 仍有约 44% 的任务失败。</li>
+</ol>
+</li>
+<li>
+<p>作者还在正文报告：把 AlphaOPT 经验库用于微调后的 LLMOPT，平均提高约 6%。这支持外部记忆与微调可以互补</p>
+</li>
+</ul>
+<h3 id="322-q2是经验内容起效还是条件和精炼起效"><a class="markdownIt-Anchor" href="#322-q2是经验内容起效还是条件和精炼起效"></a> 3.2.2 Q2：是经验内容起效，还是条件和精炼起效</h3>
+<ul>
+<li>实验设定：固定 AlphaOPT 框架，分别去掉 taxonomy、applicability condition、refinement 和 insight example，比较 Table 1 下半部分的准确率变化。
+<ul>
+<li><strong>去掉 Refinement 影响最明显的建模场景：</strong> Test Split Micro 从 80.1% 降到 73.3%，Macro 从 76.4% 降到 67.2%；IndustryOR 从 60.0% 降到 44.0%，MAMO 从 76.5% 降到 61.8%。说明“有经验”之后仍需要调整它的使用范围。</li>
+<li><strong>去掉 Example 主要破坏原则到实例的落实：</strong> MAMO 从 76.5% 降到 58.8%，下降 17.7 个百分点；Test Split Macro 下降 6.6。只告诉模型应遵循什么原则，不如同时展示具体数学或代码变换。</li>
+<li><strong>条件与分类不是同一种帮助：</strong> 去掉 condition，Test Split Micro/Macro 下降 3.6/4.3，OOD Macro 下降 5.0；去掉 taxonomy，OOD Macro 下降 4.1，但 MAMO 单列反而从 76.5% 升到 79.4%。分类总体有用，却可能在某些任务上限制候选召回。</li>
+</ul>
+</li>
+<li>正文另称用 embedding 相似度替代两步检索，会让 Test Split Micro 降 4.9、OOD Macro 降 5.4 个百分点；</li>
+</ul>
+<h3 id="323-q3更多训练样本是否带来持续改进"><a class="markdownIt-Anchor" href="#323-q3更多训练样本是否带来持续改进"></a> 3.2.3 Q3：更多训练样本是否带来持续改进</h3>
+<ul>
+<li>
+<p>实验设定：分别用 100、200、300 条训练样本构建经验库，在 LogiOR 与 OptiBench 上报告 OOD Micro/Macro</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_010.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+  </div>
+<ol>
+<li>Macro 从 <strong>65.80% → 69.22% → 72.12%</strong>，100 到 300 条提高 6.32 个百分点；</li>
+<li>Micro 从 <strong>83.24% → 85.09% → 85.21%</strong>，后 100 条只增加 0.12 个百分点，表明不同加权口径下的收益并不均匀。</li>
+<li>实验支持有限范围内增加经验来源有帮助，不足以建立长期 scaling law</li>
+</ol>
+</li>
+</ul>
+<h3 id="324-q4库规模会不会无限膨胀"><a class="markdownIt-Anchor" href="#324-q4库规模会不会无限膨胀"></a> 3.2.4 Q4：库规模会不会无限膨胀</h3>
+<ul>
+<li>
+<p>实验设定：在 452 个训练任务上迭代访问，记录累计训练准确率和库规模随迭代变化的轨迹，</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_011.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 80%;">
+  </div>
+<ol>
+<li>准确率早期快速上升，后期在约 0.9 附近波动；这是训练过程曲线，不能当作 OOD 准确率。</li>
+<li>库规模从约 51 增长到约 61 后趋于稳定，显示该次运行中合并和经验饱和能限制增长。</li>
+<li>横轴“累计访问任务”超过 452，是重复访问训练任务，不代表收集了数千个独立新问题；图示轨迹也不能保证出现全新业务分布时库仍不增长。</li>
+</ol>
+</li>
+</ul>
+<h3 id="325-条件精炼到底改了什么"><a class="markdownIt-Anchor" href="#325-条件精炼到底改了什么"></a> 3.2.5 条件精炼到底改了什么</h3>
+<ul>
+<li>
+<p>实验设定：从库中选取 ID 10、43、133 三条经验，展示精炼前后的文字条件及关联任务数量变化</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_012.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>ID 10 补充“最小化单一资源”等等价触发场景，同时排除多容量约束。它试图防止把多种营养需求之类的任务简化成一个标量容量。</li>
+<li>ID 43 加入资源分配、容量和生产平衡等关键词，同时排除以固定比例、质量或预分配为主的表述。关键词用于唤起结构，但本身不能替代对守恒关系的判断。</li>
+<li>ID 133 明确单源、单汇、容量与流守恒，并排除没有单一终点的源到多点分配。这反映的是经验覆盖范围，不能误读成一般网络流理论不允许多汇转换。</li>
+<li>图中的 ID 43 正向数量从 23 变成 18，负向从 5 变成 1、漏检索从 14 变成 9。说明精炼并非逐项无损；图中各类总量也不同，无法仅靠柱状图还原同一固定 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>R</mi><mi>i</mi></msub></mrow><annotation encoding="application/x-tex">R_i</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.00773em;">R</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.31166399999999994em;"><span style="top:-2.5500000000000003em;margin-left:-0.00773em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span> 上的完整状态迁移。</li>
+</ol>
+</li>
+</ul>
+<h3 id="326-学到的知识集中在哪里"><a class="markdownIt-Anchor" href="#326-学到的知识集中在哪里"></a> 3.2.6 学到的知识集中在哪里</h3>
+<ul>
+<li>
+<p>实验设定：按经验的二级标签与来源数据集统计分布，原文 Figure 7 的三个面板分别对应 Domain Modeling、General Formulation 和 Code Implementation</p>
+</li>
+<li>
+<p>领域建模经验分布如下：</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_013.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>容量/资源平衡条目最多，并且来自四个数据集；这类错误不是单一数据集特有的措辞问题。</li>
+<li>流守恒与最大流目标也较集中，表明 LLM 容易遗漏局部守恒与整体网络结构之间的关系。</li>
+<li>较小的 IndustryOR、MAMO 也贡献大量经验，说明样本数不是经验价值的唯一指标，结构复杂性同样重要。</li>
+</ol>
+</li>
+<li>
+<p>通用形式化经验分布如下：</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_014.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>显式变量界、冗余辅助变量、连续/离散混淆位于前列；基础变量定义足以决定可行域是否正确。</li>
+<li>单位不一致、关系运算符错误等问题跨数据集出现，适合提炼成可复用的检查规则。</li>
+<li>经验数量衡量被系统提取并保存的知识，受抽取、合并与验证影响，不能无条件等同于原始错误频次。</li>
+</ol>
+</li>
+<li>
+<p>实现类经验分布如下：</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_015.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>非线性约束处理、键与索引不匹配较突出，前者连接建模变换与 API 能力，后者连接模型索引与实际数据。</li>
+<li>严格不等式与求和语法是相对局部、容易用示例落实的规则；它们更适合短经验辅助。</li>
+<li>即使总比例只有 18%，实现错误仍可能使完整模型无法运行，不能只优化自然语言到公式的前半程。</li>
+</ol>
+</li>
+</ul>
+<h3 id="327-检索成功后经验真的被正确使用了吗"><a class="markdownIt-Anchor" href="#327-检索成功后经验真的被正确使用了吗"></a> 3.2.7 检索成功后，经验真的被正确使用了吗</h3>
+<ul>
+<li>
+<p>实验设定：在全部评估集合上比较有库与无库的结果，排除两种设置都成功的任务，再将所分析的经验作用分类为 success、failure、invalid</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_016.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+  </div>
+<ol>
+<li>Success 为 <strong>128，48.3%</strong>：经验帮助避免原本会出现的错误；Failure 为 <strong>45，17.0%</strong>：误匹配或误用引入新错误。</li>
+<li>Invalid 为 <strong>92，34.7%</strong>：经验匹配正确但没有修复原错误。把这些情况当作“检索成功，因此任务成功”会显著高估系统。</li>
+</ol>
+</li>
+<li>
+<p>分类别观察，更能区分“条件错”与“执行错”：</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_017.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 90%;">
+  </div>
+<ol>
+<li>Solver &amp; API Syntax 为 48 次成功、17 次无效，局部语法知识更容易落实；Variable Definition 有 45 次成功，也有 20 次失败，变量界过强仍会损害建模。</li>
+<li>Facility Location 中图示 7 次失败、1 次成功、2 次无效，与正文讨论的 70% 失败比例一致，主要风险是把启用逻辑强加给没有该语义的问题。</li>
+<li>Resource Allocation 的无效数量为 29，Production Planning 为 11，反映系统即便识别了知识，也未必能完成跨阶段、跨资源的完整约束组合。</li>
+</ol>
+</li>
+<li>
+<p>附录举出 “严格不等式改写为差 1 的非严格不等式” 的实现经验。这里必须补充适用前提：若 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo separator="true">,</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">x,y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal">x</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.16666666666666666em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span> 为整数，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>&lt;</mo><mi>y</mi></mrow><annotation encoding="application/x-tex">x&lt;y</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5782em;vertical-align:-0.0391em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.625em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span></span></span></span> 等价于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>≤</mo><mi>y</mi><mo>−</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">x\le y-1</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7719400000000001em;vertical-align:-0.13597em;"></span><span class="mord mathnormal">x</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.7777700000000001em;vertical-align:-0.19444em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">y</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.64444em;vertical-align:0em;"></span><span class="mord">1</span></span></span></span>；对一般连续变量并不成立。这正好说明，<strong>经验条目需要明确变量域与精度，不能把局部技巧当成普遍数学规则</strong></p>
+</li>
+<li>
+<p>作者在主文脚注报告，自探索程序与参考解核查中发现 3 个伪通过案例，约 0.8%，主要为不影响数值结果的变量类型不精确。这个审计缓解了对当前样本的担忧，但不能证明目标值验证在任意新任务上都可靠；多实例回放与一致性检查仍被列为后续工作。</p>
+</li>
+</ul>
+<h3 id="328-非优化建模任务上的表现"><a class="markdownIt-Anchor" href="#328-非优化建模任务上的表现"></a> 3.2.8 非优化建模任务上的表现</h3>
+<ul>
+<li>
+<p>实验设定：改用 GPT-4o-mini，将同样的学习—诊断—精炼流程应用于两个新任务，两项均说明流程有超出主任务的应用潜力</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_018.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 50%;">
+  </div>
+<ol>
+<li>CO-Bench：Algorithm Design 任务，为组合优化问题编写求解算法，寻找满足约束、目标值尽量好的解。包含约 3,000 个实例、31 类问题并按 18/13 类划分</li>
+<li>HumanEval：Code Implementation 任务，根据函数签名、文字说明和示例补全 Python 函数，通过测试用例；包含 114/50 个训练/测试任务</li>
+</ol>
+</li>
+</ul>
+<h3 id="329-不训练参数成本在哪里"><a class="markdownIt-Anchor" href="#329-不训练参数成本在哪里"></a> 3.2.9 不训练参数，成本在哪里</h3>
+<ul>
+<li>
+<p>实验设定：按建库、诊断、精炼和测试阶段统计 API token、费用与运行时间，原文 Table 5 记录的是作者实验期间的成本，不是当前 API 报价</p>
+  <div align="center">
+      <img src="/MyBlog/img/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/img_019.png" srcset="/MyBlog/img/loading.gif" lazyload alt="在这里插入图片描述" style="width: 100%;">
+  </div>
+<ol>
+<li>Learning、Diagnosis、Refinement 的 prompt tokens 约为 <strong>7.7M、11.5M、32.9M</strong>；精炼最贵，因为每条经验需要结合关联任务生成并比较多个条件</li>
+<li>表中对应单实例费用约 <strong>0.07、0.11、0.22 美元</strong>；测试约 <strong>0.07 美元</strong>。不能把正文“约 0.1 美元”的概述直接当作多阶段完整训练的总费用</li>
+<li>运行时间约 40.5、48.6、33.7、25.5 分钟是作者批处理设置下的统计；并发、重试与网络均影响它，不能简单换成单请求时延。</li>
+</ol>
+</li>
+<li>
+<p>我觉得合理的成本解释是 <strong>“离线经验可以反复复用，建库成本可摊销”</strong>。但库条数稳定并不自动证明总 token 对数据量次线性：即使不再增加经验，每个新任务通常仍有读取、检索与生成开销。论文建议代表性采样与失败阈值触发精炼，这些是值得验证的优化方向。</p>
+</li>
+</ul>
+<h1 id="4-总结"><a class="markdownIt-Anchor" href="#4-总结"></a> 4. 总结</h1>
+<h2 id="41-创新思想来源"><a class="markdownIt-Anchor" href="#41-创新思想来源"></a> 4.1 创新思想来源</h2>
+<ul>
+<li>从论文直接引用的 Reflexion、ExpeL、规则学习和持续记忆研究来看，AlphaOPT 延续了“把交互反馈变成可复用知识”的路线。它比较鲜明的贡献，是把优化建模的经验定义成<strong>具有适用语义、具体示例和回放验证的规则</strong>，并将条件精炼变成由关联任务聚合证据驱动的步骤。</li>
+<li>我觉得最值得借鉴的不是智能体数量，而是<strong>对失败原因的划分：缺知识、知识没被找到、找到但用错、找到却没执行到位</strong>。它们分别需要补充内容、修检索条件、增加排除条件、改进解释与实现示例。把这些问题都交给“再反思一次”，通常会失去针对性。</li>
+</ul>
+<h2 id="42-review意见"><a class="markdownIt-Anchor" href="#42-review意见"></a> 4.2 Review意见</h2>
+<h3 id="421-评分与共同认可"><a class="markdownIt-Anchor" href="#421-评分与共同认可"></a> 4.2.1 评分与共同认可</h3>
+<ul>
+<li>四位评审的评分如下。3 位给出 4 分，页面解释为略低于录用线、但不反对录用；1 位给出 2 分，明确建议拒绝。<strong>这些是评审建议；最终页面状态是作者撤稿，不能据此写成会议正式拒稿。</strong>
+<table>
+<thead>
+<tr>
+<th>Reviewer</th>
+<th style="text-align:right">Rating</th>
+<th style="text-align:right">Confidence</th>
+<th>Soundness / Presentation / Contribution</th>
+<th>主要关注点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>6Bxv</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">3</td>
+<td>2 / 3 / 3</td>
+<td>骨干差异导致比较混杂、缺同类经验学习基线、缺成本分析</td>
+</tr>
+<tr>
+<td>qYdJ</td>
+<td style="text-align:right">2</td>
+<td style="text-align:right">3</td>
+<td>2 / 1 / 2</td>
+<td>理论假设过强、自动建模的价值论证、OOD 定义及跨领域适用性</td>
+</tr>
+<tr>
+<td>igsk</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">4</td>
+<td>2 / 3 / 3</td>
+<td>时延与 token 统计、验证器依赖、多模块成本、检索质量指标</td>
+</tr>
+<tr>
+<td>MDu6</td>
+<td style="text-align:right">4</td>
+<td style="text-align:right">4</td>
+<td>3 / 3 / 3</td>
+<td>相对已有反思与检索方法的新颖性、经验库的上下文容量</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>6Bxv、igsk 和 MDu6 都认可问题动机或实用价值，尤其是<strong>仅答案监督、从失败中积累经验、随数据增加改善表现</strong>。6Bxv 认为四元组与 Library Evolution 是针对优化建模的有价值适配；MDu6 也认可实验对主要主张的支持，但认为算法层面的突破需要更有说服力的定位。qYdJ 同样承认经验库随时间改善准确率的证据，只是对理论和问题定位评价更低。</li>
+</ul>
+<h3 id="422-主要争议贡献来自哪里证据够不够"><a class="markdownIt-Anchor" href="#422-主要争议贡献来自哪里证据够不够"></a> 4.2.2 主要争议：贡献来自哪里，证据够不够</h3>
+<ul>
+<li><strong>骨干公平性与同类基线（6Bxv，qYdJ 亦关注）：</strong> GPT-4o 与 ORLM 的 LLaMA3-8B、LLMOPT 的 Qwen2.5-14B 不同，OOD 差距可能混合了底座能力和框架收益。6Bxv 要求在相同骨干上比较，并引入代码、智能体领域的经验学习方法作为基线。评审将 GPT-4o 描述为规模远大于开源基线，这是其论述，不是本文能够独立核实的模型参数量事实；更稳妥的结论是<strong>不同骨干构成混杂因素，需要同底座消融</strong></li>
+<li><strong>“不重新训练”不等于低成本（6Bxv、igsk、qYdJ）：</strong> 自探索、诊断、条件演化需要多轮 LLM 调用，评审要求报告总 token、API 费用、运行时间及各模块的时延占比，再与微调或其他 test-time scaling 方法比较。igsk 还追问与可验证反馈强化学习（RLVF）及大型推理模型的关系</li>
+<li><strong>新颖性与领域适配（MDu6、6Bxv）：</strong> MDu6 将其联系到 Reflexion、AlphaEvolve/ReEvo、Voyager，并指出优化视角与其提到的 WALL-E 规则剪枝工作相近，认为主要贡献可能是将已有机制适配到 OR，而非基础算法突破。这里保留的是评审提出的相关工作线索，未额外核查这些工作的具体等价关系。6Bxv 的看法更积极：通用“从经验学习”思路虽熟悉，四元组、适用条件演化与领域验证的组合仍有贡献</li>
+<li><strong>理论假设（qYdJ）：</strong> 该评审认为有限情形的结论依赖过强假设，尤其“充分探索”不现实，在无限空间中也缺少保证。这与本笔记 §2.4.2 的方法边界有关：自然语言条件修改及有限次 LLM 调用，不自动满足理想化收敛前提。作者如何定位这段分析，与这些前提是否在实际系统成立，是需要分开讨论的两个问题</li>
+<li><strong>任务价值与 OOD 定义（qYdJ）：</strong> 评审追问已有优化工具为何还需要 LLM，以及不同数据集何以构成分布外任务。我的理解是，前一个问题应区分<strong>从业务语言构建模型</strong>与<strong>求解已给定的模型</strong>：AlphaOPT 主要自动化前者。后一个问题则仍值得具体回答：没有样本重叠不等于分布不同，应展示来源、生成方式、问题结构与领域构成的差异</li>
+<li><strong>检索与外部有效性（igsk、MDu6）：</strong> igsk 要求检索 precision/recall 等质量指标，并指出依赖可执行验证器限制了方法迁移范围；MDu6 关心经历积累后是否触及上下文长度上限，并建议考虑记忆压缩。我的理解是，经验的语义去重与 KV/context 压缩作用层级不同，不能未经实验就视为可互相替代；另一方面，检索正确却无法落实为约束的 invalid 情况，也说明只测检索指标还不够</li>
+</ul>
+<h3 id="423-作者回应与撤稿时间线"><a class="markdownIt-Anchor" href="#423-作者回应与撤稿时间线"></a> 4.2.3 作者回应与撤稿时间线</h3>
+<ul>
+<li><strong>2025-12-04 04:55（页面显示时间）：</strong> 作者专门回应 qYdJ，认为其低估了相关领域背景，并提出三项反驳：摘要与引言已说明自然语言优化建模的应用价值；理论视角本意是解释获取—精炼与冗余控制的设计，而不是严格保证；LogiOR 与 OptiBench 来自不同工作、数据来源和生成流程。作者请求 AC 与读者将这些意见视作对论文的误解。这是<strong>作者对评审的评价</strong>，并不能仅凭该评论独立认定评审缺乏专业知识或存在不公。</li>
+<li><strong>2025-12-04 05:00：</strong> 作者发表总体评论，感谢部分建设性意见，表示会在未来投稿中吸收改进；同时明确称对 qYdJ 评审的质量和公平性感到担忧，并因此决定撤稿。该评论没有逐项回答全部评审问题，也未给出同骨干实验、成本测量或检索指标的完整 rebuttal。</li>
+<li><strong>2025-12-30 23:54：</strong> 页面出现作者正式 Withdrawal Confirmation，确认代表全部作者同意会议撤稿政策。因此可以说：<strong>作者先在 12 月 4 日宣布撤稿决定，随后在 12 月 30 日完成页面上的撤稿确认；其公开陈述的原因是对其中一份评审的质量与公平性不满。</strong> 粘贴内容未包含 AC 的独立裁定，不能进一步推断会方认可了这一指控。</li>
+</ul>
+<h3 id="424-对照-v4哪些疑问有了更多材料"><a class="markdownIt-Anchor" href="#424-对照-v4哪些疑问有了更多材料"></a> 4.2.4 对照 v4：哪些疑问有了更多材料</h3>
+<ul>
+<li>v4 已包含一些与早期评审诉求相对应的补充。下面是本笔记对两个版本材料的对照，<strong>不把后来的论文内容当作当时已经提交的 rebuttal，也不据此认定所有争议已解决</strong>：
+<table>
+<thead>
+<tr>
+<th>早期评审诉求</th>
+<th>本次阅读的 v4 中可见材料</th>
+<th>仍需注意的边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>经验学习同类基线缺失</td>
+<td>Table 1 增加 Reflexion、ExpeL 比较，附录 B.2 展示 ExpeL 经验</td>
+<td>适配方式和预算公平性仍影响结论</td>
+</tr>
+<tr>
+<td>骨干混杂</td>
+<td>正文报告将库用于 LLMOPT，平均提高约 6%</td>
+<td>不是完整的同底座、同预算横向对照，组合结果的逐数据集表仍不足</td>
+</tr>
+<tr>
+<td>成本与模块开销缺失</td>
+<td>附录 B.4、Table 5 给出分阶段 token、费用和运行时间</td>
+<td>与微调的完整成本效益对照、在线时延口径仍需细化</td>
+</tr>
+<tr>
+<td>是否能用于其他领域</td>
+<td>附录 B.3 报告 CO-Bench 与 HumanEval</td>
+<td>使用相应领域任务建库，不能理解为同一 OR 库的零样本通用迁移</td>
+</tr>
+<tr>
+<td>检索质量不清晰</td>
+<td>Figure 6、8 展示关联变化及成功/失败/无效分析</td>
+<td>不是标准 precision/recall 全量评测，诊断标签可靠性仍重要</td>
+</tr>
+<tr>
+<td>库规模与上下文限制</td>
+<td>Figure 4 显示一次运行中库条目数稳定</td>
+<td>条目数稳定不证明 token 长度、关联任务上下文或长期成本有界</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>我觉得这轮评审最有价值的提醒是：<strong>论文需要同时证明经验规则有用、收益不只是骨干能力带来的、以及维护这套经验的成本值得。</strong> v4 对同类基线、成本与跨领域实验给出了更多证据，但理论前提、严格同预算比较和真实业务复杂度仍应作为后续验证重点。早期评审引用的表号和 OptiBench 提升 7.7% 属于投稿版本，不能与 v4 的 9.1 个百分点混用。</li>
+</ul>
+<h2 id="43-未来展望"><a class="markdownIt-Anchor" href="#43-未来展望"></a> 4.3 未来展望</h2>
+<ul>
+<li><strong>把单实例验证扩展为结构保持的多实例验证。</strong> 对数值参数做合理扰动，再核查约束、可行性与目标值，能更有效地识别遗漏约束却碰巧答案一致的模型。还应区分参考标签错误与生成模型错误，防止错标签污染经验库。</li>
+<li><strong>把自然语言 condition 接到显式结构上。</strong> 例如记录“变量为整数”“存在二元启用逻辑”“只有一个汇点”等可检查前提，并与 CIR/R2C 一类规则表示结合。这是笔记作者提出的组合方向，尚不是本文已验证的结果。</li>
+<li><strong>让检索得分更接近最终任务效用。</strong> 对收益最大的候选或高风险规则增加完整程序回放；把负迁移的代价、历史任务退化和多条经验冲突纳入筛选，避免只提高平均检索得分。</li>
+<li><strong>加强知识落地与规模验证。</strong> 当前 invalid 比例提示，经验解释与示例还需要更好地支持实例化；工业场景还需要验证求解时间、模型规模、长期漂移和调用成本。库规模稳定只解决一部分可扩展性问题。</li>
+</ul>
+<h2 id="44-qa"><a class="markdownIt-Anchor" href="#44-qa"></a> 4.4 Q&amp;A</h2>
+<p><strong>Q1：有参考最优值了，为什么还要生成程序？</strong>
+A：参考值用于训练阶段判断探索是否成功；最终目的是把经验迁移到没有答案的新任务。单独记住一个数值不会提供变量、约束或可复用的建模规律，生成程序则提供可执行的经验锚点。</p>
+<p><strong>Q2：这是否就是 RAG？</strong>
+A：推理时确实包含检索增强，但检索库是从任务失败中学出来、经回放筛选并持续修改适用条件的。区别主要在知识获取和维护机制，不能只从“有没有检索”判断贡献。</p>
+<p><strong>Q3：为什么条件更新不用把所有候选都完整求解一遍？</strong>
+A：检索重放更便宜，且直接针对过宽、过窄这类错误；代价是它只优化代理指标。如果经验被找到了却无法正确执行，检索得分上升未必带来答案正确率提升。</p>
+<p><strong>Q4：经验库会稳定，是不是就保证泛化？</strong>
+A：不保证。稳定可能来自当前训练集的知识饱和，也可能来自检索或探索瓶颈。附录理论假设训练测试同分布，而 OOD 能力必须由独立实验验证；当前 LogiOR 的 56.0% 仍显示明显局限。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/" class="category-chain-item">机器学习</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/" class="category-chain-item">论文理解</a>
+  
+  
+    <span>></span>
+    
+  <a href="/MyBlog/categories/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3/LLM-OR/" class="category-chain-item">LLM-OR</a>
+  
+  
+
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/MyBlog/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/MyBlog/tags/LLM-Clarification/" class="print-no-link">#LLM-Clarification</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>论文理解【LLM-OR】——【AlphaOPT】Formulating Optimization Programs with Self-Improving LLM Experien</div>
+      <div>https://wxc971231.github.io/MyBlog/2026/09/19/论文理解LLM_OR_AlphaOPTFormulatingOptimizationProgramswithSelf_ImprovingLLMExperien/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>云端fff</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/10/20/%E7%8E%B0%E4%BB%A3AIAgent%E7%BC%96%E6%8E%92%E6%8A%80%E6%9C%AF%E5%85%A8%E6%99%AF1_%E5%88%86%E7%B1%BB%E4%BD%93%E7%B3%BB%E4%B8%8E%E5%9B%9B%E5%A4%A7%E6%8A%80%E6%9C%AF%E7%BB%B4%E5%BA%A6/" title="现代 AI Agent 编排技术全景（1）—— 分类体系与四大技术维度">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">现代 AI Agent 编排技术全景（1）—— 分类体系与四大技术维度</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/MyBlog/2026/06/09/%E8%AE%BA%E6%96%87%E7%90%86%E8%A7%A3LLM_Agent_ReActSynergizingReasoningandActinginLanguageModels/" title="论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models">
+                        <span class="hidden-mobile">论文理解【LLM-Agent】—— 【ReAct】Synergizing Reasoning and Acting in Language Models</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+  
+  
+    <article id="comments" lazyload>
+      
+    <div id="giscus" class="giscus"></div>
+    <script type="text/javascript">
+      Fluid.utils.loadComments('#giscus', function() {
+        var options = {"repo":"wxc971231/MyBlog","repo-id":"R_kgDOPp4ieQ","category":"Announcements","category-id":"DIC_kwDOPp4iec4CxWoO","theme-light":"light","theme-dark":"dark","mapping":"pathname","strict":0,"reactions-enabled":1,"emit-metadata":0,"input-position":"bottom","lang":"zh-CN"};
+        var attributes = {};
+        for (let option in options) {
+          if (!option.startsWith('theme-')) {
+            var key = option.startsWith('data-') ? option : 'data-' + option;
+            attributes[key] = options[option];
+          }
+        }
+        var light = 'light';
+        var dark = 'dark';
+        window.GiscusThemeLight = light;
+        window.GiscusThemeDark = dark;
+        attributes['data-theme'] = document.documentElement.getAttribute('data-user-color-scheme') === 'dark' ? dark : light;
+        for (let attribute in attributes) {
+          var value = attributes[attribute];
+          if (value === undefined || value === null || value === '') {
+            delete attributes[attribute];
+          }
+        }
+        var s = document.createElement('script');
+        s.setAttribute('src', 'https://giscus.app/client.js');
+        s.setAttribute('crossorigin', 'anonymous');
+        for (let attribute in attributes) {
+          s.setAttribute(attribute, attributes[attribute]);
+        }
+        var ss = document.getElementsByTagName('script');
+        var e = ss.length > 0 ? ss[ss.length - 1] : document.head || document.documentElement;
+        e.parentNode.insertBefore(s, e.nextSibling);
+      });
+    </script>
+    <noscript>Please enable JavaScript to view the comments</noscript>
+
+
+    </article>
+  
+
+
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+    <div class="statistics">
+  
+  
+
+  
+    
+      <span id="busuanzi_container_site_pv" style="display: none">
+        总访问量 
+        <span id="busuanzi_value_site_pv"></span>
+         次
+      </span>
+    
+    
+      <span id="busuanzi_container_site_uv" style="display: none">
+        总访客数 
+        <span id="busuanzi_value_site_uv"></span>
+         人
+      </span>
+    
+    
+
+  
+
+</div>
+
+  
+  
+</div>
+
+
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/MyBlog/js/events.js" ></script>
+<script  src="/MyBlog/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/MyBlog/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/MyBlog/js/local-search.js" ></script>
+
+  <script defer src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" ></script>
+
+
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/MyBlog/js/boot.js" ></script>
+
+
+  
+
+
+
+
+  <script>
+    (function() {
+      var maxLines = 20;
+
+      function getRoot(pre) {
+        return pre.closest('figure.highlight') || pre.closest('.code-wrapper') || pre;
+      }
+
+      function getLineCount(root, pre) {
+        var highlightedLines = root.querySelectorAll('td.gutter span.line');
+        if (highlightedLines.length) {
+          return highlightedLines.length;
+        }
+
+        var code = pre.querySelector('code');
+        var text = code ? code.textContent : pre.textContent;
+        return text.replace(/\n$/, '').split('\n').length;
+      }
+
+      function getCollapsedHeight(pre) {
+        var style = window.getComputedStyle(pre);
+        var lineHeight = parseFloat(style.lineHeight);
+        var fontSize = parseFloat(style.fontSize) || 16;
+        var paddingTop = parseFloat(style.paddingTop) || 0;
+        var paddingBottom = parseFloat(style.paddingBottom) || 0;
+
+        if (!Number.isFinite(lineHeight)) {
+          lineHeight = fontSize * 1.5;
+        }
+
+        return Math.ceil(lineHeight * maxLines + paddingTop + paddingBottom);
+      }
+
+      function enhanceCodeBlocks() {
+        var roots = new Set();
+
+        document.querySelectorAll('.markdown-body pre').forEach(function(pre) {
+          if (pre.querySelector('code.mermaid') || pre.closest('.code-collapse')) {
+            return;
+          }
+
+          var root = getRoot(pre);
+          if (roots.has(root) || getLineCount(root, pre) <= maxLines) {
+            return;
+          }
+          roots.add(root);
+
+          var wrapper = document.createElement('div');
+          var content = document.createElement('div');
+          var button = document.createElement('button');
+          var collapsedHeight = getCollapsedHeight(pre);
+
+          wrapper.className = 'code-collapse is-collapsed';
+          wrapper.style.setProperty('--code-collapse-height', collapsedHeight + 'px');
+          content.className = 'code-collapse-content';
+          button.className = 'code-collapse-toggle';
+          button.type = 'button';
+          button.setAttribute('aria-expanded', 'false');
+          button.innerHTML = '<span class="code-collapse-toggle-icon" aria-hidden="true">&#9660;</span><span>展开全部</span>';
+
+          root.parentNode.insertBefore(wrapper, root);
+          content.appendChild(root);
+          wrapper.appendChild(content);
+          wrapper.appendChild(button);
+
+          button.addEventListener('click', function() {
+            var expanded = wrapper.classList.toggle('is-expanded');
+            wrapper.classList.toggle('is-collapsed', !expanded);
+            button.setAttribute('aria-expanded', String(expanded));
+            button.lastElementChild.textContent = expanded ? '收起代码' : '展开全部';
+
+            if (!expanded && wrapper.getBoundingClientRect().top < 0) {
+              wrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          });
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enhanceCodeBlocks);
+      } else {
+        enhanceCodeBlocks();
+      }
+    })();
+  </script>
+
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
